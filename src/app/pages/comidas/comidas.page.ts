@@ -1,8 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
 import {
-  IonHeader,
-  IonToolbar,
-  IonTitle,
   IonContent,
   IonButton,
   IonIcon,
@@ -20,9 +17,6 @@ import { AlertService } from '../../services/alert.service';
   templateUrl: 'comidas.page.html',
   styleUrls: ['comidas.page.scss'],
   imports: [
-    IonHeader,
-    IonToolbar,
-    IonTitle,
     IonContent,
     IonButton,
     IonIcon,

@@ -1,16 +1,14 @@
-<ion-header>
-  <ion-toolbar color="primary">
-    <ion-title>Planeador Semanal</ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content>
-  @for (dia of dias; track dia; let i = $index) {
-    <ion-card class="dia-card">
+  <div class="page-title">Planeador Semanal</div>
+  @for (dia of dias; track dia) {
+    <ion-card class="dia-card" [class.dia-card--hoy]="dia === hoy()">
       <div class="dia-header">
-        <div class="dia-numero">{{ i + 1 }}</div>
+        <div class="dia-numero" [class.dia-numero--hoy]="dia === hoy()">{{ diaNumero(dia) }}</div>
         <div class="dia-titulo">
           <span class="dia-nombre">{{ diasLabel[dia] }}</span>
+          @if (dia === hoy()) {
+            <span class="dia-hoy-badge">Hoy</span>
+          }
         </div>
         @if (plan()[dia].desayuno || plan()[dia].cena) {
           <span class="dia-badge">Planificado</span>

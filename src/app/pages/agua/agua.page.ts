@@ -1,8 +1,5 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import {
-  IonHeader,
-  IonToolbar,
-  IonTitle,
   IonContent,
   IonButton,
   IonIcon,
@@ -18,7 +15,7 @@ const META_VASOS = 8;
   selector: 'app-agua',
   templateUrl: 'agua.page.html',
   styleUrls: ['agua.page.scss'],
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonIcon, IonLabel, IonFab, IonFabButton],
+  imports: [IonContent, IonButton, IonIcon, IonLabel, IonFab, IonFabButton],
 })
 export class AguaPage implements OnInit {
   registro = signal<RegistroAgua>({ fecha: '', vasos: 0 });

@@ -1,8 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
 import {
-  IonHeader,
-  IonToolbar,
-  IonTitle,
   IonContent,
   IonButton,
   IonIcon,
@@ -23,9 +20,6 @@ type EstadoVencimiento = 'verde' | 'amarillo' | 'rojo';
   templateUrl: 'nevera.page.html',
   styleUrls: ['nevera.page.scss'],
   imports: [
-    IonHeader,
-    IonToolbar,
-    IonTitle,
     IonContent,
     IonButton,
     IonIcon,

@@ -44,6 +44,14 @@ ion-content {
   --background: #f8faf9;
 }
 
+/* Page title inline (no header) */
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1a2e22;
+  padding: 20px 18px 4px;
+}
+
 /* Toolbar con sombra suave */
 ion-header ion-toolbar {
   --border-width: 0;

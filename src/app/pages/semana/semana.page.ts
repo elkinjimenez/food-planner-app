@@ -1,8 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
 import {
-  IonHeader,
-  IonToolbar,
-  IonTitle,
   IonContent,
   IonIcon,
   IonCard,
@@ -25,9 +22,6 @@ import { AlertService } from '../../services/alert.service';
   templateUrl: 'semana.page.html',
   styleUrls: ['semana.page.scss'],
   imports: [
-    IonHeader,
-    IonToolbar,
-    IonTitle,
     IonContent,
     IonIcon,
     IonCard,
@@ -38,7 +32,7 @@ import { AlertService } from '../../services/alert.service';
 export class SemanaPage implements OnInit {
   plan = signal<PlanSemanal>(this.planVacio());
   comidas = signal<Comida[]>([]);
-  dias = DIAS_SEMANA;
+  dias = this.ordenarDesdeHoy();
   diasLabel = DIAS_LABEL;
 
   constructor(
@@ -54,6 +48,21 @@ export class SemanaPage implements OnInit {
     const [plan, comidas] = await Promise.all([this.storage.getPlan(), this.storage.getComidas()]);
     this.plan.set(plan);
     this.comidas.set(comidas);
+  }
+
+  private ordenarDesdeHoy(): DiaSemana[] {
+    const hoy = new Date().getDay(); // 0=domingo, 1=lunes, ..., 6=sabado
+    const indice = hoy === 0 ? 6 : hoy - 1; // mapear a 0=lunes, ..., 6=domingo
+    return [...DIAS_SEMANA.slice(indice), ...DIAS_SEMANA.slice(0, indice)];
+  }
+
+  diaNumero(dia: DiaSemana): number {
+    return DIAS_SEMANA.indexOf(dia) + 1;
+  }
+
+  hoy(): DiaSemana {
+    const d = new Date().getDay(); // 0=domingo, 1=lunes, ..., 6=sabado
+    return DIAS_SEMANA[d === 0 ? 6 : d - 1];
   }
 
   private planVacio(): PlanSemanal {

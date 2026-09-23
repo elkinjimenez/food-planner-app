@@ -1,8 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
 import {
-  IonHeader,
-  IonToolbar,
-  IonTitle,
   IonContent,
   IonCheckbox,
   IonButton,
@@ -21,9 +18,6 @@ import { AlertService } from '../../services/alert.service';
   templateUrl: 'mercado.page.html',
   styleUrls: ['mercado.page.scss'],
   imports: [
-    IonHeader,
-    IonToolbar,
-    IonTitle,
     IonContent,
     IonCheckbox,
     IonButton,

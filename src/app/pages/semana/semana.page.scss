@@ -1,6 +1,13 @@
 .dia-card {
   margin: 10px 14px;
   padding: 0;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  border: 2px solid transparent;
+
+  &--hoy {
+    border-color: var(--ion-color-primary);
+    box-shadow: 0 4px 20px rgba(45, 211, 111, 0.25);
+  }
 }
 
 .dia-header {
@@ -23,6 +30,11 @@
   font-size: 0.9rem;
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(45, 211, 111, 0.3);
+
+  &--hoy {
+    background: var(--ion-color-primary-shade);
+    box-shadow: 0 3px 12px rgba(45, 211, 111, 0.5);
+  }
 }
 
 .dia-titulo {
@@ -36,6 +48,18 @@
   font-size: 1.1rem;
   font-weight: 700;
   color: #1a2e22;
+}
+
+.dia-hoy-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: var(--ion-color-primary);
+  padding: 2px 8px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(45, 211, 111, 0.4);
 }
 
 .dia-badge {
