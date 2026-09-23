@@ -1,0 +1,44 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4a90d9"/>
+      <stop offset="100%" stop-color="#2a6dbf"/>
+    </linearGradient>
+    <linearGradient id="plate" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e8eef5"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo redondeado -->
+  <rect width="512" height="512" rx="112" ry="112" fill="url(#bg)"/>
+
+  <!-- Plato -->
+  <circle cx="256" cy="256" r="150" fill="url(#plate)" stroke="#c8d6e5" stroke-width="4"/>
+  <circle cx="256" cy="256" r="110" fill="none" stroke="#d1dbe8" stroke-width="3"/>
+
+  <!-- Horario / calendario (comida planificada) -->
+  <!-- Tenedor (izquierda) -->
+  <g transform="translate(196, 176)">
+    <rect x="0" y="0" width="6" height="160" rx="3" fill="#5a7a9a"/>
+    <rect x="-10" y="0" width="4" height="40" rx="2" fill="#5a7a9a"/>
+    <rect x="-2" y="0" width="4" height="40" rx="2" fill="#5a7a9a"/>
+    <rect x="6" y="0" width="4" height="40" rx="2" fill="#5a7a9a"/>
+    <rect x="14" y="0" width="4" height="40" rx="2" fill="#5a7a9a"/>
+  </g>
+
+  <!-- Cuchillo (derecha) -->
+  <g transform="translate(296, 176)">
+    <rect x="0" y="0" width="6" height="160" rx="3" fill="#5a7a9a"/>
+    <path d="M -8 0 Q 3 -20 14 0 L 14 40 L -8 40 Z" fill="#7a9ab8"/>
+  </g>
+
+  <!-- Comida en el plato (representación simple) -->
+  <ellipse cx="256" cy="270" rx="70" ry="30" fill="#f0c04a" opacity="0.9"/>
+  <circle cx="230" cy="265" r="12" fill="#e85d4a"/>
+  <circle cx="270" cy="275" r="10" fill="#5cb85c"/>
+  <circle cx="285" cy="260" r="8" fill="#e85d4a"/>
+
+  <!-- Pequeña hoja (decoración) -->
+  <path d="M 256 230 Q 266 215 276 230 Q 266 240 256 230 Z" fill="#5cb85c"/>
+</svg>

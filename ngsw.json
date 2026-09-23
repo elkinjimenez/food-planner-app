@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1790183217839,
+  "timestamp": 1790183410342,
   "index": "/food-planner-app/index.html",
   "assetGroups": [
     {
@@ -54,6 +54,7 @@
         "ignoreVary": true
       },
       "urls": [
+        "/food-planner-app/assets/icon/app-icon.svg",
         "/food-planner-app/assets/icon/favicon.png",
         "/food-planner-app/assets/shapes.svg"
       ],
@@ -62,7 +63,8 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/food-planner-app/assets/icon/favicon.png": "7798b8e0eb61d7375c245af78bbf5c916932bf13",
+    "/food-planner-app/assets/icon/app-icon.svg": "65174caa226be3945997ed26a451ceb3769c94c7",
+    "/food-planner-app/assets/icon/favicon.png": "ff877fa44d535bec5ce950539aee6a5800ec3b73",
     "/food-planner-app/assets/shapes.svg": "5413e95adabcb2cb639970051f55e0ddb64ace53",
     "/food-planner-app/chunk--LyAy8Db.js": "1add3ad848eba8d1575d68566223bc75fe181585",
     "/food-planner-app/chunk-1WgjXSTw.js": "d302cabc4fe734b95477086e5dd74d971b45bc5d",
