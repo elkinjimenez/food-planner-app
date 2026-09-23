@@ -1,5 +1,11 @@
 <ion-content>
-  <div class="page-title">Mercado</div>
+  <div class="page-title-row">
+    <span class="page-title">Mercado</span>
+    <ion-button fill="clear" size="small" class="btn-desmarcar" (click)="desmarcarTodo()">
+      <ion-icon name="refresh-outline" slot="start"></ion-icon>
+      <ion-label>Desmarcar todo</ion-label>
+    </ion-button>
+  </div>
   <!-- Supermercado -->
   <div class="section-header">
     <div class="section-icon section-icon--cart">

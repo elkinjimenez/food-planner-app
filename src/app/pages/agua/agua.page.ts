@@ -4,8 +4,6 @@ import {
   IonButton,
   IonIcon,
   IonLabel,
-  IonFab,
-  IonFabButton,
 } from '@ionic/angular';
 import { StorageService, RegistroAgua } from '../../services/storage.service';
 
@@ -15,7 +13,7 @@ const META_VASOS = 8;
   selector: 'app-agua',
   templateUrl: 'agua.page.html',
   styleUrls: ['agua.page.scss'],
-  imports: [IonContent, IonButton, IonIcon, IonLabel, IonFab, IonFabButton],
+  imports: [IonContent, IonButton, IonIcon, IonLabel],
 })
 export class AguaPage implements OnInit {
   registro = signal<RegistroAgua>({ fecha: '', vasos: 0 });

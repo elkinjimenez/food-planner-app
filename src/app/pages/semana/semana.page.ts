@@ -44,6 +44,10 @@ export class SemanaPage implements OnInit {
     await this.cargar();
   }
 
+  async ionViewWillEnter(): Promise<void> {
+    await this.cargar();
+  }
+
   private async cargar(): Promise<void> {
     const [plan, comidas] = await Promise.all([this.storage.getPlan(), this.storage.getComidas()]);
     this.plan.set(plan);

@@ -41,6 +41,10 @@ export class NeveraPage implements OnInit {
     await this.cargar();
   }
 
+  async ionViewWillEnter(): Promise<void> {
+    await this.cargar();
+  }
+
   private async cargar(): Promise<void> {
     const data = await this.storage.getNevera();
     // Ordenar por fecha de vencimiento ascendente

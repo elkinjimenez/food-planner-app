@@ -1,0 +1,59 @@
+// ===== Tab bar estilo iOS 26 — flotante con glassmorphism =====
+ion-tab-bar {
+  --background: rgba(255, 255, 255, 0.85);
+  --color: var(--ion-color-medium);
+  --color-selected: var(--ion-color-primary);
+
+  border-radius: 24px;
+  margin: 0 12px 12px;
+  padding: 6px 8px;
+  height: 64px;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.08),
+    0 1px 4px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  position: relative;
+  z-index: 10;
+}
+
+ion-tab-button {
+  --color: var(--ion-color-medium);
+  --color-selected: var(--ion-color-primary);
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+
+  border-radius: 18px;
+  transition: background 0.25s ease, color 0.2s ease;
+  margin: 0 2px;
+  flex: 1;
+  max-width: none;
+
+  ion-icon {
+    font-size: 24px;
+    transition: transform 0.25s ease;
+  }
+
+  ion-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    transition: opacity 0.2s ease;
+  }
+
+  // Estado seleccionado — fondo destacado
+  &.tab-selected {
+    background: rgba(45, 211, 111, 0.12);
+    color: var(--ion-color-primary);
+
+    ion-icon {
+      transform: scale(1.1);
+      color: var(--ion-color-primary);
+    }
+
+    ion-label {
+      color: var(--ion-color-primary);
+      font-weight: 700;
+    }
+  }
+}

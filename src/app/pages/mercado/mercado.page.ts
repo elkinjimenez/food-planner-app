@@ -4,12 +4,15 @@ import {
   IonCheckbox,
   IonButton,
   IonIcon,
+  IonLabel,
   IonFab,
   IonFabButton,
   IonCard,
 } from '@ionic/angular';
 import { ItemMercado } from '../../models/item-mercado.model';
+import { ProductoNevera } from '../../models/producto-nevera.model';
 import { uuid } from '../../utils/uuid';
+import { parsearDuracionADias, calcularFechaVencimiento } from '../../utils/duracion';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
 
@@ -22,6 +25,7 @@ import { AlertService } from '../../services/alert.service';
     IonCheckbox,
     IonButton,
     IonIcon,
+    IonLabel,
     IonFab,
     IonFabButton,
     IonCard,
@@ -41,6 +45,10 @@ export class MercadoPage implements OnInit {
     await this.cargar();
   }
 
+  async ionViewWillEnter(): Promise<void> {
+    await this.cargar();
+  }
+
   private async cargar(): Promise<void> {
     const data = await this.storage.getMercado();
     this.items.set(data);
@@ -51,12 +59,37 @@ export class MercadoPage implements OnInit {
   async toggleComprado(item: ItemMercado): Promise<void> {
     item.comprado = !item.comprado;
     await this.storage.saveItemMercado(item);
+
+    if (item.comprado) {
+      // Al marcar como comprado, agregar a nevera con fecha de vencimiento calculada
+      const dias = parsearDuracionADias(item.duracion);
+      const producto: ProductoNevera = {
+        id: uuid(),
+        nombre: item.nombre,
+        fechaVencimiento: calcularFechaVencimiento(dias),
+      };
+      await this.storage.saveProductoNevera(producto);
+    } else {
+      // Al desmarcar, eliminar de nevera si existe un producto con el mismo nombre
+      const nevera = await this.storage.getNevera();
+      const existente = nevera.find((p) => p.nombre === item.nombre);
+      if (existente) {
+        await this.storage.deleteProductoNevera(existente.id);
+      }
+    }
   }
 
   async desmarcarTodo(): Promise<void> {
-    const todos = this.items().map((i) => ({ ...i, comprado: false }));
-    for (const i of todos) {
-      await this.storage.saveItemMercado(i);
+    const nevera = await this.storage.getNevera();
+    for (const item of this.items()) {
+      if (item.comprado) {
+        const existente = nevera.find((p) => p.nombre === item.nombre);
+        if (existente) {
+          await this.storage.deleteProductoNevera(existente.id);
+        }
+      }
+      item.comprado = false;
+      await this.storage.saveItemMercado(item);
     }
     await this.cargar();
   }

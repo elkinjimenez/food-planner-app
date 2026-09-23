@@ -38,6 +38,10 @@ export class ComidasPage implements OnInit {
     await this.cargar();
   }
 
+  async ionViewWillEnter(): Promise<void> {
+    await this.cargar();
+  }
+
   private async cargar(): Promise<void> {
     const data = await this.storage.getComidas();
     this.desayunos.set(data.filter((c) => c.tipo === 'desayuno'));
