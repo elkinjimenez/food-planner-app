@@ -1,6 +1,6 @@
 {
-  "name": "app",
-  "short_name": "app",
+  "name": "Food Planner",
+  "short_name": "FoodPlanner",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
