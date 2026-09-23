@@ -1,44 +1,75 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#4a90d9"/>
-      <stop offset="100%" stop-color="#2a6dbf"/>
+      <stop offset="0%" stop-color="#2dd36f"/>
+      <stop offset="100%" stop-color="#28ba62"/>
     </linearGradient>
-    <linearGradient id="plate" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#e8eef5"/>
-    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="8"/>
+      <feOffset dx="0" dy="6" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.15"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
 
   <!-- Fondo redondeado -->
-  <rect width="512" height="512" rx="112" ry="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="120" ry="120" fill="url(#bg)"/>
 
-  <!-- Plato -->
-  <circle cx="256" cy="256" r="150" fill="url(#plate)" stroke="#c8d6e5" stroke-width="4"/>
-  <circle cx="256" cy="256" r="110" fill="none" stroke="#d1dbe8" stroke-width="3"/>
+  <!-- Calendario (planeador) -->
+  <g filter="url(#shadow)">
+    <rect x="120" y="110" width="272" height="250" rx="24" ry="24" fill="#ffffff"/>
 
-  <!-- Horario / calendario (comida planificada) -->
-  <!-- Tenedor (izquierda) -->
-  <g transform="translate(196, 176)">
-    <rect x="0" y="0" width="6" height="160" rx="3" fill="#5a7a9a"/>
-    <rect x="-10" y="0" width="4" height="40" rx="2" fill="#5a7a9a"/>
-    <rect x="-2" y="0" width="4" height="40" rx="2" fill="#5a7a9a"/>
-    <rect x="6" y="0" width="4" height="40" rx="2" fill="#5a7a9a"/>
-    <rect x="14" y="0" width="4" height="40" rx="2" fill="#5a7a9a"/>
+    <!-- Cabecera verde oscuro -->
+    <path d="M 120 134 Q 120 110 144 110 L 368 110 Q 392 110 392 134 L 392 168 L 120 168 Z" fill="#28ba62"/>
+
+    <!-- Anillas -->
+    <rect x="170" y="92" width="14" height="44" rx="7" fill="#1a8e47"/>
+    <rect x="328" y="92" width="14" height="44" rx="7" fill="#1a8e47"/>
+
+    <!-- Días como puntos en cabecera -->
+    <circle cx="160" cy="139" r="6" fill="#ffffff" opacity="0.5"/>
+    <circle cx="190" cy="139" r="6" fill="#ffffff" opacity="0.5"/>
+    <circle cx="220" cy="139" r="6" fill="#ffffff" opacity="0.5"/>
+    <circle cx="250" cy="139" r="6" fill="#ffffff" opacity="0.5"/>
+    <circle cx="280" cy="139" r="6" fill="#ffffff" opacity="0.5"/>
+    <circle cx="310" cy="139" r="6" fill="#ffffff" opacity="0.5"/>
+    <circle cx="340" cy="139" r="6" fill="#ffffff" opacity="0.5"/>
+
+    <!-- Filas de días con comidas -->
+    <circle cx="150" cy="200" r="8" fill="#2dd36f"/>
+    <rect x="172" y="195" width="100" height="10" rx="5" fill="#e0e8e0"/>
+    <rect x="284" y="195" width="90" height="10" rx="5" fill="#f0c04a"/>
+
+    <circle cx="150" cy="232" r="8" fill="#2dd36f"/>
+    <rect x="172" y="227" width="100" height="10" rx="5" fill="#e0e8e0"/>
+    <rect x="284" y="227" width="90" height="10" rx="5" fill="#e85d4a"/>
+
+    <circle cx="150" cy="264" r="8" fill="#2dd36f"/>
+    <rect x="172" y="259" width="100" height="10" rx="5" fill="#e0e8e0"/>
+    <rect x="284" y="259" width="90" height="10" rx="5" fill="#5cb85c"/>
+
+    <circle cx="150" cy="296" r="8" fill="#2dd36f"/>
+    <rect x="172" y="291" width="100" height="10" rx="5" fill="#e0e8e0"/>
+    <rect x="284" y="291" width="50" height="10" rx="5" fill="#f0c04a"/>
+
+    <circle cx="150" cy="328" r="8" fill="#d0d8d0"/>
+    <rect x="172" y="323" width="100" height="10" rx="5" fill="#eef2ee"/>
+    <rect x="284" y="323" width="90" height="10" rx="5" fill="#eef2ee"/>
   </g>
 
-  <!-- Cuchillo (derecha) -->
-  <g transform="translate(296, 176)">
-    <rect x="0" y="0" width="6" height="160" rx="3" fill="#5a7a9a"/>
-    <path d="M -8 0 Q 3 -20 14 0 L 14 40 L -8 40 Z" fill="#7a9ab8"/>
+  <!-- Plato de comida superpuesto -->
+  <g filter="url(#shadow)">
+    <circle cx="372" cy="372" r="70" fill="#ffffff" stroke="#28ba62" stroke-width="5"/>
+    <circle cx="372" cy="372" r="52" fill="none" stroke="#e0e8e0" stroke-width="2"/>
+    <ellipse cx="372" cy="378" rx="36" ry="18" fill="#f0c04a"/>
+    <circle cx="358" cy="372" r="9" fill="#e85d4a"/>
+    <circle cx="386" cy="380" r="8" fill="#5cb85c"/>
+    <circle cx="392" cy="368" r="6" fill="#e85d4a"/>
+    <path d="M 372 356 Q 380 346 388 356 Q 380 362 372 356 Z" fill="#5cb85c"/>
   </g>
-
-  <!-- Comida en el plato (representación simple) -->
-  <ellipse cx="256" cy="270" rx="70" ry="30" fill="#f0c04a" opacity="0.9"/>
-  <circle cx="230" cy="265" r="12" fill="#e85d4a"/>
-  <circle cx="270" cy="275" r="10" fill="#5cb85c"/>
-  <circle cx="285" cy="260" r="8" fill="#e85d4a"/>
-
-  <!-- Pequeña hoja (decoración) -->
-  <path d="M 256 230 Q 266 215 276 230 Q 266 240 256 230 Z" fill="#5cb85c"/>
 </svg>

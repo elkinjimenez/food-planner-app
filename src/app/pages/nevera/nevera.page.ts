@@ -3,6 +3,7 @@ import {
   IonContent,
   IonButton,
   IonIcon,
+  IonLabel,
   IonBadge,
   IonFab,
   IonFabButton,
@@ -23,6 +24,7 @@ type EstadoVencimiento = 'verde' | 'amarillo' | 'rojo';
     IonContent,
     IonButton,
     IonIcon,
+    IonLabel,
     IonBadge,
     IonFab,
     IonFabButton,
@@ -118,6 +120,32 @@ export class NeveraPage implements OnInit {
     const confirm = await this.alert.confirm('¿Eliminar producto?', producto.nombre);
     if (!confirm) return;
     await this.storage.deleteProductoNevera(producto.id);
+    // Desmarcar en mercado el ítem que coincida por nombre
+    const mercado = await this.storage.getMercado();
+    const item = mercado.find((m) => m.nombre === producto.nombre && m.comprado);
+    if (item) {
+      item.comprado = false;
+      await this.storage.saveItemMercado(item);
+    }
+    await this.cargar();
+  }
+
+  async vaciarNevera(): Promise<void> {
+    const confirm = await this.alert.confirm('¿Vaciar nevera?', 'Se eliminarán todos los productos.');
+    if (!confirm) return;
+    // Eliminar todos los productos de nevera
+    for (const producto of this.productos()) {
+      await this.storage.deleteProductoNevera(producto.id);
+    }
+    // Desmarcar en mercado los ítems que coincidan
+    const mercado = await this.storage.getMercado();
+    for (const producto of this.productos()) {
+      const item = mercado.find((m) => m.nombre === producto.nombre && m.comprado);
+      if (item) {
+        item.comprado = false;
+        await this.storage.saveItemMercado(item);
+      }
+    }
     await this.cargar();
   }
 

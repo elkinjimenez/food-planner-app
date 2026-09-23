@@ -1,5 +1,13 @@
 <ion-content>
-  <div class="page-title">Nevera</div>
+  <div class="page-title-row">
+    <span class="page-title">Nevera</span>
+    @if (productos().length > 0) {
+      <ion-button fill="clear" size="small" class="btn-vaciar" (click)="vaciarNevera()">
+        <ion-icon name="trash-outline" slot="start"></ion-icon>
+        <ion-label>Vaciar nevera</ion-label>
+      </ion-button>
+    }
+  </div>
   @if (productos().length === 0) {
     <div class="empty-state">
       <ion-icon name="snow-outline"></ion-icon>
