@@ -1,0 +1,119 @@
+{
+  "configVersion": 1,
+  "timestamp": 1790183217839,
+  "index": "/food-planner-app/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
+      "urls": [
+        "/food-planner-app/chunk--LyAy8Db.js",
+        "/food-planner-app/chunk-1WgjXSTw.js",
+        "/food-planner-app/chunk-BY9HrSAH.js",
+        "/food-planner-app/chunk-Bk3sQ0hz.js",
+        "/food-planner-app/chunk-BkXCiOIz.js",
+        "/food-planner-app/chunk-BmO8355T.js",
+        "/food-planner-app/chunk-Br51yb0e.js",
+        "/food-planner-app/chunk-C4-y1quQ.js",
+        "/food-planner-app/chunk-CABSGZFi.js",
+        "/food-planner-app/chunk-CFcrGsit.js",
+        "/food-planner-app/chunk-CMKSnDfU.js",
+        "/food-planner-app/chunk-CWiJRsGi.js",
+        "/food-planner-app/chunk-Cg-N7sAU.js",
+        "/food-planner-app/chunk-D9AI81tR.js",
+        "/food-planner-app/chunk-D9WLpRXW.js",
+        "/food-planner-app/chunk-DEQTwfN6.js",
+        "/food-planner-app/chunk-DL6HYRdT.js",
+        "/food-planner-app/chunk-DORpjao0.js",
+        "/food-planner-app/chunk-Djs35J3_.js",
+        "/food-planner-app/chunk-DtE4cfcc.js",
+        "/food-planner-app/chunk-DuhrUiir.js",
+        "/food-planner-app/chunk-DyZaHOZn.js",
+        "/food-planner-app/chunk-EAk29v_m.js",
+        "/food-planner-app/chunk-FdQJvtw6.js",
+        "/food-planner-app/chunk-MZzQxeJH.js",
+        "/food-planner-app/chunk-OA8N9K7r.js",
+        "/food-planner-app/chunk-SWCFGJJZ.js",
+        "/food-planner-app/chunk-zw3W6Ye2.js",
+        "/food-planner-app/index.html",
+        "/food-planner-app/main-FTQVB4ZL.js",
+        "/food-planner-app/manifest.webmanifest",
+        "/food-planner-app/styles-MD4VICRL.css"
+      ],
+      "patterns": []
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
+      "urls": [
+        "/food-planner-app/assets/icon/favicon.png",
+        "/food-planner-app/assets/shapes.svg"
+      ],
+      "patterns": []
+    }
+  ],
+  "dataGroups": [],
+  "hashTable": {
+    "/food-planner-app/assets/icon/favicon.png": "7798b8e0eb61d7375c245af78bbf5c916932bf13",
+    "/food-planner-app/assets/shapes.svg": "5413e95adabcb2cb639970051f55e0ddb64ace53",
+    "/food-planner-app/chunk--LyAy8Db.js": "1add3ad848eba8d1575d68566223bc75fe181585",
+    "/food-planner-app/chunk-1WgjXSTw.js": "d302cabc4fe734b95477086e5dd74d971b45bc5d",
+    "/food-planner-app/chunk-BY9HrSAH.js": "d3a88f73fd6189c36b1c96b3d30675f22f1538f0",
+    "/food-planner-app/chunk-Bk3sQ0hz.js": "e31af52f438ff3957d5c576f3e2f7ab778069321",
+    "/food-planner-app/chunk-BkXCiOIz.js": "1c49deb29433aa36335e1bf1d6c49edf47677035",
+    "/food-planner-app/chunk-BmO8355T.js": "e44a02be29dc143d85b33c7133dab3e82721eca9",
+    "/food-planner-app/chunk-Br51yb0e.js": "e89441be8f4733d3d4fff47bb4cbcaa77325797b",
+    "/food-planner-app/chunk-C4-y1quQ.js": "679c379a4fe283058e1171f5173d1c47fae8e51e",
+    "/food-planner-app/chunk-CABSGZFi.js": "52a2bc497409b203845c463bf476547d44bf65e3",
+    "/food-planner-app/chunk-CFcrGsit.js": "3d0db55db26a9e0ab5dedd9342c9a2a251c7e642",
+    "/food-planner-app/chunk-CMKSnDfU.js": "70a3501105be7f71b2cf2ebe5a06100926a28f9b",
+    "/food-planner-app/chunk-CWiJRsGi.js": "903a907a330240ef9a258084759d33927c880d8d",
+    "/food-planner-app/chunk-Cg-N7sAU.js": "6b94b9cc3740234a65e5e16d7f32c71857227e74",
+    "/food-planner-app/chunk-D9AI81tR.js": "48abe8b26b8999bac7e71dff029841bdc57f5da6",
+    "/food-planner-app/chunk-D9WLpRXW.js": "b748ce0e51dd7c66e6e5459a5c457bcc228294cf",
+    "/food-planner-app/chunk-DEQTwfN6.js": "db1c75ab936172ebe8e4db2899b69a3307b3c184",
+    "/food-planner-app/chunk-DL6HYRdT.js": "9261457aa39987a5f2009d1d22d751b7c3fca91f",
+    "/food-planner-app/chunk-DORpjao0.js": "c3ee4aed7955029d1237627f4457a8cc36c9df65",
+    "/food-planner-app/chunk-Djs35J3_.js": "a19b5b0ca9e2274bf043342f1ff0aa17b5840000",
+    "/food-planner-app/chunk-DtE4cfcc.js": "30d1ab555dec6891e81d78a5de44ebea05a2725c",
+    "/food-planner-app/chunk-DuhrUiir.js": "d048eb1f7c70d4c084e23b63b8e03aeafbd0ba18",
+    "/food-planner-app/chunk-DyZaHOZn.js": "e30ae75287b0f1fe2bec6689f6e3cfae8b02bf24",
+    "/food-planner-app/chunk-EAk29v_m.js": "156dd30f313f3f0f4923f88dd5353340eecddc44",
+    "/food-planner-app/chunk-FdQJvtw6.js": "5436e714dca18680dc4a49509a8bd5daaf486799",
+    "/food-planner-app/chunk-MZzQxeJH.js": "9ac439a2f114fc1e6a5ca7f52992de966ef4e845",
+    "/food-planner-app/chunk-OA8N9K7r.js": "13c18871d94555b3aa575a241b5e3d8f3e8458ee",
+    "/food-planner-app/chunk-SWCFGJJZ.js": "fd05cae7c7e9e8e86abc1ea7d18a8d4336e6ac95",
+    "/food-planner-app/chunk-zw3W6Ye2.js": "427d919f42a324f2ec8d9afbb5ed3aee81f95419",
+    "/food-planner-app/index.html": "5f18ec8fa086fb397a5729b955faf7f171b44fda",
+    "/food-planner-app/main-FTQVB4ZL.js": "39b5a119832c5be13b1c7b5d4ba1c6c23818b097",
+    "/food-planner-app/manifest.webmanifest": "ce153d86bc6a088dff604658c6b210c754cd77a2",
+    "/food-planner-app/styles-MD4VICRL.css": "79db52b73c621569a1e5745bcf74e46213f95509"
+  },
+  "navigationUrls": [
+    {
+      "positive": true,
+      "regex": "^\\/.*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*\\.[^/]*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*\\/.*$"
+    }
+  ],
+  "navigationRequestStrategy": "performance"
+}
