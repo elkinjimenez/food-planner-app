@@ -5,6 +5,7 @@ import {
   IonCard,
   IonFab,
   IonFabButton,
+  ModalController,
 } from '@ionic/angular';
 import { Comida } from '../../models/comida.model';
 import {
@@ -16,6 +17,7 @@ import {
 } from '../../models/plan-semanal.model';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
+import { SeleccionarComidaModal } from './seleccionar-comida.modal';
 
 @Component({
   selector: 'app-semana',
@@ -38,6 +40,7 @@ export class SemanaPage implements OnInit {
   constructor(
     private storage: StorageService,
     private alert: AlertService,
+    private modalCtrl: ModalController,
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -87,14 +90,25 @@ export class SemanaPage implements OnInit {
       await this.alert.confirm('No hay comidas', `Agrega ${tipo}s en la pestaña Comidas.`);
       return;
     }
-    const seleccion = await this.alert.selectFromList(
-      `Elegir ${tipo}`,
-      opciones.map((o) => ({ text: o.nombre, value: o.id })),
-    );
-    if (!seleccion) return;
-    const comida = opciones.find((c) => c.id === seleccion)!;
+
+    const modal = await this.modalCtrl.create({
+      component: SeleccionarComidaModal,
+      componentProps: {
+        titulo: `Elegir ${tipo}`,
+        comidas: opciones,
+        seleccionadaId: this.plan()[dia][tipo]?.id ?? null,
+      },
+      presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
+      showBackdrop: false,
+      cssClass: 'card-modal-dark',
+    });
+    await modal.present();
+
+    const { data } = await modal.onWillDismiss<Comida | null>();
+    if (!data) return;
+
     const nuevoPlan = { ...this.plan() };
-    nuevoPlan[dia] = { ...nuevoPlan[dia], [tipo]: comida };
+    nuevoPlan[dia] = { ...nuevoPlan[dia], [tipo]: data };
     this.plan.set(nuevoPlan);
     await this.storage.putPlan(nuevoPlan);
   }

@@ -8,11 +8,13 @@ import {
   IonFab,
   IonFabButton,
   IonCard,
+  ModalController,
 } from '@ionic/angular';
 import { ProductoNevera } from '../../models/producto-nevera.model';
 import { uuid } from '../../utils/uuid';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
+import { EditarItemModal } from '../../shared/editar-item.modal';
 
 type EstadoVencimiento = 'verde' | 'amarillo' | 'rojo';
 
@@ -37,6 +39,7 @@ export class NeveraPage implements OnInit {
   constructor(
     private storage: StorageService,
     private alert: AlertService,
+    private modalCtrl: ModalController,
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -82,36 +85,58 @@ export class NeveraPage implements OnInit {
   }
 
   async agregar(): Promise<void> {
-    const data = await this.alert.promptAgregarItem('Agregar producto', 'Nombre', 'Fecha vencimiento (YYYY-MM-DD)');
-    if (!data) return;
-    if (!this.fechaValida(data[1])) {
-      await this.alert.confirm('Fecha inválida', 'Usa el formato YYYY-MM-DD.');
-      return;
-    }
+    const modal = await this.modalCtrl.create({
+      component: EditarItemModal,
+      componentProps: {
+        config: {
+          titulo: 'Agregar producto',
+          icono: 'snow-outline',
+          label1: 'Nombre',
+          label2: 'Fecha vencimiento',
+          value1: '',
+          value2: '',
+          input2Type: 'date' as const,
+        },
+      },
+      presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
+      showBackdrop: false,
+      cssClass: 'card-modal-dark',
+    });
+    await modal.present();
+    const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
+    if (!data || !data.value1 || !data.value2) return;
     const nuevo: ProductoNevera = {
       id: uuid(),
-      nombre: data[0],
-      fechaVencimiento: data[1],
+      nombre: data.value1,
+      fechaVencimiento: data.value2,
     };
     await this.storage.saveProductoNevera(nuevo);
     await this.cargar();
   }
 
   async editar(producto: ProductoNevera): Promise<void> {
-    const data = await this.alert.promptEditarItem(
-      'Editar producto',
-      'Nombre',
-      'Fecha vencimiento (YYYY-MM-DD)',
-      producto.nombre,
-      producto.fechaVencimiento,
-    );
-    if (!data) return;
-    if (!this.fechaValida(data[1])) {
-      await this.alert.confirm('Fecha inválida', 'Usa el formato YYYY-MM-DD.');
-      return;
-    }
-    producto.nombre = data[0];
-    producto.fechaVencimiento = data[1];
+    const modal = await this.modalCtrl.create({
+      component: EditarItemModal,
+      componentProps: {
+        config: {
+          titulo: 'Editar producto',
+          icono: 'snow-outline',
+          label1: 'Nombre',
+          label2: 'Fecha vencimiento',
+          value1: producto.nombre,
+          value2: producto.fechaVencimiento,
+          input2Type: 'date' as const,
+        },
+      },
+      presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
+      showBackdrop: false,
+      cssClass: 'card-modal-dark',
+    });
+    await modal.present();
+    const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
+    if (!data || !data.value1) return;
+    producto.nombre = data.value1;
+    producto.fechaVencimiento = data.value2;
     await this.storage.saveProductoNevera(producto);
     await this.cargar();
   }

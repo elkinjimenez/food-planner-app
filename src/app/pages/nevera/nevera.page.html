@@ -40,12 +40,12 @@
           >
             {{ estadoLabel(producto.fechaVencimiento) }}
           </ion-badge>
-          <ion-button fill="clear" size="small" class="btn-action" (click)="editar(producto)">
-            <ion-icon name="create-outline" color="medium" slot="icon-only"></ion-icon>
-          </ion-button>
-          <ion-button fill="clear" size="small" class="btn-action" (click)="eliminar(producto)">
-            <ion-icon name="trash-outline" color="danger" slot="icon-only"></ion-icon>
-          </ion-button>
+          <button class="action-btn action-btn--edit" (click)="editar(producto)">
+            <ion-icon name="create-outline"></ion-icon>
+          </button>
+          <button class="action-btn action-btn--delete" (click)="eliminar(producto)">
+            <ion-icon name="trash-outline"></ion-icon>
+          </button>
         </div>
       </ion-card>
     }

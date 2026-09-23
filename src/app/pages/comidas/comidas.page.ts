@@ -1,16 +1,18 @@
 import { Component, OnInit, signal } from '@angular/core';
 import {
   IonContent,
-  IonButton,
   IonIcon,
   IonFab,
   IonFabButton,
   IonCard,
+  ModalController,
+  ActionSheetController,
 } from '@ionic/angular';
 import { Comida } from '../../models/comida.model';
 import { uuid } from '../../utils/uuid';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
+import { EditarItemModal } from '../../shared/editar-item.modal';
 
 @Component({
   selector: 'app-comidas',
@@ -18,7 +20,6 @@ import { AlertService } from '../../services/alert.service';
   styleUrls: ['comidas.page.scss'],
   imports: [
     IonContent,
-    IonButton,
     IonIcon,
     IonFab,
     IonFabButton,
@@ -32,7 +33,9 @@ export class ComidasPage implements OnInit {
   constructor(
     private storage: StorageService,
     private alert: AlertService,
-  ) {}
+    private modalCtrl: ModalController,
+    private actionSheetCtrl: ActionSheetController,
+  ) { }
 
   async ngOnInit(): Promise<void> {
     await this.cargar();
@@ -49,16 +52,30 @@ export class ComidasPage implements OnInit {
   }
 
   async agregar(tipo: 'desayuno' | 'cena'): Promise<void> {
-    const data = await this.alert.promptAgregarItem(
-      tipo === 'desayuno' ? 'Agregar desayuno' : 'Agregar cena',
-      'Nombre',
-      'Ingredientes (opcional)',
-    );
-    if (!data) return;
+    const modal = await this.modalCtrl.create({
+      component: EditarItemModal,
+      componentProps: {
+        config: {
+          titulo: tipo === 'desayuno' ? 'Agregar desayuno' : 'Agregar cena',
+          icono: tipo === 'desayuno' ? 'sunny-outline' : 'moon-outline',
+          label1: 'Nombre',
+          label2: 'Ingredientes (opcional)',
+          value1: '',
+          value2: '',
+          campo2Opcional: true,
+        },
+      },
+      presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
+      showBackdrop: false,
+      cssClass: 'card-modal-dark',
+    });
+    await modal.present();
+    const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
+    if (!data || !data.value1) return;
     const nueva: Comida = {
       id: uuid(),
-      nombre: data[0],
-      ingredientes: data[1] || undefined,
+      nombre: data.value1,
+      ingredientes: data.value2 || undefined,
       tipo,
     };
     await this.storage.saveComida(nueva);
@@ -66,25 +83,46 @@ export class ComidasPage implements OnInit {
   }
 
   async agregarActual(): Promise<void> {
-    const tipo = await this.alert.selectFromList('Tipo de comida', [
-      { text: 'Desayuno', value: 'desayuno' },
-      { text: 'Cena', value: 'cena' },
-    ]);
-    if (!tipo) return;
-    await this.agregar(tipo as 'desayuno' | 'cena');
+    const actionSheet = await this.actionSheetCtrl.create({
+      header: 'Tipo de comida',
+      buttons: [
+        {
+          text: 'Desayuno',
+          handler: () => this.agregar('desayuno'),
+        },
+        {
+          text: 'Cena',
+          handler: () => this.agregar('cena'),
+        },
+        { text: 'Cancelar', role: 'cancel' },
+      ],
+    });
+    await actionSheet.present();
   }
 
   async editar(comida: Comida): Promise<void> {
-    const data = await this.alert.promptEditarItem(
-      'Editar comida',
-      'Nombre',
-      'Ingredientes (opcional)',
-      comida.nombre,
-      comida.ingredientes ?? '',
-    );
-    if (!data) return;
-    comida.nombre = data[0];
-    comida.ingredientes = data[1] || undefined;
+    const modal = await this.modalCtrl.create({
+      component: EditarItemModal,
+      componentProps: {
+        config: {
+          titulo: 'Editar comida',
+          icono: 'restaurant-outline',
+          label1: 'Nombre',
+          label2: 'Ingredientes (opcional)',
+          value1: comida.nombre,
+          value2: comida.ingredientes ?? '',
+          campo2Opcional: true,
+        },
+      },
+      presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
+      showBackdrop: false,
+      cssClass: 'card-modal-dark',
+    });
+    await modal.present();
+    const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
+    if (!data || !data.value1) return;
+    comida.nombre = data.value1;
+    comida.ingredientes = data.value2 || undefined;
     await this.storage.saveComida(comida);
     await this.cargar();
   }

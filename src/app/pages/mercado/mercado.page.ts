@@ -8,6 +8,8 @@ import {
   IonFab,
   IonFabButton,
   IonCard,
+  ModalController,
+  ActionSheetController,
 } from '@ionic/angular';
 import { ItemMercado } from '../../models/item-mercado.model';
 import { ProductoNevera } from '../../models/producto-nevera.model';
@@ -15,6 +17,7 @@ import { uuid } from '../../utils/uuid';
 import { parsearDuracionADias, calcularFechaVencimiento } from '../../utils/duracion';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
+import { EditarItemModal } from '../../shared/editar-item.modal';
 
 @Component({
   selector: 'app-mercado',
@@ -39,7 +42,9 @@ export class MercadoPage implements OnInit {
   constructor(
     private storage: StorageService,
     private alert: AlertService,
-  ) {}
+    private modalCtrl: ModalController,
+    private actionSheetCtrl: ActionSheetController,
+  ) { }
 
   async ngOnInit(): Promise<void> {
     await this.cargar();
@@ -101,12 +106,29 @@ export class MercadoPage implements OnInit {
   }
 
   async agregar(categoria: 'supermercado' | 'fruver'): Promise<void> {
-    const data = await this.alert.promptAgregarItem('Agregar ítem', 'Nombre', 'Duración aprox.');
-    if (!data) return;
+    const modal = await this.modalCtrl.create({
+      component: EditarItemModal,
+      componentProps: {
+        config: {
+          titulo: 'Agregar ítem',
+          icono: 'cart-outline',
+          label1: 'Nombre',
+          label2: 'Duración aprox.',
+          value1: '',
+          value2: '',
+        },
+      },
+      presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
+      showBackdrop: false,
+      cssClass: 'card-modal-dark',
+    });
+    await modal.present();
+    const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
+    if (!data || !data.value1) return;
     const nuevo: ItemMercado = {
       id: uuid(),
-      nombre: data[0],
-      duracion: data[1] || '',
+      nombre: data.value1,
+      duracion: data.value2 || '',
       categoria,
       comprado: false,
     };
@@ -115,25 +137,45 @@ export class MercadoPage implements OnInit {
   }
 
   async agregarActual(): Promise<void> {
-    const cat = await this.alert.selectFromList('Categoría', [
-      { text: 'Supermercado', value: 'supermercado' },
-      { text: 'Fruver', value: 'fruver' },
-    ]);
-    if (!cat) return;
-    await this.agregar(cat as 'supermercado' | 'fruver');
+    const actionSheet = await this.actionSheetCtrl.create({
+      header: 'Categoría',
+      buttons: [
+        {
+          text: 'Supermercado',
+          handler: () => this.agregar('supermercado'),
+        },
+        {
+          text: 'Fruver',
+          handler: () => this.agregar('fruver'),
+        },
+        { text: 'Cancelar', role: 'cancel' },
+      ],
+    });
+    await actionSheet.present();
   }
 
   async editar(item: ItemMercado): Promise<void> {
-    const data = await this.alert.promptEditarItem(
-      'Editar ítem',
-      'Nombre',
-      'Duración aprox.',
-      item.nombre,
-      item.duracion,
-    );
-    if (!data) return;
-    item.nombre = data[0];
-    item.duracion = data[1] || '';
+    const modal = await this.modalCtrl.create({
+      component: EditarItemModal,
+      componentProps: {
+        config: {
+          titulo: 'Editar ítem',
+          icono: 'cart-outline',
+          label1: 'Nombre',
+          label2: 'Duración aprox.',
+          value1: item.nombre,
+          value2: item.duracion,
+        },
+      },
+      presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
+      showBackdrop: false,
+      cssClass: 'card-modal-dark',
+    });
+    await modal.present();
+    const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
+    if (!data || !data.value1) return;
+    item.nombre = data.value1;
+    item.duracion = data.value2 || '';
     await this.storage.saveItemMercado(item);
     await this.cargar();
   }
