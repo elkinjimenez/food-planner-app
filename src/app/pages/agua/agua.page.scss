@@ -1,0 +1,127 @@
+.agua-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px;
+  gap: 24px;
+}
+
+/* ===== Anillo de progreso ===== */
+.progreso-ring {
+  position: relative;
+  width: 220px;
+  height: 220px;
+}
+
+.ring-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring-bg {
+  fill: none;
+  stroke: #e0e8e4;
+  stroke-width: 14;
+}
+
+.ring-fill {
+  fill: none;
+  stroke: #2dd36f;
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke-dasharray: 534;
+  transition: stroke-dashoffset 0.4s ease;
+  filter: drop-shadow(0 2px 6px rgba(45, 211, 111, 0.4));
+}
+
+.ring-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.ring-icon {
+  font-size: 36px;
+  color: #2dd36f;
+  margin-bottom: 4px;
+}
+
+.ring-vasos {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #1a2e22;
+  line-height: 1;
+}
+
+.ring-meta {
+  font-size: 0.85rem;
+  color: var(--ion-color-medium);
+  font-weight: 500;
+}
+
+/* ===== Mensaje de meta ===== */
+.meta-msg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2dd36f;
+  padding: 10px 20px;
+  border-radius: 12px;
+  background: #e8f7ee;
+
+  ion-icon {
+    font-size: 20px;
+  }
+
+  &--pendiente {
+    color: var(--ion-color-medium);
+    background: #f0f4f1;
+    font-weight: 500;
+  }
+}
+
+/* ===== Botones ===== */
+.botones {
+  display: flex;
+  gap: 24px;
+  margin-top: 8px;
+}
+
+.btn-circ {
+  --border-radius: 50%;
+  width: 64px;
+  height: 64px;
+}
+
+.btn-sumar {
+  --background: #2dd36f;
+  --background-hover: #28ba62;
+  --box-shadow: 0 4px 16px rgba(45, 211, 111, 0.4);
+}
+
+.btn-restar {
+  --background: #e8e8e8;
+  --background-hover: #d8d8d8;
+  --color: #555;
+}
+
+.btn-reiniciar {
+  --color: var(--ion-color-medium);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.nota {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+}

@@ -1,0 +1,73 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Mis Comidas</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <!-- Desayunos -->
+  <div class="section-header">
+    <div class="section-icon section-icon--sol">
+      <ion-icon name="sunny-outline"></ion-icon>
+    </div>
+    <span class="section-title">Desayunos</span>
+    <span class="section-count">{{ desayunos().length }}</span>
+  </div>
+  @for (comida of desayunos(); track comida.id) {
+    <ion-card class="item-card">
+      <div class="item-card-body">
+        <div class="item-icon item-icon--sol">
+          <ion-icon name="sunny-outline"></ion-icon>
+        </div>
+        <div class="item-info">
+          <span class="item-nombre">{{ comida.nombre }}</span>
+          @if (comida.ingredientes) {
+            <span class="item-sub">{{ comida.ingredientes }}</span>
+          }
+        </div>
+        <ion-button fill="clear" size="small" class="btn-action" (click)="editar(comida)">
+          <ion-icon name="create-outline" color="medium" slot="icon-only"></ion-icon>
+        </ion-button>
+        <ion-button fill="clear" size="small" class="btn-action" (click)="eliminar(comida)">
+          <ion-icon name="trash-outline" color="danger" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+    </ion-card>
+  }
+
+  <!-- Cenas -->
+  <div class="section-header">
+    <div class="section-icon section-icon--luna">
+      <ion-icon name="moon-outline"></ion-icon>
+    </div>
+    <span class="section-title">Cenas</span>
+    <span class="section-count">{{ cenas().length }}</span>
+  </div>
+  @for (comida of cenas(); track comida.id) {
+    <ion-card class="item-card">
+      <div class="item-card-body">
+        <div class="item-icon item-icon--luna">
+          <ion-icon name="moon-outline"></ion-icon>
+        </div>
+        <div class="item-info">
+          <span class="item-nombre">{{ comida.nombre }}</span>
+          @if (comida.ingredientes) {
+            <span class="item-sub">{{ comida.ingredientes }}</span>
+          }
+        </div>
+        <ion-button fill="clear" size="small" class="btn-action" (click)="editar(comida)">
+          <ion-icon name="create-outline" color="medium" slot="icon-only"></ion-icon>
+        </ion-button>
+        <ion-button fill="clear" size="small" class="btn-action" (click)="eliminar(comida)">
+          <ion-icon name="trash-outline" color="danger" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+    </ion-card>
+  }
+</ion-content>
+
+<ion-fab slot="fixed" horizontal="end" vertical="bottom">
+  <ion-fab-button (click)="agregarActual()">
+    <ion-icon name="add-outline"></ion-icon>
+  </ion-fab-button>
+</ion-fab>

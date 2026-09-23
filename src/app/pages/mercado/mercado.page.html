@@ -1,0 +1,65 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Mercado</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <!-- Supermercado -->
+  <div class="section-header">
+    <div class="section-icon section-icon--cart">
+      <ion-icon name="cart-outline"></ion-icon>
+    </div>
+    <span class="section-title">Supermercado</span>
+    <span class="section-count">{{ supermercado().length }}</span>
+  </div>
+  @for (item of supermercado(); track item.id) {
+    <ion-card class="item-card" [class.item-comprado]="item.comprado">
+      <div class="item-card-body">
+        <ion-checkbox [checked]="item.comprado" (ionChange)="toggleComprado(item)"></ion-checkbox>
+        <div class="item-info">
+          <span class="item-nombre">{{ item.nombre }}</span>
+          <span class="item-sub">{{ item.duracion }}</span>
+        </div>
+        <ion-button fill="clear" size="small" class="btn-action" (click)="editar(item)">
+          <ion-icon name="create-outline" color="medium" slot="icon-only"></ion-icon>
+        </ion-button>
+        <ion-button fill="clear" size="small" class="btn-action" (click)="eliminar(item)">
+          <ion-icon name="trash-outline" color="danger" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+    </ion-card>
+  }
+
+  <!-- Fruver -->
+  <div class="section-header">
+    <div class="section-icon section-icon--leaf">
+      <ion-icon name="leaf-outline"></ion-icon>
+    </div>
+    <span class="section-title">Fruver</span>
+    <span class="section-count">{{ fruver().length }}</span>
+  </div>
+  @for (item of fruver(); track item.id) {
+    <ion-card class="item-card" [class.item-comprado]="item.comprado">
+      <div class="item-card-body">
+        <ion-checkbox [checked]="item.comprado" (ionChange)="toggleComprado(item)"></ion-checkbox>
+        <div class="item-info">
+          <span class="item-nombre">{{ item.nombre }}</span>
+          <span class="item-sub">{{ item.duracion }}</span>
+        </div>
+        <ion-button fill="clear" size="small" class="btn-action" (click)="editar(item)">
+          <ion-icon name="create-outline" color="medium" slot="icon-only"></ion-icon>
+        </ion-button>
+        <ion-button fill="clear" size="small" class="btn-action" (click)="eliminar(item)">
+          <ion-icon name="trash-outline" color="danger" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+    </ion-card>
+  }
+</ion-content>
+
+<ion-fab slot="fixed" horizontal="end" vertical="bottom">
+  <ion-fab-button (click)="agregarActual()">
+    <ion-icon name="add-outline"></ion-icon>
+  </ion-fab-button>
+</ion-fab>

@@ -1,0 +1,143 @@
+// ===== Empty state =====
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 80px 24px;
+  text-align: center;
+  gap: 8px;
+
+  ion-icon {
+    font-size: 72px;
+    color: var(--ion-color-medium);
+    opacity: 0.25;
+    margin-bottom: 8px;
+  }
+}
+
+.empty-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a2e22;
+}
+
+.empty-sub {
+  font-size: 0.85rem;
+  color: var(--ion-color-medium);
+}
+
+// ===== Section header =====
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 18px 8px;
+}
+
+.section-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: #e0eef5;
+  flex-shrink: 0;
+
+  ion-icon {
+    font-size: 18px;
+    color: #5599cc;
+  }
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a2e22;
+  flex: 1;
+}
+
+.section-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ion-color-medium);
+  background: #eef2ef;
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+
+// ===== Item card =====
+.item-card {
+  margin: 6px 14px;
+  padding: 0;
+}
+
+.item-card-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+}
+
+.item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.item-nombre {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #1a2e22;
+}
+
+.item-sub {
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+}
+
+.item-vencido {
+  --background: #fff5f6;
+}
+
+.btn-action {
+  --padding-start: 6px;
+  --padding-end: 6px;
+}
+
+// ===== Estado dot =====
+.estado-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &--verde {
+    background: #2dd36f;
+    box-shadow: 0 0 6px rgba(45, 211, 111, 0.5);
+  }
+
+  &--amarillo {
+    background: #ffc409;
+    box-shadow: 0 0 6px rgba(255, 196, 9, 0.5);
+  }
+
+  &--rojo {
+    background: #eb445a;
+    box-shadow: 0 0 8px rgba(235, 68, 90, 0.6);
+    animation: pulse 1.5s infinite;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

@@ -1,0 +1,98 @@
+// ===== Section header =====
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 18px 8px;
+}
+
+.section-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  flex-shrink: 0;
+
+  ion-icon {
+    font-size: 18px;
+  }
+
+  &--cart {
+    background: #e0f5e8;
+    ion-icon {
+      color: var(--ion-color-primary-shade);
+    }
+  }
+
+  &--leaf {
+    background: #e8f7ee;
+    ion-icon {
+      color: #2dd36f;
+    }
+  }
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a2e22;
+  flex: 1;
+}
+
+.section-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ion-color-medium);
+  background: #eef2ef;
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+
+// ===== Item card =====
+.item-card {
+  margin: 6px 14px;
+  padding: 0;
+}
+
+.item-card-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.item-nombre {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #1a2e22;
+}
+
+.item-sub {
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+}
+
+.item-comprado {
+  .item-nombre {
+    text-decoration: line-through;
+    opacity: 0.45;
+  }
+  .item-sub {
+    opacity: 0.45;
+  }
+}
+
+.btn-action {
+  --padding-start: 6px;
+  --padding-end: 6px;
+}
