@@ -40,8 +40,32 @@
   --ion-font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
 }
 
+ion-app {
+  background: #f8faf9;
+}
+
+ion-router-outlet {
+  background: transparent;
+}
+
 ion-content {
   --background: #f8faf9;
+}
+
+/* Que el contenido scrolle detrás del tab bar flotante */
+ion-tabs ion-content {
+  --padding-bottom: 90px;
+}
+
+/* FAB por encima del tab bar flotante */
+ion-fab {
+  z-index: 200 !important;
+  --ion-color-primary: #2dd36f;
+}
+
+ion-fab-button {
+  --box-shadow: 0 4px 16px rgba(45, 211, 111, 0.4);
+  margin-bottom: 100px;
 }
 
 /* Page title inline (no header) */

@@ -52,8 +52,12 @@ export class MercadoPage implements OnInit {
   private async cargar(): Promise<void> {
     const data = await this.storage.getMercado();
     this.items.set(data);
-    this.supermercado.set(data.filter((i) => i.categoria === 'supermercado'));
-    this.fruver.set(data.filter((i) => i.categoria === 'fruver'));
+    this.supermercado.set(
+      data.filter((i) => i.categoria === 'supermercado').sort((a, b) => Number(a.comprado) - Number(b.comprado)),
+    );
+    this.fruver.set(
+      data.filter((i) => i.categoria === 'fruver').sort((a, b) => Number(a.comprado) - Number(b.comprado)),
+    );
   }
 
   async toggleComprado(item: ItemMercado): Promise<void> {
@@ -77,6 +81,8 @@ export class MercadoPage implements OnInit {
         await this.storage.deleteProductoNevera(existente.id);
       }
     }
+
+    setTimeout(() => this.cargar(), 1500);
   }
 
   async desmarcarTodo(): Promise<void> {
