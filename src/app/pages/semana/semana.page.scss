@@ -76,6 +76,11 @@
     background: #f0f0f0;
     color: var(--ion-color-medium);
   }
+
+  &--confirmado {
+    background: #2dd36f;
+    color: #ffffff;
+  }
 }
 
 .comidas-row {
@@ -104,6 +109,12 @@
   &--filled {
     background: #ecf7f0;
     border-color: rgba(45, 211, 111, 0.2);
+  }
+
+  &--confirmed {
+    background: #e8f9ef;
+    border-color: #2dd36f;
+    box-shadow: 0 2px 8px rgba(45, 211, 111, 0.15);
   }
 }
 
@@ -167,8 +178,36 @@
   font-style: italic;
 }
 
-.comida-check {
-  font-size: 20px;
-  color: var(--ion-color-primary);
+.confirm-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #f5d99e;
+  background: #fff8e8;
+  cursor: pointer;
   flex-shrink: 0;
+  transition: all 0.2s ease;
+
+  ion-icon {
+    font-size: 16px;
+    color: #f5a623;
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
+
+  &--active {
+    border-color: #2dd36f;
+    background: #2dd36f;
+
+    ion-icon {
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: bold;
+    }
+  }
 }

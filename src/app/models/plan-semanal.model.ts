@@ -12,6 +12,8 @@ export type DiaSemana =
 export interface ComidaDelDia {
   desayuno?: Comida;
   cena?: Comida;
+  desayunoConfirmado?: boolean;
+  cenaConfirmado?: boolean;
 }
 
 export type PlanSemanal = Record<DiaSemana, ComidaDelDia>;

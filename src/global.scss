@@ -147,6 +147,25 @@ ion-note {
 }
 
 /* Botones de acción modernos en tarjetas */
+
+/* Toast de confirmación moderno */
+.toast-confirmacion {
+  --border-radius: 12px;
+  --box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --min-height: 64px;
+  font-weight: 500;
+  color: #ffffff;
+  opacity: 0.96;
+}
+
+.toast-confirmacion.toast-color-success {
+  --background: linear-gradient(135deg, #2dd36f, #28ba62);
+}
+
+.toast-confirmacion.toast-color-medium {
+  --background: linear-gradient(135deg, #7a8b99, #6b7a88);
+}
+
 .action-btn {
   display: flex;
   align-items: center;

@@ -9,6 +9,7 @@ import {
   IonFabButton,
   IonCard,
   ModalController,
+  ActionSheetController,
 } from '@ionic/angular';
 import { ProductoNevera } from '../../models/producto-nevera.model';
 import { uuid } from '../../utils/uuid';
@@ -40,6 +41,7 @@ export class NeveraPage implements OnInit {
     private storage: StorageService,
     private alert: AlertService,
     private modalCtrl: ModalController,
+    private actionSheetCtrl: ActionSheetController,
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -156,8 +158,23 @@ export class NeveraPage implements OnInit {
   }
 
   async vaciarNevera(): Promise<void> {
-    const confirm = await this.alert.confirm('¿Vaciar nevera?', 'Se eliminarán todos los productos.');
-    if (!confirm) return;
+    const actionSheet = await this.actionSheetCtrl.create({
+      header: '¿Vaciar nevera?',
+      subHeader: 'Se eliminarán todos los productos',
+      cssClass: 'action-sheet-centered',
+      buttons: [
+        {
+          text: 'Sí, vaciar',
+          role: 'destructive',
+          handler: () => this.ejecutarVaciarNevera(),
+        },
+        { text: 'Cancelar', role: 'cancel' },
+      ],
+    });
+    await actionSheet.present();
+  }
+
+  private async ejecutarVaciarNevera(): Promise<void> {
     // Eliminar todos los productos de nevera
     for (const producto of this.productos()) {
       await this.storage.deleteProductoNevera(producto.id);

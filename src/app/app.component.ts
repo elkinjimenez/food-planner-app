@@ -18,6 +18,11 @@ import {
   moonOutline,
   leafOutline,
   checkmarkCircle,
+  checkmarkSharp,
+  ellipseOutline,
+  timeOutline,
+  arrowBackOutline,
+  closeOutline,
 } from 'ionicons/icons';
 import { StorageService } from './services/storage.service';
 
@@ -45,6 +50,11 @@ export class AppComponent implements OnInit {
       moonOutline,
       leafOutline,
       checkmarkCircle,
+      checkmarkSharp,
+      ellipseOutline,
+      timeOutline,
+      arrowBackOutline,
+      closeOutline,
     });
   }
 

@@ -91,6 +91,23 @@ export class MercadoPage implements OnInit {
   }
 
   async desmarcarTodo(): Promise<void> {
+    const actionSheet = await this.actionSheetCtrl.create({
+      header: '¿Desmarcar todo?',
+      subHeader: 'Se quitarán todos los ítems del carrito',
+      cssClass: 'action-sheet-centered',
+      buttons: [
+        {
+          text: 'Sí, desmarcar',
+          role: 'destructive',
+          handler: () => this.ejecutarDesmarcarTodo(),
+        },
+        { text: 'Cancelar', role: 'cancel' },
+      ],
+    });
+    await actionSheet.present();
+  }
+
+  private async ejecutarDesmarcarTodo(): Promise<void> {
     const nevera = await this.storage.getNevera();
     for (const item of this.items()) {
       if (item.comprado) {
@@ -139,6 +156,7 @@ export class MercadoPage implements OnInit {
   async agregarActual(): Promise<void> {
     const actionSheet = await this.actionSheetCtrl.create({
       header: 'Categoría',
+      cssClass: 'action-sheet-centered',
       buttons: [
         {
           text: 'Supermercado',

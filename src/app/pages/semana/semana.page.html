@@ -11,13 +11,17 @@
           }
         </div>
         @if (plan()[dia].desayuno || plan()[dia].cena) {
-          <span class="dia-badge">Planificado</span>
+          @if (diaConfirmado(dia)) {
+            <span class="dia-badge dia-badge--confirmado">Confirmado</span>
+          } @else {
+            <span class="dia-badge">Planificado</span>
+          }
         } @else {
           <span class="dia-badge dia-badge--vacio">Vacío</span>
         }
       </div>
       <div class="comidas-row">
-        <div class="comida-slot" [class.comida-slot--filled]="!!plan()[dia].desayuno" (click)="asignarComida(dia, 'desayuno')">
+        <div class="comida-slot" [class.comida-slot--filled]="!!plan()[dia].desayuno" [class.comida-slot--confirmed]="plan()[dia].desayunoConfirmado" (click)="asignarComida(dia, 'desayuno')">
           <div class="comida-icon comida-icon--desayuno">
             <ion-icon name="sunny-outline"></ion-icon>
           </div>
@@ -30,10 +34,12 @@
             }
           </div>
           @if (plan()[dia].desayuno) {
-            <ion-icon name="checkmark-circle" class="comida-check"></ion-icon>
+            <button class="confirm-btn" [class.confirm-btn--active]="plan()[dia].desayunoConfirmado" (click)="toggleConfirmar(dia, 'desayuno'); $event.stopPropagation()">
+              <ion-icon [name]="plan()[dia].desayunoConfirmado ? 'checkmark-sharp' : 'time-outline'"></ion-icon>
+            </button>
           }
         </div>
-        <div class="comida-slot" [class.comida-slot--filled]="!!plan()[dia].cena" (click)="asignarComida(dia, 'cena')">
+        <div class="comida-slot" [class.comida-slot--filled]="!!plan()[dia].cena" [class.comida-slot--confirmed]="plan()[dia].cenaConfirmado" (click)="asignarComida(dia, 'cena')">
           <div class="comida-icon comida-icon--cena">
             <ion-icon name="moon-outline"></ion-icon>
           </div>
@@ -46,7 +52,9 @@
             }
           </div>
           @if (plan()[dia].cena) {
-            <ion-icon name="checkmark-circle" class="comida-check"></ion-icon>
+            <button class="confirm-btn" [class.confirm-btn--active]="plan()[dia].cenaConfirmado" (click)="toggleConfirmar(dia, 'cena'); $event.stopPropagation()">
+              <ion-icon [name]="plan()[dia].cenaConfirmado ? 'checkmark-sharp' : 'time-outline'"></ion-icon>
+            </button>
           }
         </div>
       </div>

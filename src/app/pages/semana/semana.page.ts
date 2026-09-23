@@ -6,6 +6,7 @@ import {
   IonFab,
   IonFabButton,
   ModalController,
+  ToastController,
 } from '@ionic/angular';
 import { Comida } from '../../models/comida.model';
 import {
@@ -41,6 +42,7 @@ export class SemanaPage implements OnInit {
     private storage: StorageService,
     private alert: AlertService,
     private modalCtrl: ModalController,
+    private toastCtrl: ToastController,
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -55,6 +57,12 @@ export class SemanaPage implements OnInit {
     const [plan, comidas] = await Promise.all([this.storage.getPlan(), this.storage.getComidas()]);
     this.plan.set(plan);
     this.comidas.set(comidas);
+
+    // Si no hay nada planificado y hay comidas disponibles, generar semana aleatoria
+    const tieneAlgo = this.dias.some((d) => plan[d]?.desayuno || plan[d]?.cena);
+    if (!tieneAlgo && comidas.length > 0) {
+      await this.generarSemanaAleatoria();
+    }
   }
 
   private ordenarDesdeHoy(): DiaSemana[] {
@@ -108,9 +116,40 @@ export class SemanaPage implements OnInit {
     if (!data) return;
 
     const nuevoPlan = { ...this.plan() };
-    nuevoPlan[dia] = { ...nuevoPlan[dia], [tipo]: data };
+    const keyConfirmado = tipo === 'desayuno' ? 'desayunoConfirmado' : 'cenaConfirmado';
+    nuevoPlan[dia] = { ...nuevoPlan[dia], [tipo]: data, [keyConfirmado]: false };
     this.plan.set(nuevoPlan);
     await this.storage.putPlan(nuevoPlan);
+  }
+
+  async toggleConfirmar(dia: DiaSemana, tipo: 'desayuno' | 'cena'): Promise<void> {
+    const keyConfirmado = tipo === 'desayuno' ? 'desayunoConfirmado' : 'cenaConfirmado';
+    const nuevoPlan = { ...this.plan() };
+    nuevoPlan[dia] = { ...nuevoPlan[dia], [keyConfirmado]: !nuevoPlan[dia][keyConfirmado] };
+    this.plan.set(nuevoPlan);
+    await this.storage.putPlan(nuevoPlan);
+
+    const confirmado = nuevoPlan[dia][keyConfirmado];
+    const comida = nuevoPlan[dia][tipo];
+    const toast = await this.toastCtrl.create({
+      message: confirmado
+        ? `${tipo.charAt(0).toUpperCase()}${tipo.slice(1)} confirmado`
+        : `${tipo.charAt(0).toUpperCase()}${tipo.slice(1)} aún pendiente`,
+      duration: 1800,
+      position: 'top',
+      color: confirmado ? 'success' : 'medium',
+      icon: confirmado ? 'checkmark-circle' : 'time-outline',
+      cssClass: 'toast-confirmacion',
+    });
+    await toast.present();
+  }
+
+  diaConfirmado(dia: DiaSemana): boolean {
+    const p = this.plan()[dia];
+    const tieneComidas = !!p.desayuno || !!p.cena;
+    const desayunoOk = !p.desayuno || !!p.desayunoConfirmado;
+    const cenaOk = !p.cena || !!p.cenaConfirmado;
+    return tieneComidas && desayunoOk && cenaOk;
   }
 
   async generarSemanaAleatoria(): Promise<void> {
@@ -120,15 +159,27 @@ export class SemanaPage implements OnInit {
       await this.alert.confirm('No hay comidas', 'Agrega comidas en la pestaña Comidas.');
       return;
     }
+    const planActual = this.plan();
     const nuevoPlan = this.planVacio();
     for (const dia of this.dias) {
       const comidaDia: ComidaDelDia = {};
-      if (desayunos.length > 0) {
+
+      // Mantener desayuno si ya está confirmado
+      if (planActual[dia].desayunoConfirmado && planActual[dia].desayuno) {
+        comidaDia.desayuno = planActual[dia].desayuno;
+        comidaDia.desayunoConfirmado = true;
+      } else if (desayunos.length > 0) {
         comidaDia.desayuno = desayunos[Math.floor(Math.random() * desayunos.length)];
       }
-      if (cenas.length > 0) {
+
+      // Mantener cena si ya está confirmada
+      if (planActual[dia].cenaConfirmado && planActual[dia].cena) {
+        comidaDia.cena = planActual[dia].cena;
+        comidaDia.cenaConfirmado = true;
+      } else if (cenas.length > 0) {
         comidaDia.cena = cenas[Math.floor(Math.random() * cenas.length)];
       }
+
       nuevoPlan[dia] = comidaDia;
     }
     this.plan.set(nuevoPlan);
