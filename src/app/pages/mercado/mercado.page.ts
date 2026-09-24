@@ -87,7 +87,7 @@ export class MercadoPage implements OnInit {
       }
     }
 
-    setTimeout(() => this.cargar(), 1500);
+    setTimeout(() => this.cargar(), 400);
   }
 
   async desmarcarTodo(): Promise<void> {

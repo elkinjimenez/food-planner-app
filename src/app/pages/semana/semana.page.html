@@ -1,5 +1,11 @@
 <ion-content>
-  <div class="page-title">Planeador Semanal</div>
+  <div class="page-title-row">
+    <div class="page-title">Planeador Semanal</div>
+    <ion-button fill="clear" size="small" class="btn-desmarcar" (click)="refresh()">
+      <ion-icon name="refresh-outline" slot="start"></ion-icon>
+    </ion-button>
+  </div>
+
   @for (dia of dias; track dia) {
     <ion-card class="dia-card" [class.dia-card--hoy]="dia === hoy()">
       <div class="dia-header">
@@ -64,6 +70,6 @@
 
 <ion-fab slot="fixed" horizontal="end" vertical="bottom">
   <ion-fab-button (click)="generarSemanaAleatoria()">
-    <ion-icon name="shuffle-outline"></ion-icon>
+    <ion-icon class="float-icon" name="shuffle-outline"></ion-icon>
   </ion-fab-button>
 </ion-fab>

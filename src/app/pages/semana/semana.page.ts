@@ -7,6 +7,8 @@ import {
   IonFabButton,
   ModalController,
   ToastController,
+  IonButton,
+  IonLabel,
 } from '@ionic/angular';
 import { Comida } from '../../models/comida.model';
 import {
@@ -30,6 +32,7 @@ import { SeleccionarComidaModal } from './seleccionar-comida.modal';
     IonCard,
     IonFab,
     IonFabButton,
+    IonButton,
   ],
 })
 export class SemanaPage implements OnInit {
@@ -43,7 +46,7 @@ export class SemanaPage implements OnInit {
     private alert: AlertService,
     private modalCtrl: ModalController,
     private toastCtrl: ToastController,
-  ) {}
+  ) { }
 
   async ngOnInit(): Promise<void> {
     await this.cargar();
@@ -133,7 +136,7 @@ export class SemanaPage implements OnInit {
     const comida = nuevoPlan[dia][tipo];
     const toast = await this.toastCtrl.create({
       message: confirmado
-        ? `${tipo.charAt(0).toUpperCase()}${tipo.slice(1)} confirmado`
+        ? `${tipo.charAt(0).toUpperCase()}${tipo.slice(1)} ${tipo == 'desayuno' ? 'confirmado' : 'confirmada'}`
         : `${tipo.charAt(0).toUpperCase()}${tipo.slice(1)} aún pendiente`,
       duration: 1800,
       position: 'top',
@@ -184,5 +187,9 @@ export class SemanaPage implements OnInit {
     }
     this.plan.set(nuevoPlan);
     await this.storage.putPlan(nuevoPlan);
+  }
+
+  async refresh(): Promise<void> {
+    document.location.reload();
   }
 }
