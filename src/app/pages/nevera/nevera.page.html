@@ -24,7 +24,7 @@
       <span class="section-count">{{ productos().length }}</span>
     </div>
     @for (producto of productos(); track producto.id) {
-      <ion-card class="item-card" [class.item-vencido]="estado(producto.fechaVencimiento) === 'rojo'">
+      <ion-card #fila class="item-card" [class.item-vencido]="estado(producto.fechaVencimiento) === 'rojo'">
         <div class="item-card-body">
           <div
             class="estado-dot"

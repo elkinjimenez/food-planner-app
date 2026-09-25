@@ -15,6 +15,7 @@ import { CategoriaMercado, ItemMercado } from '../../models/item-mercado.model';
 import { ProductoNevera } from '../../models/producto-nevera.model';
 import { uuid } from '../../utils/uuid';
 import { DURACIONES, parsearDuracionADias, calcularFechaVencimiento } from '../../utils/duracion';
+import { deslizarFilas } from '../../utils/deslizar-filas';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
 import { EditarItemModal } from '../../shared/editar-item.modal';
@@ -90,36 +91,15 @@ export class MercadoPage implements OnInit {
       }
     }
 
-    setTimeout(() => this.reordenar(), 400);
+    setTimeout(() => this.cargarDeslizando(), 400);
   }
 
-  /**
-   * Recarga la lista deslizando cada fila a su nuevo lugar en vez de saltar (FLIP): se mide
-   * cada fila, se actualiza el DOM y la fila se anima desde donde estaba hasta donde quedó.
-   * No usa startViewTransition: esa transición pinta las filas encima del tab bar flotante
-   * y del botón + mientras dura.
-   */
-  private async reordenar(): Promise<void> {
+  /** Recarga la lista deslizando cada fila a su nuevo lugar en vez de saltar. */
+  private async cargarDeslizando(): Promise<void> {
     const data = await this.storage.getMercado();
-    // Medir y actualizar en el mismo tick, sin await de por medio, para que un scroll no descuadre
-    const filas = this.filas().map((f) => f.nativeElement);
-    const antes = filas.map((fila) => fila.getBoundingClientRect().top);
-    this.mostrar(data);
-    this.cdr.detectChanges();
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const despues = filas.map((fila) => fila.getBoundingClientRect().top);
-    filas.forEach((fila, i) => {
-      const dy = antes[i] - despues[i];
-      if (dy === 0) return;
-      // La que más se desplaza (la que se marcó) pasa por encima de las que solo se corren un puesto
-      const zIndex = Math.round(Math.abs(dy));
-      fila.animate(
-        [
-          { transform: `translateY(${dy}px)`, zIndex },
-          { transform: 'none', zIndex },
-        ],
-        { duration: 300, easing: 'ease-in-out' },
-      );
+    deslizarFilas(this.filas(), () => {
+      this.mostrar(data);
+      this.cdr.detectChanges();
     });
   }
 
@@ -246,6 +226,6 @@ export class MercadoPage implements OnInit {
     const confirm = await this.alert.confirm('¿Eliminar ítem?', item.nombre);
     if (!confirm) return;
     await this.storage.deleteItemMercado(item.id);
-    await this.cargar();
+    await this.cargarDeslizando();
   }
 }
