@@ -1,1 +1,0 @@
-import{Wt as tx,m as ae}from"./main-VELVYF3S.js";var n=(()=>{let r=class r{transform(e){return ae(e)}};r.ɵfac=function(o){return new(o||r)},r.ɵpipe=tx({name:`fecha`,type:r,pure:!0});return r})();export{n as t};
