@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, signal, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, signal, inject, viewChildren } from '@angular/core';
 import {
   IonContent,
   IonCheckbox,
@@ -44,6 +44,7 @@ export class MercadoPage implements OnInit {
   items = signal<ItemMercado[]>([]);
   supermercado = signal<ItemMercado[]>([]);
   fruver = signal<ItemMercado[]>([]);
+  private filas = viewChildren('fila', { read: ElementRef<HTMLElement> });
 
   async ngOnInit(): Promise<void> {
     await this.cargar();
@@ -54,7 +55,10 @@ export class MercadoPage implements OnInit {
   }
 
   private async cargar(): Promise<void> {
-    const data = await this.storage.getMercado();
+    this.mostrar(await this.storage.getMercado());
+  }
+
+  private mostrar(data: ItemMercado[]): void {
     this.items.set(data);
     this.supermercado.set(
       data.filter((i) => i.categoria === 'supermercado').sort((a, b) => Number(a.comprado) - Number(b.comprado)),
@@ -89,16 +93,33 @@ export class MercadoPage implements OnInit {
     setTimeout(() => this.reordenar(), 400);
   }
 
-  /** Recarga la lista deslizando cada fila a su nuevo lugar (view transition) en vez de saltar. */
-  private reordenar(): void {
-    if (!document.startViewTransition) {
-      this.cargar();
-      return;
-    }
-    document.startViewTransition(async () => {
-      await this.cargar();
-      // La transición toma la foto final al resolver: el DOM ya debe estar actualizado
-      this.cdr.detectChanges();
+  /**
+   * Recarga la lista deslizando cada fila a su nuevo lugar en vez de saltar (FLIP): se mide
+   * cada fila, se actualiza el DOM y la fila se anima desde donde estaba hasta donde quedó.
+   * No usa startViewTransition: esa transición pinta las filas encima del tab bar flotante
+   * y del botón + mientras dura.
+   */
+  private async reordenar(): Promise<void> {
+    const data = await this.storage.getMercado();
+    // Medir y actualizar en el mismo tick, sin await de por medio, para que un scroll no descuadre
+    const filas = this.filas().map((f) => f.nativeElement);
+    const antes = filas.map((fila) => fila.getBoundingClientRect().top);
+    this.mostrar(data);
+    this.cdr.detectChanges();
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const despues = filas.map((fila) => fila.getBoundingClientRect().top);
+    filas.forEach((fila, i) => {
+      const dy = antes[i] - despues[i];
+      if (dy === 0) return;
+      // La que más se desplaza (la que se marcó) pasa por encima de las que solo se corren un puesto
+      const zIndex = Math.round(Math.abs(dy));
+      fila.animate(
+        [
+          { transform: `translateY(${dy}px)`, zIndex },
+          { transform: 'none', zIndex },
+        ],
+        { duration: 300, easing: 'ease-in-out' },
+      );
     });
   }
 
