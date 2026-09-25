@@ -1,5 +1,5 @@
 import { Component, ElementRef, ViewChild, inject } from '@angular/core';
-import { ActionSheetController, IonButton, IonIcon, ToastController } from '@ionic/angular';
+import { ActionSheetController, IonButton, IonIcon } from '@ionic/angular';
 import { RespaldoService } from '../services/respaldo.service';
 import { AlertService } from '../services/alert.service';
 import { DatosApp } from '../services/storage.service';
@@ -21,7 +21,6 @@ export class RespaldoBotonComponent {
   private respaldo = inject(RespaldoService);
   private alert = inject(AlertService);
   private actionSheetCtrl = inject(ActionSheetController);
-  private toastCtrl = inject(ToastController);
 
   async abrirOpciones(): Promise<void> {
     // El archivo se prepara antes: iOS solo deja compartir o abrir el selector de archivos
@@ -30,7 +29,6 @@ export class RespaldoBotonComponent {
     const opciones = await this.actionSheetCtrl.create({
       header: 'Respaldo de tus datos',
       subHeader: 'Guarda una copia de comidas, mercado, nevera, plan e historial, o recupera una anterior',
-      cssClass: 'action-sheet-centered',
       buttons: [
         { text: 'Exportar respaldo', handler: () => void this.exportar(archivo) },
         { text: 'Importar respaldo', handler: () => this.selectorArchivo.nativeElement.click() },
@@ -66,7 +64,7 @@ export class RespaldoBotonComponent {
     const confirmar = await this.alert.confirm(
       '¿Importar respaldo?',
       `Se reemplazarán todos tus datos actuales por los del respaldo: ${datos.comidas.length} comidas, ` +
-        `${datos.mercado.length} ítems de mercado, ${datos.nevera.length} productos de nevera ` +
+        `${datos.mercado.length} productos de mercado, ${datos.nevera.length} productos de nevera ` +
         `y ${diasHistorial} días de historial.`,
     );
     if (!confirmar) return;
@@ -77,15 +75,8 @@ export class RespaldoBotonComponent {
       await this.alert.aviso('No se pudo importar', 'Tus datos no cambiaron. Inténtalo de nuevo.');
       return;
     }
-    const toast = await this.toastCtrl.create({
-      message: 'Respaldo importado',
-      duration: 1200,
-      position: 'top',
-      icon: 'checkmark-circle',
-      cssClass: ['toast-confirmacion', 'toast-ok'],
-    });
-    await toast.present();
+    await this.alert.toast('Respaldo importado', { duration: 1200 });
     // Todas las pantallas vuelven a cargar con los datos importados
-    setTimeout(() => document.location.reload(), 1200);
+    document.location.reload();
   }
 }

@@ -1,8 +1,3 @@
-// Colores de cada marca: los mismos del desayuno y la cena en Semana; azul para el agua
-$desayuno: #f5a623;
-$cena: #5570cc;
-$agua: #3b9fe8;
-
 // Fuera de las pestañas no hay tab bar: solo el área segura de abajo
 ion-content {
   --padding-bottom: calc(var(--ion-safe-area-bottom, 0px) + 16px);
@@ -42,7 +37,7 @@ ion-content {
 .calendario-titulo {
   font-size: 1.05rem;
   font-weight: 700;
-  color: #1a2e22;
+  color: var(--color-texto);
 }
 
 .calendario-grid {
@@ -57,7 +52,7 @@ ion-content {
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: #9aa7b2;
+  color: var(--color-texto-tenue);
 }
 
 .casilla {
@@ -69,12 +64,12 @@ ion-content {
   border: none;
   border-radius: 12px;
   background: transparent;
-  color: #1a2e22;
+  color: var(--color-texto);
   cursor: pointer;
   transition: background 0.15s ease;
 
   &:active {
-    background: #eef3f0;
+    background: var(--fondo-presionado);
   }
 
   // Días que aún no llegan: se atenúa el contenido, no el recuadro si está elegido
@@ -83,12 +78,12 @@ ion-content {
   }
 
   &--hoy .casilla-numero {
-    color: #fff;
+    color: var(--color-sobre-primario);
     background: var(--ion-color-primary);
   }
 
   &--elegida {
-    background: #e8f9ef;
+    background: var(--fondo-primario-tenue);
     box-shadow: inset 0 0 0 1.5px var(--ion-color-primary);
   }
 }
@@ -118,21 +113,21 @@ ion-content {
   flex-shrink: 0;
 
   &--desayuno {
-    background: $desayuno;
+    background: var(--color-desayuno);
   }
 
   &--cena {
-    background: $cena;
+    background: var(--color-cena);
   }
 
   &--agua {
-    background: $agua;
+    background: var(--color-agua);
   }
 
   // Tomó agua pero sin llegar a la meta: solo el borde
   &--parcial {
     background: transparent;
-    box-shadow: inset 0 0 0 1.5px $agua;
+    box-shadow: inset 0 0 0 1.5px var(--color-agua);
   }
 }
 
@@ -143,7 +138,7 @@ ion-content {
   gap: 6px;
   margin-top: 10px;
   padding-top: 12px;
-  border-top: 1px solid #eef2ef;
+  border-top: 1px solid var(--borde-suave);
   text-align: center;
 }
 
@@ -160,7 +155,7 @@ ion-content {
   gap: 6px;
   font-size: 1.15rem;
   font-weight: 800;
-  color: #1a2e22;
+  color: var(--color-texto);
 
   .marca {
     width: 8px;
@@ -172,7 +167,7 @@ ion-content {
   font-size: 0.7rem;
   font-weight: 600;
   line-height: 1.2;
-  color: #7a8b99;
+  color: var(--color-texto-secundario);
 }
 
 // ===== Detalle del día elegido =====
@@ -187,18 +182,7 @@ ion-content {
   margin-bottom: 8px;
   font-size: 1.05rem;
   font-weight: 700;
-  color: #1a2e22;
-}
-
-.detalle-hoy {
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: var(--ion-color-primary);
-  color: #fff;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  color: var(--color-texto);
 }
 
 .detalle-fila {
@@ -208,62 +192,14 @@ ion-content {
   padding: 8px 0;
 
   & + & {
-    border-top: 1px solid #f0f3f1;
+    border-top: 1px solid var(--borde-suave);
   }
-}
-
-.detalle-icono {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  flex-shrink: 0;
-  font-size: 19px;
-
-  &--desayuno {
-    background: #fff4d6;
-    color: $desayuno;
-  }
-
-  &--cena {
-    background: #e0e8ff;
-    color: $cena;
-  }
-
-  &--agua {
-    background: #e3f2fd;
-    color: $agua;
-  }
-}
-
-.detalle-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-
-.detalle-label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--ion-color-medium);
-}
-
-.detalle-valor {
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: #1a2e22;
 }
 
 .detalle-vacio {
   font-size: 0.88rem;
   font-style: italic;
-  color: #a3aeb8;
+  color: var(--color-texto-tenue);
 }
 
 .detalle-meta {

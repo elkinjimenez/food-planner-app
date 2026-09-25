@@ -20,7 +20,7 @@
         <div class="dia-titulo">
           <span class="dia-nombre">{{ diasLabel[d.dia] }}</span>
           @if (d.esHoy) {
-            <span class="dia-hoy-badge">Hoy</span>
+            <span class="badge-hoy">Hoy</span>
           }
         </div>
         @if (d.desayuno || d.cena) {
@@ -35,13 +35,13 @@
       </div>
       <div class="comidas-row">
         <div class="comida-slot" [class.comida-slot--filled]="!!d.desayuno" [class.comida-slot--confirmed]="d.desayunoConfirmado" (click)="asignarComida(d, 'desayuno')">
-          <div class="comida-icon comida-icon--desayuno">
+          <div class="item-icon tono-desayuno">
             <ion-icon name="sunny-outline"></ion-icon>
           </div>
-          <div class="comida-info">
-            <span class="comida-label">Desayuno</span>
+          <div class="item-info">
+            <span class="item-label">Desayuno</span>
             @if (d.desayuno) {
-              <span class="comida-nombre">{{ d.desayuno.nombre }}</span>
+              <span class="item-nombre">{{ d.desayuno.nombre }}</span>
             } @else {
               <span class="comida-placeholder">Toca para asignar</span>
             }
@@ -53,13 +53,13 @@
           }
         </div>
         <div class="comida-slot" [class.comida-slot--filled]="!!d.cena" [class.comida-slot--confirmed]="d.cenaConfirmado" (click)="asignarComida(d, 'cena')">
-          <div class="comida-icon comida-icon--cena">
+          <div class="item-icon tono-cena">
             <ion-icon name="moon-outline"></ion-icon>
           </div>
-          <div class="comida-info">
-            <span class="comida-label">Cena</span>
+          <div class="item-info">
+            <span class="item-label">Cena</span>
             @if (d.cena) {
-              <span class="comida-nombre">{{ d.cena.nombre }}</span>
+              <span class="item-nombre">{{ d.cena.nombre }}</span>
             } @else {
               <span class="comida-placeholder">Toca para asignar</span>
             }

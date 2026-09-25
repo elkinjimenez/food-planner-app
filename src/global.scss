@@ -25,31 +25,16 @@
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
-
 /* Modo oscuro desactivado — siempre modo claro */
 
 /* ===== Estilos globales personalizados ===== */
-:root {
-  --ion-background-color: #f8faf9;
-  --ion-font-family: -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
-}
-
+/* Al abrir un modal tarjeta, Ionic pinta el body de negro: este fondo lo tapa detrás de la página encogida */
 ion-app {
-  background: #f8faf9;
+  background: var(--ion-background-color);
 }
 
 ion-router-outlet {
   background: transparent;
-}
-
-ion-content {
-  --background: #f8faf9;
 }
 
 /* Que el contenido scrolle detrás del tab bar flotante */
@@ -60,18 +45,16 @@ ion-tabs ion-content {
 /* FAB por encima del tab bar flotante */
 ion-fab {
   z-index: 200 !important;
-  --ion-color-primary: #2dd36f;
 }
 
 ion-fab-button {
-  --box-shadow: 0 4px 16px rgba(45, 211, 111, 0.4);
+  --box-shadow: 0 4px 16px rgba(var(--ion-color-primary-rgb), 0.4);
   margin-bottom: 88px;
 }
 
-/* Toolbar con sombra suave */
-ion-header ion-toolbar {
-  --border-width: 0;
-  box-shadow: 0 2px 12px rgba(45, 211, 111, 0.18);
+.float-icon {
+  color: var(--color-sobre-primario);
+  font-size: 2rem;
 }
 
 /* Cards con sombra y bordes redondeados */
@@ -80,41 +63,6 @@ ion-card {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
   margin: 10px 14px;
   overflow: hidden;
-}
-
-ion-card-header {
-  padding-bottom: 4px;
-}
-
-ion-card-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--ion-color-primary-shade);
-}
-
-/* Item dividers con estilo */
-ion-item-divider {
-  --color: var(--ion-color-primary-shade);
-  font-weight: 700;
-  font-size: 0.85rem;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  --background: #eef7f0;
-  min-height: 44px;
-}
-
-/* Listas con separación */
-ion-list {
-  background: transparent;
-}
-
-ion-item {
-  --border-color: rgba(0, 0, 0, 0.06);
-  --background: #ffffff;
-  border-radius: 10px;
-  margin: 4px 8px;
-  --padding-start: 16px;
-  --inner-padding-end: 12px;
 }
 
 /* Botones de acción redondeados */
@@ -131,57 +79,132 @@ ion-badge {
   padding: 4px 10px;
 }
 
-/* Notas con mejor legibilidad */
-ion-note {
-  font-size: 0.8rem;
-}
-
-/* Botones de acción modernos en tarjetas */
-
-/* Toast de confirmación moderno */
 // ===== Toast estilo iOS 26 — liquid glass =====
+// Todos los avisos (AlertService) van abajo, anclados sobre el tab bar.
 // Sin `color` de Ionic: sus clases .ion-color-* fijan el fondo con !important.
 // El blur va en el part "wrapper" (el mismo elemento que anima la opacidad).
-.toast-confirmacion {
+.toast-glass {
   --background: transparent;
   --border-radius: 50px;
   --min-height: 64px;
-  --color: #1c1c1e;
+  --color: var(--color-texto);
+  --start: 16px;
+  --end: 16px;
+  --button-color: var(--color-primario-texto);
   font-weight: 600;
 
   &::part(wrapper) {
     border-radius: 50px;
-    border: 1px solid rgba(255, 255, 255, 0.7);
-    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(var(--vidrio-rgb), 0.7);
+    background: rgba(var(--vidrio-rgb), 0.18);
     backdrop-filter: blur(16px) saturate(180%);
     -webkit-backdrop-filter: blur(16px) saturate(180%);
     // Sombra exterior + brillo superior e inferior, como el borde de vidrio de iOS 26
     box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.12),
       0 1px 4px rgba(0, 0, 0, 0.06),
-      inset 0 1px 1px rgba(255, 255, 255, 0.8),
-      inset 0 -1px 1px rgba(255, 255, 255, 0.25);
+      inset 0 1px 1px rgba(var(--vidrio-rgb), 0.8),
+      inset 0 -1px 1px rgba(var(--vidrio-rgb), 0.25);
   }
 
   &::part(icon) {
     font-size: 22px;
   }
+
+  &::part(message) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  // Botón "Deshacer"
+  &::part(button) {
+    font-weight: 700;
+    border-radius: 50px;
+    margin-right: 8px;
+  }
 }
 
-.toast-confirmacion.toast-ok {
+.toast-glass.toast-ok {
   &::part(wrapper) {
-    background: linear-gradient(135deg, rgba(45, 211, 111, 0.22), rgba(45, 211, 111, 0.10));
+    background: linear-gradient(135deg, rgba(var(--ion-color-primary-rgb), 0.22), rgba(var(--ion-color-primary-rgb), 0.10));
   }
 
   &::part(icon) {
-    color: #1fa855;
+    color: var(--color-primario-texto);
   }
 }
 
-.toast-confirmacion.toast-pendiente {
+.toast-glass.toast-pendiente {
   &::part(icon) {
-    color: #6b7a88;
+    color: var(--color-texto-suave);
   }
+}
+
+.toast-glass.toast-eliminado {
+  &::part(icon) {
+    color: var(--color-peligro);
+  }
+}
+
+// Con título, el mensaje va debajo como texto secundario (p. ej. el nombre de lo eliminado)
+.toast-glass.toast-con-titulo {
+  &::part(message) {
+    font-weight: 500;
+    color: var(--color-texto-suave);
+  }
+}
+
+// ===== Modales: pestaña, ícono y título arriba =====
+.modal-header ion-toolbar {
+  --background: var(--fondo-tarjeta);
+  --border-width: 0;
+  --min-height: 64px;
+}
+
+/* Misma pestaña que Ionic pone en los modales sheet: flota sobre la barra */
+.modal-handle {
+  position: absolute;
+  top: 5px;
+  left: 0;
+  right: 0;
+  z-index: 11;
+  width: 36px;
+  height: 5px;
+  margin: 0 auto;
+  border-radius: 8px;
+  background: var(--fondo-pestana);
+}
+
+.modal-title {
+  /* En iOS, ion-title va centrado en position absolute; static lo alinea a la izquierda, igual que en Android. */
+  position: static;
+  padding-inline-start: 16px;
+
+  .title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .title-icon {
+    font-size: 1.2rem;
+    color: var(--ion-color-primary);
+  }
+
+  .title-text {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--color-texto);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.modal-content {
+  --background: var(--fondo-modal);
 }
 
 // ===== Calendario del selector de fecha (ion-datetime-button) =====
@@ -191,11 +214,11 @@ ion-modal.calendario {
   --border-radius: 20px;
   --box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
   --backdrop-opacity: 0.2;
-  --background: #ffffff;
+  --background: var(--fondo-tarjeta);
 
   ion-datetime {
-    --background: #ffffff;
-    --background-rgb: 255, 255, 255;
+    --background: var(--fondo-tarjeta);
+    --background-rgb: var(--fondo-tarjeta-rgb);
     padding: 0 4px 8px;
   }
 
@@ -204,17 +227,195 @@ ion-modal.calendario {
   }
 
   ion-datetime::part(calendar-day today) {
-    color: #2dd36f;
+    color: var(--ion-color-primary);
     font-weight: 700;
   }
 
   ion-datetime::part(calendar-day active) {
-    background: #2dd36f;
-    color: #ffffff;
+    background: var(--ion-color-primary);
+    color: var(--color-sobre-primario);
     font-weight: 700;
   }
 }
 
+// ===== Encabezado de cada vista: título + descripción =====
+// Todas las vistas usan la misma estructura:
+//   <div class="page-title-row"> <div class="page-title">…</div> [botón .page-title-btn] </div>
+//   <p class="page-subtitle">…</p>
+// Los altos son fijos para que el encabezado mida lo mismo en todas, tenga o no botón.
+.page-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0px 4px 18px;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 32px;
+  color: var(--color-texto);
+  margin: 0;
+}
+
+/* Varios botones a la derecha del título */
+.page-title-acciones {
+  display: flex;
+}
+
+/* Botón de acción a la derecha del título (recargar, desmarcar todo, vaciar nevera) */
+.page-title-btn {
+  --color: var(--ion-color-medium);
+  --padding-top: 0;
+  --padding-bottom: 0;
+  height: 32px;
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Descripción corta debajo del título de cada vista */
+.page-subtitle {
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--color-texto-secundario);
+  padding: 0 18px 8px;
+  margin: 0;
+}
+
+// ===== Encabezado de cada sección: ícono + título + cantidad =====
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 18px 8px;
+}
+
+.section-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  font-size: 18px;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-texto);
+  flex: 1;
+}
+
+.section-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ion-color-medium);
+  background: var(--fondo-suave);
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+
+/* Sección sin elementos, con la opción de restaurar su lista base */
+.seccion-vacia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin: 4px 14px 8px;
+  padding: 14px 16px 6px;
+  border: 1.5px dashed var(--borde);
+  border-radius: 14px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--color-texto-secundario);
+}
+
+// ===== Fila de cada elemento: ícono o casilla + nombre + acciones =====
+.item-card {
+  margin: 6px 14px;
+  padding: 0;
+}
+
+.item-card-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  font-size: 20px;
+}
+
+.item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Rótulo pequeño encima del nombre (Desayuno, Cena, Agua) */
+.item-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ion-color-medium);
+}
+
+.item-nombre {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-texto);
+}
+
+.item-sub {
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+}
+
+/* Colores de los íconos (.section-icon, .item-icon) */
+.tono-desayuno {
+  background: var(--fondo-desayuno);
+  color: var(--color-desayuno);
+}
+
+.tono-cena {
+  background: var(--fondo-cena);
+  color: var(--color-cena);
+}
+
+.tono-agua {
+  background: var(--fondo-agua);
+  color: var(--color-agua);
+}
+
+/* Etiqueta "Hoy" junto al nombre del día */
+.badge-hoy {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-sobre-primario);
+  background: var(--ion-color-primary);
+  padding: 2px 8px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(var(--ion-color-primary-rgb), 0.4);
+}
+
+/* Botones de editar y eliminar de cada fila */
 .action-btn {
   display: flex;
   align-items: center;
@@ -237,97 +438,13 @@ ion-modal.calendario {
 }
 
 .action-btn--edit {
-  background: #f0f4f8;
-  ion-icon { color: #7a8b99; }
-  &:hover { background: #e3eaf2; }
+  background: var(--fondo-suave);
+  ion-icon { color: var(--color-texto-secundario); }
+  &:hover { background: var(--fondo-presionado); }
 }
 
 .action-btn--delete {
-  background: #fdeaea;
-  ion-icon { color: #e85d4a; }
-  &:hover { background: #f9d8d3; }
-}
-
-/* Empty state */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 60px 24px;
-  text-align: center;
-  gap: 12px;
-}
-
-.empty-state ion-icon {
-  font-size: 64px;
-  color: var(--ion-color-medium);
-  opacity: 0.4;
-}
-
-// ===== Encabezado de cada vista: título + descripción =====
-// Todas las vistas usan la misma estructura:
-//   <div class="page-title-row"> <div class="page-title">…</div> [botón .page-title-btn] </div>
-//   <p class="page-subtitle">…</p>
-// Los altos son fijos para que el encabezado mida lo mismo en todas, tenga o no botón.
-.page-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 0px 4px 18px;
-}
-
-.page-title {
-  font-size: 1.5rem;
-  font-weight: 800;
-  line-height: 32px;
-  color: #1a2e22;
-  margin: 0;
-}
-
-/* Varios botones a la derecha del título */
-.page-title-acciones {
-  display: flex;
-}
-
-/* Botón de acción a la derecha del título (recargar, desmarcar todo, vaciar nevera) */
-.page-title-btn {
-  --color: var(--ion-color-medium);
-  --padding-top: 0;
-  --padding-bottom: 0;
-  height: 32px;
-  margin: 0;
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-/* Sección sin elementos, con la opción de restaurar su lista base */
-.seccion-vacia {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  margin: 4px 14px 8px;
-  padding: 14px 16px 6px;
-  border: 1.5px dashed #d5ded8;
-  border-radius: 14px;
-  text-align: center;
-  font-size: 0.9rem;
-  color: #7a8b99;
-}
-
-/* Descripción corta debajo del título de cada vista */
-.page-subtitle {
-  font-size: 0.9rem;
-  font-weight: 500;
-  line-height: 20px;
-  color: #7a8b99;
-  padding: 0 18px 8px;
-  margin: 0;
-}
-
-.float-icon {
-  color: #ffffff;
-  font-size: 2rem;
+  background: var(--fondo-peligro);
+  ion-icon { color: var(--color-peligro); }
+  &:hover { background: var(--fondo-peligro-hover); }
 }

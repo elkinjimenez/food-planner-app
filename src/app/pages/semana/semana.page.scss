@@ -1,12 +1,11 @@
 .dia-card {
-  margin: 10px 14px;
   padding: 0;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
   border: 2px solid transparent;
 
   &--hoy {
     border-color: var(--ion-color-primary);
-    box-shadow: 0 4px 20px rgba(45, 211, 111, 0.25);
+    box-shadow: 0 4px 20px rgba(var(--ion-color-primary-rgb), 0.25);
   }
 }
 
@@ -25,15 +24,15 @@
   height: 32px;
   border-radius: 10px;
   background: var(--ion-color-primary);
-  color: #fff;
+  color: var(--color-sobre-primario);
   font-weight: 800;
   font-size: 0.9rem;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(45, 211, 111, 0.3);
+  box-shadow: 0 2px 8px rgba(var(--ion-color-primary-rgb), 0.3);
 
   &--hoy {
     background: var(--ion-color-primary-shade);
-    box-shadow: 0 3px 12px rgba(45, 211, 111, 0.5);
+    box-shadow: 0 3px 12px rgba(var(--ion-color-primary-rgb), 0.5);
   }
 }
 
@@ -47,19 +46,7 @@
 .dia-nombre {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1a2e22;
-}
-
-.dia-hoy-badge {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #fff;
-  background: var(--ion-color-primary);
-  padding: 2px 8px;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(45, 211, 111, 0.4);
+  color: var(--color-texto);
 }
 
 .dia-badge {
@@ -69,17 +56,17 @@
   letter-spacing: 0.3px;
   padding: 3px 8px;
   border-radius: 8px;
-  background: #e0f5e8;
+  background: var(--fondo-primario-suave);
   color: var(--ion-color-primary-shade);
 
   &--vacio {
-    background: #f0f0f0;
+    background: var(--fondo-suave);
     color: var(--ion-color-medium);
   }
 
   &--confirmado {
-    background: #2dd36f;
-    color: #ffffff;
+    background: var(--ion-color-primary);
+    color: var(--color-sobre-primario);
   }
 }
 
@@ -96,79 +83,37 @@
   gap: 12px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: #f6f9f7;
+  background: var(--fondo-bloque);
   transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
   cursor: pointer;
   border: 1.5px solid transparent;
 
   &:active {
     transform: scale(0.98);
-    background: #e8f3ec;
+    background: var(--fondo-presionado);
   }
 
   &--filled {
-    background: #ecf7f0;
-    border-color: rgba(45, 211, 111, 0.2);
+    background: var(--fondo-primario-tenue);
+    border-color: rgba(var(--ion-color-primary-rgb), 0.2);
   }
 
   &--confirmed {
-    background: #e8f9ef;
-    border-color: #2dd36f;
-    box-shadow: 0 2px 8px rgba(45, 211, 111, 0.15);
+    background: var(--fondo-primario-tenue);
+    border-color: var(--ion-color-primary);
+    box-shadow: 0 2px 8px rgba(var(--ion-color-primary-rgb), 0.15);
   }
 }
 
-.comida-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  flex-shrink: 0;
-
-  ion-icon {
-    font-size: 20px;
-  }
-
-  &--desayuno {
-    background: #fff4d6;
-    ion-icon {
-      color: #f5a623;
-    }
-  }
-
-  &--cena {
-    background: #e0e8ff;
-    ion-icon {
-      color: #5570cc;
-    }
-  }
-}
-
-.comida-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-
-.comida-label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--ion-color-medium);
-}
-
-.comida-nombre {
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: #1a2e22;
+// El nombre de la comida ocupa hasta dos líneas
+.item-nombre {
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .comida-placeholder {
@@ -185,15 +130,15 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 2px solid #f5d99e;
-  background: #fff8e8;
+  border: 2px solid var(--borde-pendiente);
+  background: var(--fondo-pendiente);
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.2s ease;
 
   ion-icon {
     font-size: 16px;
-    color: #f5a623;
+    color: var(--color-pendiente);
   }
 
   &:active {
@@ -201,11 +146,11 @@
   }
 
   &--active {
-    border-color: #2dd36f;
-    background: #2dd36f;
+    border-color: var(--ion-color-primary);
+    background: var(--ion-color-primary);
 
     ion-icon {
-      color: #ffffff;
+      color: var(--color-sobre-primario);
       font-size: 20px;
       font-weight: bold;
     }

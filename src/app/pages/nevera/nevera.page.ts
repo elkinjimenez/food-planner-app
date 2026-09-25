@@ -12,6 +12,7 @@ import {
   ActionSheetController,
 } from '@ionic/angular';
 import { ProductoNevera } from '../../models/producto-nevera.model';
+import { ItemMercado } from '../../models/item-mercado.model';
 import { uuid } from '../../utils/uuid';
 import { diasHasta } from '../../utils/fecha';
 import { deslizarFilas } from '../../utils/deslizar-filas';
@@ -114,8 +115,6 @@ export class NeveraPage implements OnInit {
         },
       },
       presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
-      showBackdrop: false,
-      cssClass: 'card-modal-dark',
     });
     await modal.present();
     const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
@@ -145,8 +144,6 @@ export class NeveraPage implements OnInit {
         },
       },
       presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
-      showBackdrop: false,
-      cssClass: 'card-modal-dark',
     });
     await modal.present();
     const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
@@ -158,10 +155,16 @@ export class NeveraPage implements OnInit {
   }
 
   async eliminar(producto: ProductoNevera): Promise<void> {
-    const confirm = await this.alert.confirm('¿Eliminar producto?', producto.nombre);
-    if (!confirm) return;
     await this.storage.deleteProductoNevera(producto.id);
-    await this.desmarcarEnMercado([producto]);
+    const desmarcados = await this.desmarcarEnMercado([producto]);
+    await this.cargarDeslizando();
+    const deshacer = await this.alert.toast(producto.nombre, { tipo: 'eliminado', header: 'Producto eliminado', deshacer: true });
+    if (!deshacer) return;
+    await this.storage.saveProductoNevera(producto);
+    for (const item of desmarcados) {
+      item.comprado = true;
+      await this.storage.saveItemMercado(item);
+    }
     await this.cargarDeslizando();
   }
 
@@ -169,7 +172,6 @@ export class NeveraPage implements OnInit {
     const actionSheet = await this.actionSheetCtrl.create({
       header: '¿Vaciar nevera?',
       subHeader: 'Se eliminarán todos los productos',
-      cssClass: 'action-sheet-centered',
       buttons: [
         {
           text: 'Sí, vaciar',
@@ -191,15 +193,15 @@ export class NeveraPage implements OnInit {
     await this.cargar();
   }
 
-  /** Desmarca en Mercado los ítems de los que salieron estos productos. */
-  private async desmarcarEnMercado(productos: ProductoNevera[]): Promise<void> {
+  /** Desmarca en Mercado los ítems de los que salieron estos productos y los devuelve. */
+  private async desmarcarEnMercado(productos: ProductoNevera[]): Promise<ItemMercado[]> {
     const ids = new Set(productos.map((p) => p.itemMercadoId));
     const mercado = await this.storage.getMercado();
-    for (const item of mercado) {
-      if (item.comprado && ids.has(item.id)) {
-        item.comprado = false;
-        await this.storage.saveItemMercado(item);
-      }
+    const desmarcados = mercado.filter((item) => item.comprado && ids.has(item.id));
+    for (const item of desmarcados) {
+      item.comprado = false;
+      await this.storage.saveItemMercado(item);
     }
+    return desmarcados;
   }
 }

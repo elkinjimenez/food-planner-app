@@ -5,7 +5,7 @@
   <p class="page-subtitle">Tus opciones para planear la semana</p>
   <!-- Desayunos -->
   <div class="section-header">
-    <div class="section-icon section-icon--sol">
+    <div class="section-icon tono-desayuno">
       <ion-icon name="sunny-outline"></ion-icon>
     </div>
     <span class="section-title">Desayunos</span>
@@ -14,7 +14,7 @@
   @for (comida of desayunos(); track comida.id) {
     <ion-card #fila class="item-card">
       <div class="item-card-body">
-        <div class="item-icon item-icon--sol">
+        <div class="item-icon tono-desayuno">
           <ion-icon name="sunny-outline"></ion-icon>
         </div>
         <div class="item-info">
@@ -43,7 +43,7 @@
 
   <!-- Cenas -->
   <div class="section-header">
-    <div class="section-icon section-icon--luna">
+    <div class="section-icon tono-cena">
       <ion-icon name="moon-outline"></ion-icon>
     </div>
     <span class="section-title">Cenas</span>
@@ -52,7 +52,7 @@
   @for (comida of cenas(); track comida.id) {
     <ion-card #fila class="item-card">
       <div class="item-card-body">
-        <div class="item-icon item-icon--luna">
+        <div class="item-icon tono-cena">
           <ion-icon name="moon-outline"></ion-icon>
         </div>
         <div class="item-info">

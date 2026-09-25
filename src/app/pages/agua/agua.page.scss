@@ -1,16 +1,22 @@
+// Todo cabe sin scroll: sin FAB, el contenido solo deja espacio para el tab bar,
+// y el anillo y los espacios se ajustan al alto de la pantalla.
+ion-content {
+  --padding-bottom: calc(var(--ion-safe-area-bottom, 0px) + 72px);
+}
+
 .agua-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 32px 24px;
-  gap: 24px;
+  padding: clamp(4px, 1.5vh, 24px) 24px 0;
+  gap: clamp(8px, 1.8vh, 20px);
 }
 
 /* ===== Anillo de progreso ===== */
 .progreso-ring {
   position: relative;
-  width: 220px;
-  height: 220px;
+  width: clamp(140px, 25vh, 210px);
+  height: clamp(140px, 25vh, 210px);
 }
 
 .ring-svg {
@@ -21,18 +27,18 @@
 
 .ring-bg {
   fill: none;
-  stroke: #e0e8e4;
+  stroke: var(--fondo-pista);
   stroke-width: 14;
 }
 
 .ring-fill {
   fill: none;
-  stroke: #2dd36f;
+  stroke: var(--ion-color-primary);
   stroke-width: 14;
   stroke-linecap: round;
   stroke-dasharray: 534;
   transition: stroke-dashoffset 0.4s ease;
-  filter: drop-shadow(0 2px 6px rgba(45, 211, 111, 0.4));
+  filter: drop-shadow(0 2px 6px rgba(var(--ion-color-primary-rgb), 0.4));
 }
 
 .ring-center {
@@ -47,15 +53,15 @@
 }
 
 .ring-icon {
-  font-size: 36px;
-  color: #2dd36f;
-  margin-bottom: 4px;
+  font-size: 32px;
+  color: var(--ion-color-primary);
+  margin-bottom: 2px;
 }
 
 .ring-vasos {
-  font-size: 2.2rem;
+  font-size: 2.1rem;
   font-weight: 800;
-  color: #1a2e22;
+  color: var(--color-texto);
   line-height: 1;
 }
 
@@ -70,12 +76,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: #2dd36f;
-  padding: 10px 20px;
+  color: var(--ion-color-primary);
+  padding: 8px 18px;
   border-radius: 12px;
-  background: #e8f7ee;
+  background: var(--fondo-primario-tenue);
 
   ion-icon {
     font-size: 20px;
@@ -83,7 +89,7 @@
 
   &--pendiente {
     color: var(--ion-color-medium);
-    background: #f0f4f1;
+    background: var(--fondo-suave);
     font-weight: 500;
   }
 }
@@ -92,36 +98,104 @@
 .botones {
   display: flex;
   gap: 24px;
-  margin-top: 8px;
 }
 
 .btn-circ {
   --border-radius: 50%;
-  width: 64px;
-  height: 64px;
+  width: 58px;
+  height: 58px;
+  margin: 0;
 }
 
 .btn-sumar {
-  --background: #2dd36f;
-  --background-hover: #28ba62;
-  --box-shadow: 0 4px 16px rgba(45, 211, 111, 0.4);
+  --background: var(--ion-color-primary);
+  --background-hover: var(--ion-color-primary-shade);
+  --box-shadow: 0 4px 16px rgba(var(--ion-color-primary-rgb), 0.4);
 }
 
 .btn-restar {
-  --background: #e8e8e8;
-  --background-hover: #d8d8d8;
-  --color: #555;
+  --background: var(--fondo-boton-secundario);
+  --background-hover: var(--fondo-boton-secundario-hover);
+  --color: var(--color-boton-secundario);
 }
 
 .btn-reiniciar {
   --color: var(--ion-color-medium);
-  font-weight: 600;
+  height: 32px;
+  margin: 0;
   text-transform: none;
   letter-spacing: 0;
 }
 
 .nota {
-  margin-top: 4px;
+  margin-top: -4px;
   font-size: 0.8rem;
   color: var(--ion-color-medium);
+}
+
+/* ===== Últimos 7 días ===== */
+.semana-agua {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.semana-titulo {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-texto-tenue);
+}
+
+.barras {
+  display: flex;
+  justify-content: space-between;
+}
+
+.barra {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 28px;
+}
+
+.barra-vasos,
+.barra-dia {
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--color-texto-tenue);
+}
+
+.barra-track {
+  display: flex;
+  align-items: flex-end;
+  width: 10px;
+  height: clamp(32px, 6vh, 52px);
+  border-radius: 5px;
+  background: var(--fondo-pista);
+  overflow: hidden;
+}
+
+.barra-fill {
+  width: 100%;
+  border-radius: 5px;
+  background: rgba(var(--ion-color-primary-rgb), 0.4);
+  transition: height 0.4s ease;
+
+  &--meta {
+    background: var(--ion-color-primary);
+  }
+}
+
+.barra--hoy {
+  .barra-vasos,
+  .barra-dia {
+    font-weight: 700;
+    color: var(--color-texto);
+  }
 }

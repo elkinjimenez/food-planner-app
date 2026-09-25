@@ -9,7 +9,17 @@ import {
 } from '@ionic/angular';
 import { StorageService } from '../../services/storage.service';
 import { META_VASOS, RegistroAgua } from '../../models/historial.model';
-import { fechaHoy } from '../../utils/fecha';
+import { diaSemana, fechaHoy, sumarDias } from '../../utils/fecha';
+
+const LETRAS_DIA = ['D', 'L', 'M', 'X', 'J', 'V', 'S']; // por diaSemana(): 0 = domingo
+
+interface BarraDia {
+  fecha: string;
+  vasos: number;
+  letra: string;
+  alto: number; // 0 a 1: la barra llena es la meta
+  esHoy: boolean;
+}
 
 @Component({
   selector: 'app-agua',
@@ -24,6 +34,18 @@ export class AguaPage implements OnInit {
   meta = META_VASOS;
   progreso = computed(() => Math.min(this.registro().vasos / this.meta, 1));
   cumplido = computed(() => this.registro().vasos >= this.meta);
+  // Los 6 días anteriores; hoy sale de `registro`, así la gráfica sigue cada vaso
+  private anteriores = signal<RegistroAgua[]>([]);
+  ultimosDias = computed<BarraDia[]>(() => {
+    const hoy = this.registro();
+    if (!hoy.fecha) return [];
+    return [...this.anteriores(), hoy].map((r) => ({
+      ...r,
+      letra: LETRAS_DIA[diaSemana(r.fecha)],
+      alto: Math.min(r.vasos / this.meta, 1),
+      esHoy: r === hoy,
+    }));
+  });
 
   async ngOnInit(): Promise<void> {
     await this.cargar();
@@ -43,7 +65,19 @@ export class AguaPage implements OnInit {
 
   private async cargar(): Promise<void> {
     // Cada día tiene su propio registro: los días anteriores quedan en el historial
-    const reg = await this.storage.getAgua(fechaHoy());
+    const hoy = fechaHoy();
+    const desde = sumarDias(hoy, -6);
+    const [reg, anteriores] = await Promise.all([
+      this.storage.getAgua(hoy),
+      this.storage.getAguaEntre(desde, sumarDias(hoy, -1)),
+    ]);
+    const vasos = new Map(anteriores.map((r) => [r.fecha, r.vasos]));
+    this.anteriores.set(
+      Array.from({ length: 6 }, (_, i) => {
+        const fecha = sumarDias(desde, i);
+        return { fecha, vasos: vasos.get(fecha) ?? 0 };
+      }),
+    );
     this.registro.set(reg);
   }
 

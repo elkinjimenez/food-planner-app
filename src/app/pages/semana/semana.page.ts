@@ -7,7 +7,6 @@ import {
   IonFab,
   IonFabButton,
   ModalController,
-  ToastController,
   IonButton,
   IonRouterLink,
 } from '@ionic/angular';
@@ -24,10 +23,13 @@ import { ComidaConfirmada, RegistroComidas } from '../../models/historial.model'
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
 import { AppUpdateService } from '../../services/app-update.service';
-import { fechaHoy, sumarDias } from '../../utils/fecha';
+import { fechaHoy, formatearFecha, sumarDias } from '../../utils/fecha';
+import { sortearDias } from '../../utils/sorteo';
 import { planSemanalVacio } from '../../data/seed.data';
 import { SeleccionarComidaModal } from './seleccionar-comida.modal';
 import { RespaldoBotonComponent } from '../../shared/respaldo-boton.component';
+
+const TIPO_LABEL: Record<TipoComida, string> = { desayuno: 'Desayuno', cena: 'Cena' };
 
 /** Una tarjeta de la semana: una fecha, con lo planificado y lo confirmado para ese día. */
 interface DiaVista {
@@ -61,7 +63,6 @@ export class SemanaPage implements OnInit {
   private storage = inject(StorageService);
   private alert = inject(AlertService);
   private modalCtrl = inject(ModalController);
-  private toastCtrl = inject(ToastController);
   private appUpdate = inject(AppUpdateService);
 
   plan = signal<PlanSemanal>(planSemanalVacio());
@@ -155,23 +156,22 @@ export class SemanaPage implements OnInit {
     const modal = await this.modalCtrl.create({
       component: SeleccionarComidaModal,
       componentProps: {
-        titulo: `Elegir ${tipo}`,
+        titulo: `${TIPO_LABEL[tipo]} · ${DIAS_LABEL[d.dia].toLowerCase()} ${formatearFecha(d.fecha)}`,
         comidas: opciones,
         seleccionadaId: d[tipo]?.id ?? null,
       },
       presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
-      showBackdrop: false,
-      cssClass: 'card-modal-dark',
     });
     await modal.present();
 
-    const { data } = await modal.onWillDismiss<Comida | null>();
+    const { data, role } = await modal.onWillDismiss<Comida | null>();
+    if (role === 'quitar') {
+      await this.quitarComida(d, tipo);
+      return;
+    }
     if (!data) return;
 
-    const nuevoPlan = { ...this.plan() };
-    nuevoPlan[d.dia] = { ...nuevoPlan[d.dia], [`${tipo}Id` as const]: data.id };
-    this.plan.set(nuevoPlan);
-    await this.storage.putPlan(nuevoPlan);
+    await this.guardarPlan(d.dia, tipo, data.id);
 
     // Si ese día tenía otra comida confirmada, la nueva queda pendiente de confirmar
     const confirmado = tipo === 'desayuno' ? d.desayunoConfirmado : d.cenaConfirmado;
@@ -180,22 +180,52 @@ export class SemanaPage implements OnInit {
     }
   }
 
+  /** Deja el desayuno o la cena de ese día sin asignar (y sin confirmar), con opción de deshacer. */
+  private async quitarComida(d: DiaVista, tipo: TipoComida): Promise<void> {
+    const comida = d[tipo];
+    if (!comida) return;
+    const planAntes = this.plan()[d.dia][`${tipo}Id` as const];
+    const confirmadaAntes = this.confirmadas().get(d.fecha)?.[tipo];
+    await this.guardarPlan(d.dia, tipo, undefined);
+    if (confirmadaAntes) await this.guardarConfirmacion(d.fecha, tipo, undefined);
+
+    const deshacer = await this.alert.toast(comida.nombre, {
+      tipo: 'eliminado',
+      header: `${TIPO_LABEL[tipo]} ${tipo === 'desayuno' ? 'quitado' : 'quitada'}`,
+      deshacer: true,
+    });
+    if (!deshacer) return;
+    await this.guardarPlan(d.dia, tipo, planAntes);
+    if (confirmadaAntes) await this.guardarConfirmacion(d.fecha, tipo, confirmadaAntes);
+  }
+
+  /** Asigna (con el id) o deja sin asignar (sin él) el desayuno o la cena de un día de la semana. */
+  private async guardarPlan(dia: DiaSemana, tipo: TipoComida, id: string | undefined): Promise<void> {
+    const comidaDia: ComidaDelDia = { ...this.plan()[dia] };
+    if (id) {
+      comidaDia[`${tipo}Id` as const] = id;
+    } else {
+      delete comidaDia[`${tipo}Id` as const];
+    }
+    const nuevoPlan = { ...this.plan(), [dia]: comidaDia };
+    this.plan.set(nuevoPlan);
+    await this.storage.putPlan(nuevoPlan);
+  }
+
   async toggleConfirmar(d: DiaVista, tipo: TipoComida): Promise<void> {
     const comida = d[tipo];
     if (!comida) return;
     const confirmado = !(tipo === 'desayuno' ? d.desayunoConfirmado : d.cenaConfirmado);
+    const antes = this.confirmadas().get(d.fecha)?.[tipo];
     await this.guardarConfirmacion(d.fecha, tipo, confirmado ? { id: comida.id, nombre: comida.nombre } : undefined);
 
-    const toast = await this.toastCtrl.create({
-      message: confirmado
-        ? `${tipo.charAt(0).toUpperCase()}${tipo.slice(1)} ${tipo == 'desayuno' ? 'confirmado' : 'confirmada'}`
-        : `${tipo.charAt(0).toUpperCase()}${tipo.slice(1)} aún pendiente`,
-      duration: 1800,
-      position: 'top',
-      icon: confirmado ? 'checkmark-circle' : 'time-outline',
-      cssClass: ['toast-confirmacion', confirmado ? 'toast-ok' : 'toast-pendiente'],
-    });
-    await toast.present();
+    const deshacer = await this.alert.toast(
+      confirmado
+        ? `${TIPO_LABEL[tipo]} ${tipo === 'desayuno' ? 'confirmado' : 'confirmada'}`
+        : `${TIPO_LABEL[tipo]} aún pendiente`,
+      { tipo: confirmado ? 'ok' : 'pendiente', deshacer: true },
+    );
+    if (deshacer) await this.guardarConfirmacion(d.fecha, tipo, antes);
   }
 
   /** Confirma (con la comida) o deja pendiente (sin ella) el desayuno o la cena de una fecha. */
@@ -217,26 +247,23 @@ export class SemanaPage implements OnInit {
       await this.alert.aviso('No hay comidas', 'Agrega comidas en la pestaña Comidas.');
       return;
     }
+    const semana = this.semana();
+    // Lo ya confirmado se mantiene
+    const desayunoIds = sortearDias(
+      desayunos.map((c) => c.id),
+      semana.map((d) => (d.desayunoConfirmado ? d.desayuno!.id : undefined)),
+    );
+    const cenaIds = sortearDias(
+      cenas.map((c) => c.id),
+      semana.map((d) => (d.cenaConfirmado ? d.cena!.id : undefined)),
+    );
     const nuevoPlan = planSemanalVacio();
-    for (const d of this.semana()) {
+    semana.forEach((d, i) => {
       const comidaDia: ComidaDelDia = {};
-
-      // Mantener desayuno si ya está confirmado
-      if (d.desayunoConfirmado) {
-        comidaDia.desayunoId = d.desayuno!.id;
-      } else if (desayunos.length > 0) {
-        comidaDia.desayunoId = desayunos[Math.floor(Math.random() * desayunos.length)].id;
-      }
-
-      // Mantener cena si ya está confirmada
-      if (d.cenaConfirmado) {
-        comidaDia.cenaId = d.cena!.id;
-      } else if (cenas.length > 0) {
-        comidaDia.cenaId = cenas[Math.floor(Math.random() * cenas.length)].id;
-      }
-
+      if (desayunoIds[i]) comidaDia.desayunoId = desayunoIds[i];
+      if (cenaIds[i]) comidaDia.cenaId = cenaIds[i];
       nuevoPlan[d.dia] = comidaDia;
-    }
+    });
     this.plan.set(nuevoPlan);
     await this.storage.putPlan(nuevoPlan);
   }

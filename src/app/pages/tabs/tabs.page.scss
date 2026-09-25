@@ -21,7 +21,7 @@ ion-tab-bar {
     0 1px 4px rgba(0, 0, 0, 0.06);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(var(--vidrio-rgb), 0.6);
   position: fixed;
   bottom: 0;
   left: 0;
@@ -30,9 +30,8 @@ ion-tab-bar {
   background: rgba(255, 255, 255, 0);
 }
 
+// Los colores (normal y seleccionado) los hereda de --color y --color-selected del tab bar
 ion-tab-button {
-  --color: var(--ion-color-medium);
-  --color-selected: var(--ion-color-primary);
   --padding-top: 8px;
   --padding-bottom: 8px;
 
@@ -47,25 +46,12 @@ ion-tab-button {
     transition: transform 0.25s ease;
   }
 
-  ion-label {
-    font-size: 0.68rem;
-    font-weight: 600;
-    transition: opacity 0.2s ease;
-  }
-
   // Estado seleccionado — fondo destacado
   &.tab-selected {
-    background: rgba(45, 211, 111, 0.20);
-    color: var(--ion-color-primary);
+    background: rgba(var(--ion-color-primary-rgb), 0.20);
 
     ion-icon {
       transform: scale(1.1);
-      color: var(--ion-color-primary);
-    }
-
-    ion-label {
-      color: var(--ion-color-primary);
-      font-weight: 700;
     }
   }
 }

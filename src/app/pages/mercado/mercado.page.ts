@@ -104,10 +104,19 @@ export class MercadoPage implements OnInit {
   }
 
   async desmarcarTodo(): Promise<void> {
+    const ids = new Set(this.items().filter((i) => i.comprado).map((i) => i.id));
+    const nevera = await this.storage.getNevera();
+    const enNevera = nevera.filter((p) => p.itemMercadoId && ids.has(p.itemMercadoId)).length;
+    const carrito = ids.size === 1 ? 'Se desmarcará 1 producto' : `Se desmarcarán ${ids.size} productos`;
+    const detalle =
+      enNevera === 0
+        ? ''
+        : enNevera >= ids.size
+          ? ` y ${ids.size === 1 ? 'se sacará' : 'se sacarán'} de la Nevera`
+          : ` y ${enNevera} de ellos ${enNevera === 1 ? 'se sacará' : 'se sacarán'} de la Nevera`;
     const actionSheet = await this.actionSheetCtrl.create({
       header: '¿Desmarcar todo?',
-      subHeader: 'Se quitarán todos los ítems del carrito',
-      cssClass: 'action-sheet-centered',
+      subHeader: `${carrito}${detalle}`,
       buttons: [
         {
           text: 'Sí, desmarcar',
@@ -147,7 +156,7 @@ export class MercadoPage implements OnInit {
       component: EditarItemModal,
       componentProps: {
         config: {
-          titulo: 'Agregar ítem',
+          titulo: 'Agregar producto',
           boton: 'Agregar',
           icono: 'cart-outline',
           label1: 'Nombre',
@@ -158,8 +167,6 @@ export class MercadoPage implements OnInit {
         },
       },
       presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
-      showBackdrop: false,
-      cssClass: 'card-modal-dark',
     });
     await modal.present();
     const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
@@ -178,7 +185,6 @@ export class MercadoPage implements OnInit {
   async agregarActual(): Promise<void> {
     const actionSheet = await this.actionSheetCtrl.create({
       header: 'Categoría',
-      cssClass: 'action-sheet-centered',
       buttons: [
         {
           text: 'Supermercado',
@@ -199,7 +205,7 @@ export class MercadoPage implements OnInit {
       component: EditarItemModal,
       componentProps: {
         config: {
-          titulo: 'Editar ítem',
+          titulo: 'Editar producto',
           boton: 'Guardar',
           icono: 'cart-outline',
           label1: 'Nombre',
@@ -210,8 +216,6 @@ export class MercadoPage implements OnInit {
         },
       },
       presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
-      showBackdrop: false,
-      cssClass: 'card-modal-dark',
     });
     await modal.present();
     const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
@@ -223,9 +227,11 @@ export class MercadoPage implements OnInit {
   }
 
   async eliminar(item: ItemMercado): Promise<void> {
-    const confirm = await this.alert.confirm('¿Eliminar ítem?', item.nombre);
-    if (!confirm) return;
     await this.storage.deleteItemMercado(item.id);
+    await this.cargarDeslizando();
+    const deshacer = await this.alert.toast(item.nombre, { tipo: 'eliminado', header: 'Producto eliminado', deshacer: true });
+    if (!deshacer) return;
+    await this.storage.saveItemMercado(item);
     await this.cargarDeslizando();
   }
 }

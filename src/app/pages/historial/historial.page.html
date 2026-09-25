@@ -73,16 +73,16 @@
     <div class="detalle-titulo">
       <span>{{ detalleTitulo() }}</span>
       @if (detalle().fecha === hoy()) {
-        <span class="detalle-hoy">Hoy</span>
+        <span class="badge-hoy">Hoy</span>
       }
     </div>
 
     <div class="detalle-fila">
-      <div class="detalle-icono detalle-icono--desayuno"><ion-icon name="sunny-outline"></ion-icon></div>
-      <div class="detalle-info">
-        <span class="detalle-label">Desayuno</span>
+      <div class="item-icon tono-desayuno"><ion-icon name="sunny-outline"></ion-icon></div>
+      <div class="item-info">
+        <span class="item-label">Desayuno</span>
         @if (detalle().desayuno; as nombre) {
-          <span class="detalle-valor">{{ nombre }}</span>
+          <span class="item-nombre">{{ nombre }}</span>
         } @else {
           <span class="detalle-vacio">Sin confirmar</span>
         }
@@ -90,11 +90,11 @@
     </div>
 
     <div class="detalle-fila">
-      <div class="detalle-icono detalle-icono--cena"><ion-icon name="moon-outline"></ion-icon></div>
-      <div class="detalle-info">
-        <span class="detalle-label">Cena</span>
+      <div class="item-icon tono-cena"><ion-icon name="moon-outline"></ion-icon></div>
+      <div class="item-info">
+        <span class="item-label">Cena</span>
         @if (detalle().cena; as nombre) {
-          <span class="detalle-valor">{{ nombre }}</span>
+          <span class="item-nombre">{{ nombre }}</span>
         } @else {
           <span class="detalle-vacio">Sin confirmar</span>
         }
@@ -102,11 +102,11 @@
     </div>
 
     <div class="detalle-fila">
-      <div class="detalle-icono detalle-icono--agua"><ion-icon name="water-outline"></ion-icon></div>
-      <div class="detalle-info">
-        <span class="detalle-label">Agua</span>
+      <div class="item-icon tono-agua"><ion-icon name="water-outline"></ion-icon></div>
+      <div class="item-info">
+        <span class="item-label">Agua</span>
         @if (detalle().vasos > 0) {
-          <span class="detalle-valor">{{ detalle().vasos }} de {{ meta }} vasos</span>
+          <span class="item-nombre">{{ detalle().vasos }} de {{ meta }} vasos</span>
         } @else {
           <span class="detalle-vacio">Sin registro</span>
         }

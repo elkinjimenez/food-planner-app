@@ -195,18 +195,47 @@ export class StorageService {
   /**
    * Borra la comida y la quita del plan y de lo confirmado de hoy en adelante.
    * Lo confirmado en días pasados se queda en el historial, con su nombre.
+   * Devuelve una función que deshace el borrado (sin pisar lo que se haya puesto en su lugar).
    */
-  async deleteComida(id: string): Promise<void> {
+  async deleteComida(id: string): Promise<() => Promise<void>> {
+    const comida = await this.getByKey<Comida>(STORE_COMIDAS, id);
     await this.delete(STORE_COMIDAS, id);
     const plan = await this.getPlan();
+    const planAntes = structuredClone(plan);
     if (quitarComidaDelPlan(plan, id)) {
       await this.putPlan(plan);
     }
+    const confirmadasAntes: RegistroComidas[] = [];
     for (const registro of await this.getComidasConfirmadas(fechaHoy())) {
+      const antes = structuredClone(registro);
       if (quitarComidaConfirmada(registro, id)) {
+        confirmadasAntes.push(antes);
         await this.saveComidasConfirmadas(registro);
       }
     }
+
+    return async () => {
+      if (comida) await this.saveComida(comida);
+      const plan = await this.getPlan();
+      let cambio = false;
+      for (const dia of DIAS_SEMANA) {
+        for (const tipo of TIPOS_COMIDA) {
+          const campo = `${tipo}Id` as const;
+          if (planAntes[dia][campo] === id && !plan[dia][campo]) {
+            plan[dia][campo] = id;
+            cambio = true;
+          }
+        }
+      }
+      if (cambio) await this.putPlan(plan);
+      for (const antes of confirmadasAntes) {
+        const [registro = { fecha: antes.fecha }] = await this.getComidasConfirmadas(antes.fecha, antes.fecha);
+        for (const tipo of TIPOS_COMIDA) {
+          if (antes[tipo]?.id === id && !registro[tipo]) registro[tipo] = antes[tipo];
+        }
+        await this.saveComidasConfirmadas(registro);
+      }
+    };
   }
   /** Vuelve a cargar las comidas base de un tipo (se ofrece cuando la sección queda vacía). */
   restaurarComidasBase(tipo: TipoComida): Promise<void> {

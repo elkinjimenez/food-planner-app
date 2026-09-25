@@ -57,5 +57,21 @@
     </ion-button>
 
     <span class="nota">Cada vaso ≈ 250 ml · Meta: {{ meta * 250 }} ml</span>
+
+    <!-- Últimos 7 días -->
+    <div class="semana-agua">
+      <span class="semana-titulo">Últimos 7 días</span>
+      <div class="barras">
+        @for (d of ultimosDias(); track d.fecha) {
+          <div class="barra" [class.barra--hoy]="d.esHoy">
+            <span class="barra-vasos">{{ d.vasos }}</span>
+            <div class="barra-track">
+              <div class="barra-fill" [class.barra-fill--meta]="d.alto === 1" [style.height.%]="d.alto * 100"></div>
+            </div>
+            <span class="barra-dia">{{ d.letra }}</span>
+          </div>
+        }
+      </div>
+    </div>
   </div>
 </ion-content>

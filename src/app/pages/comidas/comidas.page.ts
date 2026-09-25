@@ -87,8 +87,6 @@ export class ComidasPage implements OnInit {
         },
       },
       presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
-      showBackdrop: false,
-      cssClass: 'card-modal-dark',
     });
     await modal.present();
     const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
@@ -137,8 +135,6 @@ export class ComidasPage implements OnInit {
         },
       },
       presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
-      showBackdrop: false,
-      cssClass: 'card-modal-dark',
     });
     await modal.present();
     const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
@@ -150,9 +146,11 @@ export class ComidasPage implements OnInit {
   }
 
   async eliminar(comida: Comida): Promise<void> {
-    const confirm = await this.alert.confirm('¿Eliminar comida?', comida.nombre);
-    if (!confirm) return;
-    await this.storage.deleteComida(comida.id);
+    const restaurar = await this.storage.deleteComida(comida.id);
+    await this.cargarDeslizando();
+    const deshacer = await this.alert.toast(comida.nombre, { tipo: 'eliminado', header: 'Comida eliminada', deshacer: true });
+    if (!deshacer) return;
+    await restaurar();
     await this.cargarDeslizando();
   }
 }

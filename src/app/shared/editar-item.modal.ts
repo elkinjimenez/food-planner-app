@@ -114,7 +114,7 @@ export interface EditarItemConfig {
         </div>
       </div>
     </ion-content>
-    <ion-footer class="modal-footer">
+    <ion-footer>
       <div class="form-actions">
         <button class="btn-cancel" (click)="cancelar()">Cancelar</button>
         <button class="btn-save" [class.btn-save--disabled]="!puedeGuardar()" [disabled]="!puedeGuardar()" (click)="guardar()">{{ config.boton }}</button>
@@ -122,58 +122,6 @@ export interface EditarItemConfig {
     </ion-footer>
   `,
   styles: [`
-    .modal-header ion-toolbar {
-      --background: #ffffff;
-      --border-width: 0;
-      --min-height: 64px;
-      box-shadow: none;
-    }
-
-    /* Misma pestaña que Ionic pone en los modales sheet: flota sobre la barra */
-    .modal-handle {
-      position: absolute;
-      top: 5px;
-      left: 0;
-      right: 0;
-      z-index: 11;
-      width: 36px;
-      height: 5px;
-      margin: 0 auto;
-      border-radius: 8px;
-      background: #c0c0be;
-    }
-
-    .save-btn {
-      --color: #2dd36f;
-    }
-
-    .modal-title {
-      /* En iOS, ion-title va centrado en position absolute; static lo alinea a la izquierda, igual que en Android. */
-      position: static;
-      padding-inline-start: 16px;
-    }
-
-    .title-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .title-icon {
-      font-size: 1.2rem;
-      color: #2dd36f;
-    }
-
-    .title-text {
-      font-weight: 700;
-      font-size: 1.15rem;
-      color: #1a2e35;
-    }
-
-    .modal-content {
-      --background: #f5f7fa;
-    }
-
     .edit-form {
       padding: 20px 16px;
       display: flex;
@@ -190,16 +138,16 @@ export interface EditarItemConfig {
     .field-label {
       font-size: 0.85rem;
       font-weight: 600;
-      color: #7a8b99;
+      color: var(--color-texto-secundario);
       padding-left: 4px;
     }
 
     .field-input {
-      --background: #ffffff;
+      --background: var(--fondo-tarjeta);
       --border-radius: 12px;
       --padding-start: 14px;
       --padding-end: 14px;
-      --color: #1a2e35;
+      --color: var(--color-texto);
       font-size: 1rem;
     }
 
@@ -214,9 +162,9 @@ export interface EditarItemConfig {
       margin: 0;
       padding: 0 14px;
       text-align: start;
-      background: #ffffff;
+      background: var(--fondo-tarjeta);
       border-radius: 12px;
-      color: #1a2e35;
+      color: var(--color-texto);
       font-size: 1rem;
     }
 
@@ -231,8 +179,8 @@ export interface EditarItemConfig {
       padding: 8px 4px;
       border: none;
       border-radius: 10px;
-      background: #ffffff;
-      color: #7a8b99;
+      background: var(--fondo-tarjeta);
+      color: var(--color-texto-secundario);
       font-size: 0.85rem;
       font-weight: 600;
       white-space: nowrap;
@@ -240,15 +188,15 @@ export interface EditarItemConfig {
     }
 
     .sugerencia--activa {
-      background: #2dd36f;
-      color: #ffffff;
+      background: var(--ion-color-primary);
+      color: var(--color-sobre-primario);
     }
 
     .form-actions {
       display: flex;
       gap: 12px;
       padding: 32px;
-      background: #f5f7fa;
+      background: var(--fondo-modal);
     }
 
     .btn-cancel,
@@ -269,18 +217,18 @@ export interface EditarItemConfig {
     }
 
     .btn-cancel {
-      background: #f0f4f8;
-      color: #7a8b99;
+      background: var(--fondo-suave);
+      color: var(--color-texto-secundario);
     }
 
     .btn-save {
-      background: #2dd36f;
-      color: #ffffff;
+      background: var(--ion-color-primary);
+      color: var(--color-sobre-primario);
     }
 
     .btn-save--disabled {
-      background: #c8e8d4;
-      color: #ffffff;
+      background: var(--fondo-primario-deshabilitado);
+      color: var(--color-sobre-primario);
       opacity: 0.6;
       cursor: not-allowed;
     }

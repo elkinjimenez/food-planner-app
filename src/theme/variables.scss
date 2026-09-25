@@ -51,4 +51,61 @@
   --ion-color-light-contrast-rgb: 0, 0, 0;
   --ion-color-light-shade: #d7d8da;
   --ion-color-light-tint: #f5f6f9;
+
+  --ion-background-color: #f8faf9;
+  --ion-font-family: -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+
+  // ===== Texto =====
+  --color-texto: #1a2e22;
+  --color-texto-suave: #5c6b78;
+  --color-texto-secundario: #7a8b99;
+  --color-texto-tenue: #a3aeb8;
+  --color-sobre-primario: #ffffff;
+  --color-primario-texto: #1fa855;
+
+  // ===== Fondos =====
+  --fondo-tarjeta: #ffffff;
+  --fondo-tarjeta-rgb: 255, 255, 255;
+  --fondo-modal: #f5f7fa;
+  --fondo-bloque: #f6f9f7;
+  --fondo-suave: #eef2ef;
+  --fondo-presionado: #e8f3ec;
+  --fondo-pista: #e8efeb;
+  --fondo-pestana: #c0c0be;
+  --fondo-boton-secundario: #e8e8e8;
+  --fondo-boton-secundario-hover: #d8d8d8;
+  --color-boton-secundario: #555555;
+
+  // ===== Bordes =====
+  --borde: #d5ded8;
+  --borde-suave: #eef2ef;
+
+  // ===== Tintes del verde principal =====
+  --fondo-primario-tenue: #e8f9ef;
+  --fondo-primario-suave: #e0f5e8;
+  --fondo-primario-deshabilitado: #c8e8d4;
+
+  // ===== Eliminar / vencido =====
+  --color-peligro: #e85d4a;
+  --fondo-peligro: #fdeaea;
+  --fondo-peligro-hover: #f9d8d3;
+  --fondo-peligro-tenue: #fff5f6;
+
+  // ===== Pendiente de confirmar (Semana) =====
+  --color-pendiente: #f5a623;
+  --fondo-pendiente: #fff8e8;
+  --borde-pendiente: #f5d99e;
+
+  // ===== Vidrio (tab bar y toasts) =====
+  --vidrio-rgb: 255, 255, 255;
+
+  // Desayuno, cena y agua: los mismos colores en Comidas, Semana e Historial
+  --color-desayuno: #f5a623;
+  --fondo-desayuno: #fff4d6;
+  --color-cena: #5570cc;
+  --fondo-cena: #e0e8ff;
+  --color-agua: #3b9fe8;
+  --fondo-agua: #e3f2fd;
+  --color-nevera: #5599cc;
+  --fondo-nevera: #e0eef5;
 }
