@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1790380235941,
+  "timestamp": 1790380464434,
   "index": "/food-planner-app/index.html",
   "assetGroups": [
     {
@@ -69,7 +69,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/food-planner-app/assets/icon/app-icon.svg": "223b5c0db42670602a94f2f2a4c42cd98ea39049",
+    "/food-planner-app/assets/icon/app-icon.svg": "f483c2a5b783d9e3ee36e5b7fc3dbb7876d6bbac",
     "/food-planner-app/assets/icon/apple-touch-icon.png": "d3363bb38e75789299767f63f44454b5bcf84e88",
     "/food-planner-app/assets/icon/favicon.png": "ca91db3d1f9788e61dc05e3d3ade6fb2737c1b51",
     "/food-planner-app/assets/icon/icon-192.png": "27f7e85e1d1efe746f74c8d675f0f3a241b6b4f0",
