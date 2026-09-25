@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, signal, inject, viewChildren } from '@angular/core';
 import {
   IonContent,
   IonIcon,
@@ -11,6 +11,7 @@ import {
 } from '@ionic/angular';
 import { Comida, TipoComida } from '../../models/comida.model';
 import { uuid } from '../../utils/uuid';
+import { deslizarFilas } from '../../utils/deslizar-filas';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
 import { EditarItemModal } from '../../shared/editar-item.modal';
@@ -33,9 +34,11 @@ export class ComidasPage implements OnInit {
   private alert = inject(AlertService);
   private modalCtrl = inject(ModalController);
   private actionSheetCtrl = inject(ActionSheetController);
+  private cdr = inject(ChangeDetectorRef);
 
   desayunos = signal<Comida[]>([]);
   cenas = signal<Comida[]>([]);
+  private filas = viewChildren('fila', { read: ElementRef<HTMLElement> });
 
   async ngOnInit(): Promise<void> {
     await this.cargar();
@@ -46,7 +49,19 @@ export class ComidasPage implements OnInit {
   }
 
   private async cargar(): Promise<void> {
+    this.mostrar(await this.storage.getComidas());
+  }
+
+  /** Recarga la lista deslizando cada fila a su nuevo lugar en vez de saltar. */
+  private async cargarDeslizando(): Promise<void> {
     const data = await this.storage.getComidas();
+    deslizarFilas(this.filas(), () => {
+      this.mostrar(data);
+      this.cdr.detectChanges();
+    });
+  }
+
+  private mostrar(data: Comida[]): void {
     this.desayunos.set(data.filter((c) => c.tipo === 'desayuno'));
     this.cenas.set(data.filter((c) => c.tipo === 'cena'));
   }
@@ -138,6 +153,6 @@ export class ComidasPage implements OnInit {
     const confirm = await this.alert.confirm('¿Eliminar comida?', comida.nombre);
     if (!confirm) return;
     await this.storage.deleteComida(comida.id);
-    await this.cargar();
+    await this.cargarDeslizando();
   }
 }

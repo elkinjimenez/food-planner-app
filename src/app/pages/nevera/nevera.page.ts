@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, signal, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, signal, inject, viewChildren } from '@angular/core';
 import {
   IonContent,
   IonButton,
@@ -14,6 +14,7 @@ import {
 import { ProductoNevera } from '../../models/producto-nevera.model';
 import { uuid } from '../../utils/uuid';
 import { diasHasta } from '../../utils/fecha';
+import { deslizarFilas } from '../../utils/deslizar-filas';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
 import { EditarItemModal } from '../../shared/editar-item.modal';
@@ -42,8 +43,10 @@ export class NeveraPage implements OnInit {
   private alert = inject(AlertService);
   private modalCtrl = inject(ModalController);
   private actionSheetCtrl = inject(ActionSheetController);
+  private cdr = inject(ChangeDetectorRef);
 
   productos = signal<ProductoNevera[]>([]);
+  private filas = viewChildren('fila', { read: ElementRef<HTMLElement> });
 
   async ngOnInit(): Promise<void> {
     await this.cargar();
@@ -62,7 +65,19 @@ export class NeveraPage implements OnInit {
   }
 
   private async cargar(): Promise<void> {
+    this.mostrar(await this.storage.getNevera());
+  }
+
+  /** Recarga la lista deslizando cada fila a su nuevo lugar en vez de saltar. */
+  private async cargarDeslizando(): Promise<void> {
     const data = await this.storage.getNevera();
+    deslizarFilas(this.filas(), () => {
+      this.mostrar(data);
+      this.cdr.detectChanges();
+    });
+  }
+
+  private mostrar(data: ProductoNevera[]): void {
     // Ordenar por fecha de vencimiento ascendente
     data.sort((a, b) => a.fechaVencimiento.localeCompare(b.fechaVencimiento));
     this.productos.set(data);
@@ -147,7 +162,7 @@ export class NeveraPage implements OnInit {
     if (!confirm) return;
     await this.storage.deleteProductoNevera(producto.id);
     await this.desmarcarEnMercado([producto]);
-    await this.cargar();
+    await this.cargarDeslizando();
   }
 
   async vaciarNevera(): Promise<void> {

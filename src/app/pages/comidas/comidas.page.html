@@ -12,7 +12,7 @@
     <span class="section-count">{{ desayunos().length }}</span>
   </div>
   @for (comida of desayunos(); track comida.id) {
-    <ion-card class="item-card">
+    <ion-card #fila class="item-card">
       <div class="item-card-body">
         <div class="item-icon item-icon--sol">
           <ion-icon name="sunny-outline"></ion-icon>
@@ -50,7 +50,7 @@
     <span class="section-count">{{ cenas().length }}</span>
   </div>
   @for (comida of cenas(); track comida.id) {
-    <ion-card class="item-card">
+    <ion-card #fila class="item-card">
       <div class="item-card-body">
         <div class="item-icon item-icon--luna">
           <ion-icon name="moon-outline"></ion-icon>
