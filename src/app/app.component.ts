@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { IonApp, IonRouterOutlet } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
@@ -21,6 +21,7 @@ import {
   checkmarkSharp,
   timeOutline,
   arrowBackOutline,
+  archiveOutline,
 } from 'ionicons/icons';
 import { StorageService } from './services/storage.service';
 import { AppUpdateService } from './services/app-update.service';
@@ -31,10 +32,10 @@ import { AppUpdateService } from './services/app-update.service';
   imports: [IonApp, IonRouterOutlet],
 })
 export class AppComponent implements OnInit {
-  constructor(
-    private storage: StorageService,
-    private appUpdate: AppUpdateService
-  ) {
+  private storage = inject(StorageService);
+  private appUpdate = inject(AppUpdateService);
+
+  constructor() {
     addIcons({
       calendarOutline,
       restaurantOutline,
@@ -55,6 +56,7 @@ export class AppComponent implements OnInit {
       checkmarkSharp,
       timeOutline,
       arrowBackOutline,
+      archiveOutline,
     });
   }
 

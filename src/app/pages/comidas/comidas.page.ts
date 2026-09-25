@@ -1,14 +1,15 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import {
   IonContent,
   IonIcon,
   IonFab,
   IonFabButton,
   IonCard,
+  IonButton,
   ModalController,
   ActionSheetController,
 } from '@ionic/angular';
-import { Comida } from '../../models/comida.model';
+import { Comida, TipoComida } from '../../models/comida.model';
 import { uuid } from '../../utils/uuid';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
@@ -24,18 +25,17 @@ import { EditarItemModal } from '../../shared/editar-item.modal';
     IonFab,
     IonFabButton,
     IonCard,
+    IonButton,
   ],
 })
 export class ComidasPage implements OnInit {
+  private storage = inject(StorageService);
+  private alert = inject(AlertService);
+  private modalCtrl = inject(ModalController);
+  private actionSheetCtrl = inject(ActionSheetController);
+
   desayunos = signal<Comida[]>([]);
   cenas = signal<Comida[]>([]);
-
-  constructor(
-    private storage: StorageService,
-    private alert: AlertService,
-    private modalCtrl: ModalController,
-    private actionSheetCtrl: ActionSheetController,
-  ) { }
 
   async ngOnInit(): Promise<void> {
     await this.cargar();
@@ -49,6 +49,11 @@ export class ComidasPage implements OnInit {
     const data = await this.storage.getComidas();
     this.desayunos.set(data.filter((c) => c.tipo === 'desayuno'));
     this.cenas.set(data.filter((c) => c.tipo === 'cena'));
+  }
+
+  async restaurarBase(tipo: TipoComida): Promise<void> {
+    await this.storage.restaurarComidasBase(tipo);
+    await this.cargar();
   }
 
   async agregar(tipo: 'desayuno' | 'cena'): Promise<void> {

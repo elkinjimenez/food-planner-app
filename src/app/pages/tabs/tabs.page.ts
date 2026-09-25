@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { IonTabs, IonTabBar, IonTabButton, IonIcon } from '@ionic/angular';
 import { Router } from '@angular/router';
 
@@ -9,10 +9,10 @@ import { Router } from '@angular/router';
   imports: [IonTabs, IonTabBar, IonTabButton, IonIcon],
 })
 export class TabsPage {
+  private router = inject(Router);
+
   private tabs = ['semana', 'comidas', 'mercado', 'nevera', 'agua'];
   private isDragging = false;
-
-  constructor(private router: Router) {}
 
   onTouchStart(event: TouchEvent): void {
     this.isDragging = true;

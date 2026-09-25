@@ -2,12 +2,13 @@
   <div class="page-title-row">
     <span class="page-title">Nevera</span>
     @if (productos().length > 0) {
-      <ion-button fill="clear" size="small" class="btn-vaciar" (click)="vaciarNevera()">
+      <ion-button fill="clear" size="small" class="page-title-btn" (click)="vaciarNevera()">
         <ion-icon name="trash-outline" slot="start"></ion-icon>
         <ion-label>Vaciar nevera</ion-label>
       </ion-button>
     }
   </div>
+  <p class="page-subtitle">Lo que tienes en casa y cuándo vence</p>
   @if (productos().length === 0) {
     <div class="empty-state">
       <ion-icon name="snow-outline"></ion-icon>
@@ -33,7 +34,7 @@
           ></div>
           <div class="item-info">
             <span class="item-nombre">{{ producto.nombre }}</span>
-            <span class="item-sub">Vence: {{ producto.fechaVencimiento }}</span>
+            <span class="item-sub">Vence: {{ producto.fechaVencimiento | fecha }}</span>
           </div>
           <ion-badge
             [color]="estado(producto.fechaVencimiento) === 'verde' ? 'success' : estado(producto.fechaVencimiento) === 'amarillo' ? 'warning' : 'danger'"

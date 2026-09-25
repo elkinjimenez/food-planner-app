@@ -1,11 +1,12 @@
 <ion-content>
   <div class="page-title-row">
     <span class="page-title">Mercado</span>
-    <ion-button fill="clear" size="small" class="btn-desmarcar" (click)="desmarcarTodo()">
+    <ion-button fill="clear" size="small" class="page-title-btn" (click)="desmarcarTodo()">
       <ion-icon name="refresh-outline" slot="start"></ion-icon>
       <ion-label>Desmarcar todo</ion-label>
     </ion-button>
   </div>
+  <p class="page-subtitle">Lo que marques como comprado pasa a la nevera</p>
   <!-- Supermercado -->
   <div class="section-header">
     <div class="section-icon section-icon--cart">
@@ -30,6 +31,14 @@
         </button>
       </div>
     </ion-card>
+  } @empty {
+    <div class="seccion-vacia">
+      <span>Tu lista de supermercado está vacía</span>
+      <ion-button fill="clear" size="small" (click)="restaurarBase('supermercado')">
+        <ion-icon name="refresh-outline" slot="start"></ion-icon>
+        Cargar lista base
+      </ion-button>
+    </div>
   }
 
   <!-- Fruver -->
@@ -56,6 +65,14 @@
         </button>
       </div>
     </ion-card>
+  } @empty {
+    <div class="seccion-vacia">
+      <span>Tu lista de fruver está vacía</span>
+      <ion-button fill="clear" size="small" (click)="restaurarBase('fruver')">
+        <ion-icon name="refresh-outline" slot="start"></ion-icon>
+        Cargar lista base
+      </ion-button>
+    </div>
   }
 </ion-content>
 

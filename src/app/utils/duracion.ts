@@ -1,3 +1,5 @@
+import { fechaHoy, sumarDias } from './fecha';
+
 /**
  * Parsea un texto de duración aproximada y devuelve los días estimados de vencimiento.
  * Ejemplos que soporta:
@@ -51,7 +53,5 @@ export function parsearDuracionADias(duracion: string): number {
  * Calcula la fecha de vencimiento (YYYY-MM-DD) sumando días a hoy.
  */
 export function calcularFechaVencimiento(dias: number): string {
-  const fecha = new Date();
-  fecha.setDate(fecha.getDate() + dias);
-  return fecha.toISOString().split('T')[0];
+  return sumarDias(fechaHoy(), dias);
 }

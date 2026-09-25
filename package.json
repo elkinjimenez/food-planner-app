@@ -1,8 +1,7 @@
 {
   "name": "Food-Planner-App",
   "version": "0.0.1",
-  "author": "Ionic Framework",
-  "homepage": "https://ionicframework.com/",
+  "author": "Elkin Omar Jimenez Garcia",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -45,5 +44,5 @@
     "typescript-eslint": "^8.61.0",
     "vitest": "~4.0.18"
   },
-  "description": "An Ionic project"
+  "description": "Planeador semanal de comidas, lista de mercado, nevera e hidratación"
 }

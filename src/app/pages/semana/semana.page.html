@@ -1,23 +1,27 @@
 <ion-content>
   <div class="page-title-row">
     <div class="page-title">Planeador Semanal</div>
-    <ion-button fill="clear" size="small" class="btn-desmarcar" (click)="refresh()">
-      <ion-icon name="refresh-outline" slot="start"></ion-icon>
-    </ion-button>
+    <div class="page-title-acciones">
+      <app-respaldo-boton></app-respaldo-boton>
+      <ion-button fill="clear" size="small" class="page-title-btn" aria-label="Recargar" (click)="refresh()">
+        <ion-icon name="refresh-outline" slot="start"></ion-icon>
+      </ion-button>
+    </div>
   </div>
+  <p class="page-subtitle">Desayunos y cenas de los próximos 7 días</p>
 
-  @for (dia of dias; track dia) {
-    <ion-card class="dia-card" [class.dia-card--hoy]="dia === hoy()">
+  @for (d of semana(); track d.dia) {
+    <ion-card class="dia-card" [class.dia-card--hoy]="d.dia === hoy()">
       <div class="dia-header">
-        <div class="dia-numero" [class.dia-numero--hoy]="dia === hoy()">{{ diaNumero(dia) }}</div>
+        <div class="dia-numero" [class.dia-numero--hoy]="d.dia === hoy()">{{ diaNumero(d.dia) }}</div>
         <div class="dia-titulo">
-          <span class="dia-nombre">{{ diasLabel[dia] }}</span>
-          @if (dia === hoy()) {
+          <span class="dia-nombre">{{ diasLabel[d.dia] }}</span>
+          @if (d.dia === hoy()) {
             <span class="dia-hoy-badge">Hoy</span>
           }
         </div>
-        @if (plan()[dia].desayuno || plan()[dia].cena) {
-          @if (diaConfirmado(dia)) {
+        @if (d.desayuno || d.cena) {
+          @if (d.confirmado) {
             <span class="dia-badge dia-badge--confirmado">Confirmado</span>
           } @else {
             <span class="dia-badge">Planificado</span>
@@ -27,39 +31,39 @@
         }
       </div>
       <div class="comidas-row">
-        <div class="comida-slot" [class.comida-slot--filled]="!!plan()[dia].desayuno" [class.comida-slot--confirmed]="plan()[dia].desayunoConfirmado" (click)="asignarComida(dia, 'desayuno')">
+        <div class="comida-slot" [class.comida-slot--filled]="!!d.desayuno" [class.comida-slot--confirmed]="d.desayunoConfirmado" (click)="asignarComida(d.dia, 'desayuno')">
           <div class="comida-icon comida-icon--desayuno">
             <ion-icon name="sunny-outline"></ion-icon>
           </div>
           <div class="comida-info">
             <span class="comida-label">Desayuno</span>
-            @if (plan()[dia].desayuno) {
-              <span class="comida-nombre">{{ plan()[dia].desayuno!.nombre }}</span>
+            @if (d.desayuno) {
+              <span class="comida-nombre">{{ d.desayuno.nombre }}</span>
             } @else {
               <span class="comida-placeholder">Toca para asignar</span>
             }
           </div>
-          @if (plan()[dia].desayuno) {
-            <button class="confirm-btn" [class.confirm-btn--active]="plan()[dia].desayunoConfirmado" (click)="toggleConfirmar(dia, 'desayuno'); $event.stopPropagation()">
-              <ion-icon [name]="plan()[dia].desayunoConfirmado ? 'checkmark-sharp' : 'time-outline'"></ion-icon>
+          @if (d.desayuno) {
+            <button class="confirm-btn" [class.confirm-btn--active]="d.desayunoConfirmado" (click)="toggleConfirmar(d.dia, 'desayuno'); $event.stopPropagation()">
+              <ion-icon [name]="d.desayunoConfirmado ? 'checkmark-sharp' : 'time-outline'"></ion-icon>
             </button>
           }
         </div>
-        <div class="comida-slot" [class.comida-slot--filled]="!!plan()[dia].cena" [class.comida-slot--confirmed]="plan()[dia].cenaConfirmado" (click)="asignarComida(dia, 'cena')">
+        <div class="comida-slot" [class.comida-slot--filled]="!!d.cena" [class.comida-slot--confirmed]="d.cenaConfirmado" (click)="asignarComida(d.dia, 'cena')">
           <div class="comida-icon comida-icon--cena">
             <ion-icon name="moon-outline"></ion-icon>
           </div>
           <div class="comida-info">
             <span class="comida-label">Cena</span>
-            @if (plan()[dia].cena) {
-              <span class="comida-nombre">{{ plan()[dia].cena!.nombre }}</span>
+            @if (d.cena) {
+              <span class="comida-nombre">{{ d.cena.nombre }}</span>
             } @else {
               <span class="comida-placeholder">Toca para asignar</span>
             }
           </div>
-          @if (plan()[dia].cena) {
-            <button class="confirm-btn" [class.confirm-btn--active]="plan()[dia].cenaConfirmado" (click)="toggleConfirmar(dia, 'cena'); $event.stopPropagation()">
-              <ion-icon [name]="plan()[dia].cenaConfirmado ? 'checkmark-sharp' : 'time-outline'"></ion-icon>
+          @if (d.cena) {
+            <button class="confirm-btn" [class.confirm-btn--active]="d.cenaConfirmado" (click)="toggleConfirmar(d.dia, 'cena'); $event.stopPropagation()">
+              <ion-icon [name]="d.cenaConfirmado ? 'checkmark-sharp' : 'time-outline'"></ion-icon>
             </button>
           }
         </div>

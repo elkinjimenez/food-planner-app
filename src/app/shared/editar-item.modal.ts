@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   IonHeader,
@@ -10,8 +10,15 @@ import {
   IonButton,
   IonButtons,
   IonInput,
+  IonDatetime,
+  IonDatetimeButton,
+  IonModal,
   ModalController,
 } from '@ionic/angular';
+import { FORMATO_FECHA, LOCALE_FECHAS, fechaHoy } from '../utils/fecha';
+
+// ion-datetime-button busca su ion-datetime por id en el documento: cada modal usa uno propio
+let contadorFechas = 0;
 
 export interface EditarItemConfig {
   titulo: string;
@@ -51,24 +58,42 @@ export interface EditarItemConfig {
             [(ngModel)]="value1"
             [placeholder]="config.label1"
             fill="solid"
+            autocapitalize="sentences"
+            autocorrect="on"
+            [spellcheck]="true"
           ></ion-input>
         </div>
         <div class="form-field">
           <span class="field-label">{{ config.label2 }}</span>
           @if (config.input2Type === 'date') {
-            <ion-input
-              class="field-input"
-              type="date"
-              [(ngModel)]="value2"
-              [placeholder]="config.label2"
-              fill="solid"
-            ></ion-input>
+            <!-- Selector de Ionic y no <input type="date">: el nativo muestra la fecha en el
+                 formato del sistema (p. ej. mes/día/año) y no se puede cambiar. -->
+            <ion-datetime-button class="field-fecha" [datetime]="idFecha"></ion-datetime-button>
+            <ion-modal [keepContentsMounted]="true">
+              <ng-template>
+                <ion-datetime
+                  [id]="idFecha"
+                  presentation="date"
+                  [locale]="localeFechas"
+                  [formatOptions]="formatoDatetime"
+                  [firstDayOfWeek]="1"
+                  [value]="value2"
+                  (ionChange)="fechaElegida($event.detail.value)"
+                  [showDefaultButtons]="true"
+                  doneText="Listo"
+                  cancelText="Cancelar"
+                ></ion-datetime>
+              </ng-template>
+            </ion-modal>
           } @else {
             <ion-input
               class="field-input"
               [(ngModel)]="value2"
               [placeholder]="config.label2"
               fill="solid"
+              autocapitalize="sentences"
+              autocorrect="on"
+              [spellcheck]="true"
             ></ion-input>
           }
         </div>
@@ -97,6 +122,9 @@ export interface EditarItemConfig {
     }
 
     .modal-title {
+      /* En iOS, ion-title va en position absolute sobre toda la barra; static lo
+         deja después del botón de volver, igual que en Android. */
+      position: static;
       padding-inline-start: 0;
     }
 
@@ -147,6 +175,23 @@ export interface EditarItemConfig {
       --padding-start: 14px;
       --padding-end: 14px;
       --color: #1a2e35;
+      font-size: 1rem;
+    }
+
+    /* Botón del selector de fecha, con el mismo aspecto que los inputs */
+    .field-fecha {
+      justify-content: flex-start;
+    }
+
+    .field-fecha::part(native) {
+      width: 100%;
+      min-height: 44px;
+      margin: 0;
+      padding: 0 14px;
+      text-align: start;
+      background: #ffffff;
+      border-radius: 12px;
+      color: #1a2e35;
       font-size: 1rem;
     }
 
@@ -201,19 +246,38 @@ export interface EditarItemConfig {
     IonButton,
     IonButtons,
     IonInput,
+    IonDatetime,
+    IonDatetimeButton,
+    IonModal,
   ],
 })
-export class EditarItemModal {
+export class EditarItemModal implements OnInit {
+  private modalCtrl = inject(ModalController);
+
   @Input() config!: EditarItemConfig;
 
   value1 = '';
   value2 = '';
 
-  constructor(private modalCtrl: ModalController) {}
+  readonly idFecha = `fecha-${++contadorFechas}`;
+  readonly localeFechas = LOCALE_FECHAS;
+  readonly formatoDatetime = { date: FORMATO_FECHA };
 
   ngOnInit(): void {
     this.value1 = this.config.value1;
     this.value2 = this.config.value2;
+    // El selector siempre muestra una fecha (hoy, si no hay ninguna): se usa esa misma
+    // para que lo que se ve sea lo que se guarda.
+    if (this.config.input2Type === 'date' && !this.value2) {
+      this.value2 = fechaHoy();
+    }
+  }
+
+  /** El selector puede entregar la fecha con hora (YYYY-MM-DDTHH:mm:ss): se guarda solo YYYY-MM-DD. */
+  fechaElegida(valor: string | string[] | null | undefined): void {
+    if (typeof valor === 'string') {
+      this.value2 = valor.slice(0, 10);
+    }
   }
 
   puedeGuardar(): boolean {

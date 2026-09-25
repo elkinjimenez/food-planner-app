@@ -68,16 +68,6 @@ ion-fab-button {
   margin-bottom: 88px;
 }
 
-/* Page title inline (no header) */
-.page-title {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #1a2e22;
-  padding: 20px 18px 4px;
-  margin: 0;
-  display: block;
-}
-
 /* Toolbar con sombra suave */
 ion-header ion-toolbar {
   --border-width: 0;
@@ -244,21 +234,66 @@ ion-note {
   opacity: 0.4;
 }
 
-// ===== Page title row =====
+// ===== Encabezado de cada vista: título + descripción =====
+// Todas las vistas usan la misma estructura:
+//   <div class="page-title-row"> <div class="page-title">…</div> [botón .page-title-btn] </div>
+//   <p class="page-subtitle">…</p>
+// Los altos son fijos para que el encabezado mida lo mismo en todas, tenga o no botón.
 .page-title-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   padding: 20px 0px 4px 18px;
 }
 
-.page-title-row .page-title {
+.page-title {
   font-size: 1.5rem;
   font-weight: 800;
+  line-height: 32px;
   color: #1a2e22;
-  padding: 0;
   margin: 0;
-  display: block;
+}
+
+/* Varios botones a la derecha del título */
+.page-title-acciones {
+  display: flex;
+}
+
+/* Botón de acción a la derecha del título (recargar, desmarcar todo, vaciar nevera) */
+.page-title-btn {
+  --color: var(--ion-color-medium);
+  --padding-top: 0;
+  --padding-bottom: 0;
+  height: 32px;
+  margin: 0;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Sección sin elementos, con la opción de restaurar su lista base */
+.seccion-vacia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin: 4px 14px 8px;
+  padding: 14px 16px 6px;
+  border: 1.5px dashed #d5ded8;
+  border-radius: 14px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #7a8b99;
+}
+
+/* Descripción corta debajo del título de cada vista */
+.page-subtitle {
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 20px;
+  color: #7a8b99;
+  padding: 0 18px 8px;
+  margin: 0;
 }
 
 .float-icon {

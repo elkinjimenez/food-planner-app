@@ -1,5 +1,8 @@
 <ion-content>
-  <div class="page-title">Mis Comidas</div>
+  <div class="page-title-row">
+    <div class="page-title">Mis Comidas</div>
+  </div>
+  <p class="page-subtitle">Tus opciones para planear la semana</p>
   <!-- Desayunos -->
   <div class="section-header">
     <div class="section-icon section-icon--sol">
@@ -28,6 +31,14 @@
         </button>
       </div>
     </ion-card>
+  } @empty {
+    <div class="seccion-vacia">
+      <span>No tienes desayunos</span>
+      <ion-button fill="clear" size="small" (click)="restaurarBase('desayuno')">
+        <ion-icon name="refresh-outline" slot="start"></ion-icon>
+        Cargar desayunos base
+      </ion-button>
+    </div>
   }
 
   <!-- Cenas -->
@@ -58,6 +69,14 @@
         </button>
       </div>
     </ion-card>
+  } @empty {
+    <div class="seccion-vacia">
+      <span>No tienes cenas</span>
+      <ion-button fill="clear" size="small" (click)="restaurarBase('cena')">
+        <ion-icon name="refresh-outline" slot="start"></ion-icon>
+        Cargar cenas base
+      </ion-button>
+    </div>
   }
 </ion-content>
 

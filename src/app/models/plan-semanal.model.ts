@@ -1,5 +1,3 @@
-import { Comida } from './comida.model';
-
 export type DiaSemana =
   | 'lunes'
   | 'martes'
@@ -9,9 +7,11 @@ export type DiaSemana =
   | 'sabado'
   | 'domingo';
 
+// Solo el id de la comida: el nombre se busca en "Mis Comidas", así editarla o borrarla
+// se refleja en el plan.
 export interface ComidaDelDia {
-  desayuno?: Comida;
-  cena?: Comida;
+  desayunoId?: string;
+  cenaId?: string;
   desayunoConfirmado?: boolean;
   cenaConfirmado?: boolean;
 }

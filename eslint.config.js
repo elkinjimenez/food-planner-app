@@ -11,7 +11,7 @@ module.exports = tseslint.config(
     rules: {
       "@angular-eslint/component-class-suffix": [
         "error",
-        { suffixes: ["Page", "Component"] },
+        { suffixes: ["Page", "Component", "Modal"] },
       ],
       "@angular-eslint/component-selector": [
         "error",

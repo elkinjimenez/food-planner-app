@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import {
   IonContent,
   IonCheckbox,
@@ -11,7 +11,7 @@ import {
   ModalController,
   ActionSheetController,
 } from '@ionic/angular';
-import { ItemMercado } from '../../models/item-mercado.model';
+import { CategoriaMercado, ItemMercado } from '../../models/item-mercado.model';
 import { ProductoNevera } from '../../models/producto-nevera.model';
 import { uuid } from '../../utils/uuid';
 import { parsearDuracionADias, calcularFechaVencimiento } from '../../utils/duracion';
@@ -35,16 +35,14 @@ import { EditarItemModal } from '../../shared/editar-item.modal';
   ],
 })
 export class MercadoPage implements OnInit {
+  private storage = inject(StorageService);
+  private alert = inject(AlertService);
+  private modalCtrl = inject(ModalController);
+  private actionSheetCtrl = inject(ActionSheetController);
+
   items = signal<ItemMercado[]>([]);
   supermercado = signal<ItemMercado[]>([]);
   fruver = signal<ItemMercado[]>([]);
-
-  constructor(
-    private storage: StorageService,
-    private alert: AlertService,
-    private modalCtrl: ModalController,
-    private actionSheetCtrl: ActionSheetController,
-  ) { }
 
   async ngOnInit(): Promise<void> {
     await this.cargar();
@@ -76,14 +74,14 @@ export class MercadoPage implements OnInit {
         id: uuid(),
         nombre: item.nombre,
         fechaVencimiento: calcularFechaVencimiento(dias),
+        itemMercadoId: item.id,
       };
       await this.storage.saveProductoNevera(producto);
     } else {
-      // Al desmarcar, eliminar de nevera si existe un producto con el mismo nombre
+      // Al desmarcar, quitar de la nevera lo que salió de este ítem
       const nevera = await this.storage.getNevera();
-      const existente = nevera.find((p) => p.nombre === item.nombre);
-      if (existente) {
-        await this.storage.deleteProductoNevera(existente.id);
+      for (const producto of nevera.filter((p) => p.itemMercadoId === item.id)) {
+        await this.storage.deleteProductoNevera(producto.id);
       }
     }
 
@@ -108,17 +106,24 @@ export class MercadoPage implements OnInit {
   }
 
   private async ejecutarDesmarcarTodo(): Promise<void> {
+    const comprados = this.items().filter((i) => i.comprado);
+    const ids = new Set(comprados.map((i) => i.id));
+    // Quitar de la nevera lo que salió de los ítems comprados
     const nevera = await this.storage.getNevera();
-    for (const item of this.items()) {
-      if (item.comprado) {
-        const existente = nevera.find((p) => p.nombre === item.nombre);
-        if (existente) {
-          await this.storage.deleteProductoNevera(existente.id);
-        }
+    for (const producto of nevera) {
+      if (producto.itemMercadoId && ids.has(producto.itemMercadoId)) {
+        await this.storage.deleteProductoNevera(producto.id);
       }
+    }
+    for (const item of comprados) {
       item.comprado = false;
       await this.storage.saveItemMercado(item);
     }
+    await this.cargar();
+  }
+
+  async restaurarBase(categoria: CategoriaMercado): Promise<void> {
+    await this.storage.restaurarMercadoBase(categoria);
     await this.cargar();
   }
 

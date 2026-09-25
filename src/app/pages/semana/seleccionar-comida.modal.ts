@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonButtons, IonNote, ModalController } from '@ionic/angular';
 import { Comida } from '../../models/comida.model';
 
@@ -58,6 +58,9 @@ import { Comida } from '../../models/comida.model';
     }
 
     .modal-title {
+      /* En iOS, ion-title va en position absolute sobre toda la barra; static lo
+         deja después del botón de volver, igual que en Android. */
+      position: static;
       padding-inline-start: 0;
     }
 
@@ -172,11 +175,11 @@ import { Comida } from '../../models/comida.model';
   imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonButtons, IonNote],
 })
 export class SeleccionarComidaModal {
+  private modalCtrl = inject(ModalController);
+
   @Input() titulo = 'Elegir';
   @Input() comidas: Comida[] = [];
   @Input() seleccionadaId: string | null = null;
-
-  constructor(private modalCtrl: ModalController) {}
 
   isSeleccionada(comida: Comida): boolean {
     return comida.id === this.seleccionadaId;

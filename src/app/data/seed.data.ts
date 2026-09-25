@@ -1,6 +1,5 @@
-import { Comida } from '../models/comida.model';
-import { ItemMercado } from '../models/item-mercado.model';
-import { ProductoNevera } from '../models/producto-nevera.model';
+import { Comida, TipoComida } from '../models/comida.model';
+import { CategoriaMercado, ItemMercado } from '../models/item-mercado.model';
 import { PlanSemanal } from '../models/plan-semanal.model';
 import { uuid } from '../utils/uuid';
 
@@ -23,10 +22,14 @@ const cenasSeed: Omit<Comida, 'id' | 'tipo'>[] = [
   { nombre: 'Pan + mantequilla + arequipe + leche' },
 ];
 
-export const comidasSeed: Comida[] = [
-  ...desayunosSeed.map((c) => ({ ...c, id: uuid(), tipo: 'desayuno' as const })),
-  ...cenasSeed.map((c) => ({ ...c, id: uuid(), tipo: 'cena' as const })),
-];
+/** Comidas base, con ids nuevos en cada llamada (al crear la base de datos o al restaurarlas). */
+export function comidasBase(tipo?: TipoComida): Comida[] {
+  const todas: Comida[] = [
+    ...desayunosSeed.map((c) => ({ ...c, id: uuid(), tipo: 'desayuno' as const })),
+    ...cenasSeed.map((c) => ({ ...c, id: uuid(), tipo: 'cena' as const })),
+  ];
+  return tipo ? todas.filter((c) => c.tipo === tipo) : todas;
+}
 
 // ===== Mercado precargado =====
 const supermercadoSeed: Omit<ItemMercado, 'id' | 'categoria' | 'comprado'>[] = [
@@ -67,23 +70,24 @@ const fruverSeed: Omit<ItemMercado, 'id' | 'categoria' | 'comprado'>[] = [
   { nombre: 'Cebolla', duracion: '2-3 semanas en nevera' },
 ];
 
-export const mercadoSeed: ItemMercado[] = [
-  ...supermercadoSeed.map((i) => ({
-    ...i,
-    id: uuid(),
-    categoria: 'supermercado' as const,
-    comprado: false,
-  })),
-  ...fruverSeed.map((i) => ({
-    ...i,
-    id: uuid(),
-    categoria: 'fruver' as const,
-    comprado: false,
-  })),
-];
-
-// ===== Nevera vacía por defecto =====
-export const neveraSeed: ProductoNevera[] = [];
+/** Lista de mercado base, con ids nuevos en cada llamada. */
+export function mercadoBase(categoria?: CategoriaMercado): ItemMercado[] {
+  const todos: ItemMercado[] = [
+    ...supermercadoSeed.map((i) => ({
+      ...i,
+      id: uuid(),
+      categoria: 'supermercado' as const,
+      comprado: false,
+    })),
+    ...fruverSeed.map((i) => ({
+      ...i,
+      id: uuid(),
+      categoria: 'fruver' as const,
+      comprado: false,
+    })),
+  ];
+  return categoria ? todos.filter((i) => i.categoria === categoria) : todos;
+}
 
 // ===== Plan semanal vacío por defecto =====
 export function planSemanalVacio(): PlanSemanal {
