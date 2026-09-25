@@ -1,0 +1,1 @@
+import{Wt as tx,_ as ne}from"./main-7OXPQH3Y.js";var n=(()=>{let r=class r{transform(e){return ne(e)}};r.ɵfac=function(o){return new(o||r)},r.ɵpipe=tx({name:`fecha`,type:r,pure:!0});return r})();export{n as t};
