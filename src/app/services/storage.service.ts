@@ -2,14 +2,10 @@ import { Injectable } from '@angular/core';
 import { Comida, TipoComida } from '../models/comida.model';
 import { CategoriaMercado, ItemMercado } from '../models/item-mercado.model';
 import { ProductoNevera } from '../models/producto-nevera.model';
-import { ComidaDelDia, DIAS_SEMANA, DiaSemana, PlanSemanal } from '../models/plan-semanal.model';
+import { ComidaDelDia, DIAS_SEMANA, DiaSemana, PlanSemanal, semanaDesde } from '../models/plan-semanal.model';
+import { RegistroAgua, RegistroComidas } from '../models/historial.model';
 import { comidasBase, mercadoBase, planSemanalVacio } from '../data/seed.data';
 import { fechaHoy } from '../utils/fecha';
-
-export interface RegistroAgua {
-  fecha: string; // YYYY-MM-DD
-  vasos: number;
-}
 
 /** Todos los datos de la app: lo que se exporta e importa en un respaldo. */
 export interface DatosApp {
@@ -17,22 +13,46 @@ export interface DatosApp {
   mercado: ItemMercado[];
   nevera: ProductoNevera[];
   plan: PlanSemanal;
-  agua: RegistroAgua | null;
+  comidasConfirmadas: RegistroComidas[];
+  agua: RegistroAgua[];
 }
 
 const DB_NAME = 'food-planner-db';
-const DB_VERSION = 2;
+// v3: historial por fecha (comidas confirmadas y agua de cada día)
+const DB_VERSION = 3;
 const STORE_COMIDAS = 'comidas';
 const STORE_MERCADO = 'mercado';
 const STORE_NEVERA = 'nevera';
 const STORE_PLAN = 'plan';
-const STORE_AGUA = 'agua';
+const STORE_CONFIRMADAS = 'comidasConfirmadas'; // un registro por fecha (llave: fecha)
+const STORE_AGUA = 'agua'; // un registro por fecha (llave: fecha)
 const PLAN_KEY = 'semana';
-const AGUA_KEY = 'hoy';
+// Hasta v2 solo se guardaba el agua del día en curso, siempre en esta llave
+const AGUA_KEY_ANTERIOR = 'hoy';
 
-type StoreName = typeof STORE_COMIDAS | typeof STORE_MERCADO | typeof STORE_NEVERA | typeof STORE_PLAN | typeof STORE_AGUA;
+type StoreName =
+  | typeof STORE_COMIDAS
+  | typeof STORE_MERCADO
+  | typeof STORE_NEVERA
+  | typeof STORE_PLAN
+  | typeof STORE_CONFIRMADAS
+  | typeof STORE_AGUA;
 
-const TODOS_LOS_STORES: StoreName[] = [STORE_COMIDAS, STORE_MERCADO, STORE_NEVERA, STORE_PLAN, STORE_AGUA];
+const TODOS_LOS_STORES: StoreName[] = [
+  STORE_COMIDAS,
+  STORE_MERCADO,
+  STORE_NEVERA,
+  STORE_PLAN,
+  STORE_CONFIRMADAS,
+  STORE_AGUA,
+];
+
+const TIPOS_COMIDA: TipoComida[] = ['desayuno', 'cena'];
+
+/** Fechas entre `desde` y `hasta` (incluidas); sin `hasta`, de `desde` en adelante. */
+function rangoDeFechas(desde: string, hasta?: string): IDBKeyRange {
+  return hasta ? IDBKeyRange.bound(desde, hasta) : IDBKeyRange.lowerBound(desde);
+}
 
 @Injectable({ providedIn: 'root' })
 export class StorageService {
@@ -50,9 +70,19 @@ export class StorageService {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
       request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
+      request.onsuccess = () => {
+        const db = request.result;
+        // Otra pestaña abrió una versión más nueva de la app que actualiza la base de datos:
+        // se cierra esta conexión para no bloquearla y se recarga con la versión nueva.
+        db.onversionchange = () => {
+          db.close();
+          location.reload();
+        };
+        resolve(db);
+      };
       request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
+        const db = request.result;
+        const tx = request.transaction!;
         if (!db.objectStoreNames.contains(STORE_COMIDAS)) {
           db.createObjectStore(STORE_COMIDAS, { keyPath: 'id' });
         }
@@ -65,15 +95,19 @@ export class StorageService {
         if (!db.objectStoreNames.contains(STORE_PLAN)) {
           db.createObjectStore(STORE_PLAN);
         }
+        if (!db.objectStoreNames.contains(STORE_CONFIRMADAS)) {
+          db.createObjectStore(STORE_CONFIRMADAS, { keyPath: 'fecha' });
+        }
         if (!db.objectStoreNames.contains(STORE_AGUA)) {
           db.createObjectStore(STORE_AGUA);
         }
-        // Datos base solo al crear la base de datos (primera vez que se abre la app).
-        // Si después una lista queda vacía, su pantalla ofrece restaurarla.
         if (event.oldVersion === 0) {
-          const tx = request.transaction!;
+          // Datos base solo al crear la base de datos (primera vez que se abre la app).
+          // Si después una lista queda vacía, su pantalla ofrece restaurarla.
           comidasBase().forEach((c) => tx.objectStore(STORE_COMIDAS).put(c));
           mercadoBase().forEach((i) => tx.objectStore(STORE_MERCADO).put(i));
+        } else if (event.oldVersion < 3) {
+          migrarAHistorialPorFecha(tx);
         }
       };
     });
@@ -90,11 +124,11 @@ export class StorageService {
   }
 
   // ===== Operaciones genéricas =====
-  private async getAll<T>(store: StoreName): Promise<T[]> {
+  private async getAll<T>(store: StoreName, rango?: IDBKeyRange): Promise<T[]> {
     const db = await this.getDb();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(store, 'readonly');
-      const req = tx.objectStore(store).getAll();
+      const req = tx.objectStore(store).getAll(rango);
       req.onsuccess = () => resolve(req.result as T[]);
       req.onerror = () => reject(req.error);
     });
@@ -158,12 +192,20 @@ export class StorageService {
   saveComida(comida: Comida): Promise<void> {
     return this.put(STORE_COMIDAS, comida);
   }
-  /** Borra la comida y la quita de los días del plan donde estaba asignada. */
+  /**
+   * Borra la comida y la quita del plan y de lo confirmado de hoy en adelante.
+   * Lo confirmado en días pasados se queda en el historial, con su nombre.
+   */
   async deleteComida(id: string): Promise<void> {
     await this.delete(STORE_COMIDAS, id);
     const plan = await this.getPlan();
     if (quitarComidaDelPlan(plan, id)) {
       await this.putPlan(plan);
+    }
+    for (const registro of await this.getComidasConfirmadas(fechaHoy())) {
+      if (quitarComidaConfirmada(registro, id)) {
+        await this.saveComidasConfirmadas(registro);
+      }
     }
   }
   /** Vuelve a cargar las comidas base de un tipo (se ofrece cuando la sección queda vacía). */
@@ -205,29 +247,41 @@ export class StorageService {
     return this.putWithKey(STORE_PLAN, PLAN_KEY, plan);
   }
 
-  // ===== Hidratación =====
-  async getAgua(): Promise<RegistroAgua> {
-    const hoy = fechaHoy();
-    const reg = await this.getByKey<RegistroAgua>(STORE_AGUA, AGUA_KEY);
-    if (!reg || reg.fecha !== hoy) {
-      return { fecha: hoy, vasos: 0 };
-    }
-    return reg;
+  // ===== Comidas confirmadas (historial por fecha) =====
+  /** Lo confirmado entre dos fechas (incluidas); sin `hasta`, de `desde` en adelante. */
+  getComidasConfirmadas(desde: string, hasta?: string): Promise<RegistroComidas[]> {
+    return this.getAll<RegistroComidas>(STORE_CONFIRMADAS, rangoDeFechas(desde, hasta));
+  }
+  /** Guarda lo confirmado en una fecha; si ya no queda nada confirmado, borra el registro. */
+  saveComidasConfirmadas(registro: RegistroComidas): Promise<void> {
+    return registro.desayuno || registro.cena
+      ? this.put(STORE_CONFIRMADAS, registro)
+      : this.delete(STORE_CONFIRMADAS, registro.fecha);
+  }
+
+  // ===== Hidratación (historial por fecha) =====
+  async getAgua(fecha: string): Promise<RegistroAgua> {
+    return (await this.getByKey<RegistroAgua>(STORE_AGUA, fecha)) ?? { fecha, vasos: 0 };
   }
   putAgua(registro: RegistroAgua): Promise<void> {
-    return this.putWithKey(STORE_AGUA, AGUA_KEY, registro);
+    return this.putWithKey(STORE_AGUA, registro.fecha, registro);
+  }
+  /** El agua de cada día entre dos fechas (incluidas); los días sin registro no vienen. */
+  getAguaEntre(desde: string, hasta: string): Promise<RegistroAgua[]> {
+    return this.getAll<RegistroAgua>(STORE_AGUA, rangoDeFechas(desde, hasta));
   }
 
   // ===== Respaldo =====
   async exportarDatos(): Promise<DatosApp> {
-    const [comidas, mercado, nevera, plan, agua] = await Promise.all([
+    const [comidas, mercado, nevera, plan, comidasConfirmadas, agua] = await Promise.all([
       this.getComidas(),
       this.getMercado(),
       this.getNevera(),
       this.getPlan(),
-      this.getByKey<RegistroAgua>(STORE_AGUA, AGUA_KEY),
+      this.getAll<RegistroComidas>(STORE_CONFIRMADAS),
+      this.getAll<RegistroAgua>(STORE_AGUA),
     ]);
-    return { comidas, mercado, nevera, plan, agua: agua ?? null };
+    return { comidas, mercado, nevera, plan, comidasConfirmadas, agua };
   }
 
   /** Reemplaza todos los datos en una sola transacción: si algo falla, no cambia nada. */
@@ -244,9 +298,8 @@ export class StorageService {
         datos.mercado.forEach((i) => tx.objectStore(STORE_MERCADO).put(i));
         datos.nevera.forEach((p) => tx.objectStore(STORE_NEVERA).put(p));
         tx.objectStore(STORE_PLAN).put(normalizarPlan(datos.plan), PLAN_KEY);
-        if (datos.agua) {
-          tx.objectStore(STORE_AGUA).put(datos.agua, AGUA_KEY);
-        }
+        datos.comidasConfirmadas.forEach((r) => tx.objectStore(STORE_CONFIRMADAS).put(r));
+        datos.agua.forEach((r) => tx.objectStore(STORE_AGUA).put(r, r.fecha));
       } catch (error) {
         tx.abort();
         reject(error);
@@ -255,28 +308,84 @@ export class StorageService {
   }
 }
 
-// Planes guardados antes de manejar ids tenían la comida completa ({ desayuno: Comida }).
-type ComidaDelDiaGuardada = ComidaDelDia & { desayuno?: { id?: string }; cena?: { id?: string } };
+/**
+ * v3: el historial pasa a guardarse por fecha. Hasta v2 el agua ocupaba una sola llave
+ * ('hoy') y la confirmación era una marca en el plan, por día de la semana y sin fecha.
+ * Corre dentro de la actualización de la base de datos: termina antes de cualquier lectura.
+ */
+function migrarAHistorialPorFecha(tx: IDBTransaction): void {
+  const agua = tx.objectStore(STORE_AGUA);
+  const reqAgua = agua.get(AGUA_KEY_ANTERIOR);
+  reqAgua.onsuccess = () => {
+    const registro = reqAgua.result as RegistroAgua | undefined;
+    if (registro?.fecha) {
+      agua.put(registro, registro.fecha);
+    }
+    agua.delete(AGUA_KEY_ANTERIOR);
+  };
+
+  const plan = tx.objectStore(STORE_PLAN);
+  const reqPlan = plan.get(PLAN_KEY);
+  const reqComidas = tx.objectStore(STORE_COMIDAS).getAll();
+  // Las peticiones de una transacción terminan en orden: aquí el plan ya se leyó
+  reqComidas.onsuccess = () => {
+    if (!reqPlan.result) return;
+    const confirmadas = confirmacionesDelPlanAnterior(reqPlan.result, reqComidas.result as Comida[], fechaHoy());
+    confirmadas.forEach((r) => tx.objectStore(STORE_CONFIRMADAS).put(r));
+    plan.put(normalizarPlan(reqPlan.result), PLAN_KEY);
+  };
+}
+
+// Plan como pudo quedar guardado: con la comida completa ({ desayuno: Comida }, antes de
+// manejar ids) y con la confirmación como marca del día de la semana (hasta v2).
+type ComidaDelDiaGuardada = ComidaDelDia & {
+  desayuno?: { id?: string };
+  cena?: { id?: string };
+  desayunoConfirmado?: boolean;
+  cenaConfirmado?: boolean;
+};
+type PlanGuardado = Partial<Record<DiaSemana, ComidaDelDiaGuardada>>;
+
+function idGuardado(dia: ComidaDelDiaGuardada | undefined, tipo: TipoComida): string | undefined {
+  return dia?.[`${tipo}Id` as const] ?? dia?.[tipo]?.id;
+}
 
 /** Lleva un plan guardado (formato actual o anterior) a solo ids, con los 7 días. */
 export function normalizarPlan(guardado: unknown): PlanSemanal {
+  const origen = (guardado ?? {}) as PlanGuardado;
   const plan = planSemanalVacio();
-  const origen = (guardado ?? {}) as Partial<Record<DiaSemana, ComidaDelDiaGuardada>>;
   for (const dia of DIAS_SEMANA) {
-    const d = origen[dia];
-    if (!d) continue;
-    const desayunoId = d.desayunoId ?? d.desayuno?.id;
-    const cenaId = d.cenaId ?? d.cena?.id;
-    if (desayunoId) {
-      plan[dia].desayunoId = desayunoId;
-      if (d.desayunoConfirmado) plan[dia].desayunoConfirmado = true;
-    }
-    if (cenaId) {
-      plan[dia].cenaId = cenaId;
-      if (d.cenaConfirmado) plan[dia].cenaConfirmado = true;
-    }
+    const desayunoId = idGuardado(origen[dia], 'desayuno');
+    const cenaId = idGuardado(origen[dia], 'cena');
+    if (desayunoId) plan[dia].desayunoId = desayunoId;
+    if (cenaId) plan[dia].cenaId = cenaId;
   }
   return plan;
+}
+
+/**
+ * Pasa al historial la confirmación de un plan guardado hasta v2 (marca por día de la semana,
+ * sin fecha): cada día confirmado toma la fecha que tiene en la semana que se ve hoy (Semana
+ * empieza hoy), así lo confirmado se sigue viendo igual. Como antes, solo cuenta si la comida
+ * aún existe.
+ */
+export function confirmacionesDelPlanAnterior(guardado: unknown, comidas: Comida[], hoy: string): RegistroComidas[] {
+  const origen = (guardado ?? {}) as PlanGuardado;
+  const porId = new Map(comidas.map((c) => [c.id, c]));
+  const registros: RegistroComidas[] = [];
+  for (const { fecha, dia } of semanaDesde(hoy)) {
+    const registro: RegistroComidas = { fecha };
+    for (const tipo of TIPOS_COMIDA) {
+      const comida = porId.get(idGuardado(origen[dia], tipo) ?? '');
+      if (comida && origen[dia]?.[`${tipo}Confirmado` as const]) {
+        registro[tipo] = { id: comida.id, nombre: comida.nombre };
+      }
+    }
+    if (registro.desayuno || registro.cena) {
+      registros.push(registro);
+    }
+  }
+  return registros;
 }
 
 /** Quita una comida de todos los días del plan. Devuelve true si cambió algo. */
@@ -286,12 +395,22 @@ export function quitarComidaDelPlan(plan: PlanSemanal, comidaId: string): boolea
     const d = plan[dia];
     if (d.desayunoId === comidaId) {
       delete d.desayunoId;
-      delete d.desayunoConfirmado;
       cambio = true;
     }
     if (d.cenaId === comidaId) {
       delete d.cenaId;
-      delete d.cenaConfirmado;
+      cambio = true;
+    }
+  }
+  return cambio;
+}
+
+/** Quita una comida de lo confirmado en una fecha. Devuelve true si cambió algo. */
+export function quitarComidaConfirmada(registro: RegistroComidas, comidaId: string): boolean {
+  let cambio = false;
+  for (const tipo of TIPOS_COMIDA) {
+    if (registro[tipo]?.id === comidaId) {
+      delete registro[tipo];
       cambio = true;
     }
   }

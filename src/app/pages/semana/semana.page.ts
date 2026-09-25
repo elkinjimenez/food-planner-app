@@ -1,4 +1,5 @@
 import { Component, HostListener, OnInit, computed, signal, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import {
   IonContent,
   IonIcon,
@@ -8,22 +9,37 @@ import {
   ModalController,
   ToastController,
   IonButton,
+  IonRouterLink,
 } from '@ionic/angular';
-import { Comida } from '../../models/comida.model';
+import { Comida, TipoComida } from '../../models/comida.model';
 import {
   PlanSemanal,
   DiaSemana,
   DIAS_SEMANA,
   DIAS_LABEL,
   ComidaDelDia,
+  semanaDesde,
 } from '../../models/plan-semanal.model';
+import { ComidaConfirmada, RegistroComidas } from '../../models/historial.model';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
 import { AppUpdateService } from '../../services/app-update.service';
-import { diaSemanaHoy } from '../../utils/fecha';
+import { fechaHoy, sumarDias } from '../../utils/fecha';
 import { planSemanalVacio } from '../../data/seed.data';
 import { SeleccionarComidaModal } from './seleccionar-comida.modal';
 import { RespaldoBotonComponent } from '../../shared/respaldo-boton.component';
+
+/** Una tarjeta de la semana: una fecha, con lo planificado y lo confirmado para ese día. */
+interface DiaVista {
+  fecha: string;
+  dia: DiaSemana;
+  esHoy: boolean;
+  desayuno?: ComidaConfirmada;
+  cena?: ComidaConfirmada;
+  desayunoConfirmado: boolean;
+  cenaConfirmado: boolean;
+  confirmado: boolean;
+}
 
 @Component({
   selector: 'app-semana',
@@ -36,6 +52,8 @@ import { RespaldoBotonComponent } from '../../shared/respaldo-boton.component';
     IonFab,
     IonFabButton,
     IonButton,
+    RouterLink,
+    IonRouterLink,
     RespaldoBotonComponent,
   ],
 })
@@ -48,24 +66,35 @@ export class SemanaPage implements OnInit {
 
   plan = signal<PlanSemanal>(planSemanalVacio());
   comidas = signal<Comida[]>([]);
-  hoy = signal<DiaSemana>(this.calcularHoy());
-  // La semana se muestra empezando por el día de hoy
-  dias = computed(() => {
-    const indice = DIAS_SEMANA.indexOf(this.hoy());
-    return [...DIAS_SEMANA.slice(indice), ...DIAS_SEMANA.slice(0, indice)];
-  });
-  // Lo que muestra cada tarjeta. El plan guarda ids y las comidas se buscan en "Mis Comidas":
-  // si una se edita se ve el nombre nuevo, y si se borra el día queda sin asignar.
-  semana = computed(() => {
+  // Lo confirmado en las fechas que están en pantalla (historial), por fecha
+  confirmadas = signal(new Map<string, RegistroComidas>());
+  hoy = signal(fechaHoy());
+  // La semana empieza hoy y cada tarjeta es una fecha. El plan dice qué comida toca ese día
+  // de la semana (y se repite cada semana); lo confirmado se guarda por fecha, así la
+  // confirmación de este lunes queda en el historial y no pasa al lunes siguiente.
+  // El plan guarda ids y las comidas se buscan en "Mis Comidas": si una se edita se ve el
+  // nombre nuevo, y si se borra el día queda sin asignar.
+  semana = computed<DiaVista[]>(() => {
     const plan = this.plan();
+    const confirmadas = this.confirmadas();
     const porId = new Map(this.comidas().map((c) => [c.id, c]));
-    return this.dias().map((dia) => {
-      const desayuno = plan[dia].desayunoId ? porId.get(plan[dia].desayunoId) : undefined;
-      const cena = plan[dia].cenaId ? porId.get(plan[dia].cenaId) : undefined;
-      const desayunoConfirmado = !!desayuno && !!plan[dia].desayunoConfirmado;
-      const cenaConfirmado = !!cena && !!plan[dia].cenaConfirmado;
+    return semanaDesde(this.hoy()).map(({ fecha, dia }, i) => {
+      const registro = confirmadas.get(fecha);
+      // Lo confirmado para esa fecha manda sobre lo planificado
+      const comidaDe = (tipo: TipoComida): ComidaConfirmada | undefined => {
+        const confirmada = registro?.[tipo];
+        if (confirmada) return porId.get(confirmada.id) ?? confirmada;
+        const id = plan[dia][`${tipo}Id` as const];
+        return id ? porId.get(id) : undefined;
+      };
+      const desayuno = comidaDe('desayuno');
+      const cena = comidaDe('cena');
+      const desayunoConfirmado = !!registro?.desayuno;
+      const cenaConfirmado = !!registro?.cena;
       return {
+        fecha,
         dia,
+        esHoy: i === 0,
         desayuno,
         cena,
         desayunoConfirmado,
@@ -82,22 +111,28 @@ export class SemanaPage implements OnInit {
   }
 
   async ionViewWillEnter(): Promise<void> {
-    this.hoy.set(this.calcularHoy());
     await this.cargar();
   }
 
   // En iOS la PWA se reanuda sin recargarse: al volver a la app el día pudo haber cambiado
   @HostListener('document:visibilitychange')
-  alVolverALaApp(): void {
+  async alVolverALaApp(): Promise<void> {
     if (document.visibilityState === 'visible') {
-      this.hoy.set(this.calcularHoy());
+      await this.cargar();
     }
   }
 
   private async cargar(): Promise<void> {
-    const [plan, comidas] = await Promise.all([this.storage.getPlan(), this.storage.getComidas()]);
+    const hoy = fechaHoy();
+    const [plan, comidas, confirmadas] = await Promise.all([
+      this.storage.getPlan(),
+      this.storage.getComidas(),
+      this.storage.getComidasConfirmadas(hoy, sumarDias(hoy, 6)),
+    ]);
+    this.hoy.set(hoy);
     this.plan.set(plan);
     this.comidas.set(comidas);
+    this.confirmadas.set(new Map(confirmadas.map((r) => [r.fecha, r])));
 
     // Si no hay nada planificado y hay comidas disponibles, generar semana aleatoria
     const tieneAlgo = this.semana().some((d) => d.desayuno || d.cena);
@@ -110,12 +145,7 @@ export class SemanaPage implements OnInit {
     return DIAS_SEMANA.indexOf(dia) + 1;
   }
 
-  private calcularHoy(): DiaSemana {
-    const d = diaSemanaHoy(); // 0=domingo, 1=lunes, ..., 6=sabado
-    return DIAS_SEMANA[d === 0 ? 6 : d - 1];
-  }
-
-  async asignarComida(dia: DiaSemana, tipo: 'desayuno' | 'cena'): Promise<void> {
+  async asignarComida(d: DiaVista, tipo: TipoComida): Promise<void> {
     const opciones = this.comidas().filter((c) => c.tipo === tipo);
     if (opciones.length === 0) {
       await this.alert.aviso('No hay comidas', `Agrega ${tipo}s en la pestaña Comidas.`);
@@ -127,7 +157,7 @@ export class SemanaPage implements OnInit {
       componentProps: {
         titulo: `Elegir ${tipo}`,
         comidas: opciones,
-        seleccionadaId: this.plan()[dia][tipo === 'desayuno' ? 'desayunoId' : 'cenaId'] ?? null,
+        seleccionadaId: d[tipo]?.id ?? null,
       },
       presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
       showBackdrop: false,
@@ -139,21 +169,23 @@ export class SemanaPage implements OnInit {
     if (!data) return;
 
     const nuevoPlan = { ...this.plan() };
-    const keyId = tipo === 'desayuno' ? 'desayunoId' : 'cenaId';
-    const keyConfirmado = tipo === 'desayuno' ? 'desayunoConfirmado' : 'cenaConfirmado';
-    nuevoPlan[dia] = { ...nuevoPlan[dia], [keyId]: data.id, [keyConfirmado]: false };
+    nuevoPlan[d.dia] = { ...nuevoPlan[d.dia], [`${tipo}Id` as const]: data.id };
     this.plan.set(nuevoPlan);
     await this.storage.putPlan(nuevoPlan);
+
+    // Si ese día tenía otra comida confirmada, la nueva queda pendiente de confirmar
+    const confirmado = tipo === 'desayuno' ? d.desayunoConfirmado : d.cenaConfirmado;
+    if (confirmado && d[tipo]?.id !== data.id) {
+      await this.guardarConfirmacion(d.fecha, tipo, undefined);
+    }
   }
 
-  async toggleConfirmar(dia: DiaSemana, tipo: 'desayuno' | 'cena'): Promise<void> {
-    const keyConfirmado = tipo === 'desayuno' ? 'desayunoConfirmado' : 'cenaConfirmado';
-    const nuevoPlan = { ...this.plan() };
-    nuevoPlan[dia] = { ...nuevoPlan[dia], [keyConfirmado]: !nuevoPlan[dia][keyConfirmado] };
-    this.plan.set(nuevoPlan);
-    await this.storage.putPlan(nuevoPlan);
+  async toggleConfirmar(d: DiaVista, tipo: TipoComida): Promise<void> {
+    const comida = d[tipo];
+    if (!comida) return;
+    const confirmado = !(tipo === 'desayuno' ? d.desayunoConfirmado : d.cenaConfirmado);
+    await this.guardarConfirmacion(d.fecha, tipo, confirmado ? { id: comida.id, nombre: comida.nombre } : undefined);
 
-    const confirmado = nuevoPlan[dia][keyConfirmado];
     const toast = await this.toastCtrl.create({
       message: confirmado
         ? `${tipo.charAt(0).toUpperCase()}${tipo.slice(1)} ${tipo == 'desayuno' ? 'confirmado' : 'confirmada'}`
@@ -164,6 +196,18 @@ export class SemanaPage implements OnInit {
       cssClass: ['toast-confirmacion', confirmado ? 'toast-ok' : 'toast-pendiente'],
     });
     await toast.present();
+  }
+
+  /** Confirma (con la comida) o deja pendiente (sin ella) el desayuno o la cena de una fecha. */
+  private async guardarConfirmacion(fecha: string, tipo: TipoComida, comida: ComidaConfirmada | undefined): Promise<void> {
+    const registro: RegistroComidas = { ...this.confirmadas().get(fecha), fecha };
+    if (comida) {
+      registro[tipo] = comida;
+    } else {
+      delete registro[tipo];
+    }
+    this.confirmadas.set(new Map(this.confirmadas()).set(fecha, registro));
+    await this.storage.saveComidasConfirmadas(registro);
   }
 
   async generarSemanaAleatoria(): Promise<void> {
@@ -180,7 +224,6 @@ export class SemanaPage implements OnInit {
       // Mantener desayuno si ya está confirmado
       if (d.desayunoConfirmado) {
         comidaDia.desayunoId = d.desayuno!.id;
-        comidaDia.desayunoConfirmado = true;
       } else if (desayunos.length > 0) {
         comidaDia.desayunoId = desayunos[Math.floor(Math.random() * desayunos.length)].id;
       }
@@ -188,7 +231,6 @@ export class SemanaPage implements OnInit {
       // Mantener cena si ya está confirmada
       if (d.cenaConfirmado) {
         comidaDia.cenaId = d.cena!.id;
-        comidaDia.cenaConfirmado = true;
       } else if (cenas.length > 0) {
         comidaDia.cenaId = cenas[Math.floor(Math.random() * cenas.length)].id;
       }

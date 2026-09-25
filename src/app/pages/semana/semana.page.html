@@ -3,6 +3,9 @@
     <div class="page-title">Planeador Semanal</div>
     <div class="page-title-acciones">
       <app-respaldo-boton></app-respaldo-boton>
+      <ion-button fill="clear" size="small" class="page-title-btn" aria-label="Historial" routerLink="/historial">
+        <ion-icon name="calendar-number-outline" slot="start"></ion-icon>
+      </ion-button>
       <ion-button fill="clear" size="small" class="page-title-btn" aria-label="Recargar" (click)="refresh()">
         <ion-icon name="refresh-outline" slot="start"></ion-icon>
       </ion-button>
@@ -10,13 +13,13 @@
   </div>
   <p class="page-subtitle">Desayunos y cenas de los próximos 7 días</p>
 
-  @for (d of semana(); track d.dia) {
-    <ion-card class="dia-card" [class.dia-card--hoy]="d.dia === hoy()">
+  @for (d of semana(); track d.fecha) {
+    <ion-card class="dia-card" [class.dia-card--hoy]="d.esHoy">
       <div class="dia-header">
-        <div class="dia-numero" [class.dia-numero--hoy]="d.dia === hoy()">{{ diaNumero(d.dia) }}</div>
+        <div class="dia-numero" [class.dia-numero--hoy]="d.esHoy">{{ diaNumero(d.dia) }}</div>
         <div class="dia-titulo">
           <span class="dia-nombre">{{ diasLabel[d.dia] }}</span>
-          @if (d.dia === hoy()) {
+          @if (d.esHoy) {
             <span class="dia-hoy-badge">Hoy</span>
           }
         </div>
@@ -31,7 +34,7 @@
         }
       </div>
       <div class="comidas-row">
-        <div class="comida-slot" [class.comida-slot--filled]="!!d.desayuno" [class.comida-slot--confirmed]="d.desayunoConfirmado" (click)="asignarComida(d.dia, 'desayuno')">
+        <div class="comida-slot" [class.comida-slot--filled]="!!d.desayuno" [class.comida-slot--confirmed]="d.desayunoConfirmado" (click)="asignarComida(d, 'desayuno')">
           <div class="comida-icon comida-icon--desayuno">
             <ion-icon name="sunny-outline"></ion-icon>
           </div>
@@ -44,12 +47,12 @@
             }
           </div>
           @if (d.desayuno) {
-            <button class="confirm-btn" [class.confirm-btn--active]="d.desayunoConfirmado" (click)="toggleConfirmar(d.dia, 'desayuno'); $event.stopPropagation()">
+            <button class="confirm-btn" [class.confirm-btn--active]="d.desayunoConfirmado" (click)="toggleConfirmar(d, 'desayuno'); $event.stopPropagation()">
               <ion-icon [name]="d.desayunoConfirmado ? 'checkmark-sharp' : 'time-outline'"></ion-icon>
             </button>
           }
         </div>
-        <div class="comida-slot" [class.comida-slot--filled]="!!d.cena" [class.comida-slot--confirmed]="d.cenaConfirmado" (click)="asignarComida(d.dia, 'cena')">
+        <div class="comida-slot" [class.comida-slot--filled]="!!d.cena" [class.comida-slot--confirmed]="d.cenaConfirmado" (click)="asignarComida(d, 'cena')">
           <div class="comida-icon comida-icon--cena">
             <ion-icon name="moon-outline"></ion-icon>
           </div>
@@ -62,7 +65,7 @@
             }
           </div>
           @if (d.cena) {
-            <button class="confirm-btn" [class.confirm-btn--active]="d.cenaConfirmado" (click)="toggleConfirmar(d.dia, 'cena'); $event.stopPropagation()">
+            <button class="confirm-btn" [class.confirm-btn--active]="d.cenaConfirmado" (click)="toggleConfirmar(d, 'cena'); $event.stopPropagation()">
               <ion-icon [name]="d.cenaConfirmado ? 'checkmark-sharp' : 'time-outline'"></ion-icon>
             </button>
           }

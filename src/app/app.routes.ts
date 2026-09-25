@@ -1,6 +1,11 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
+  // Fuera de las pestañas: se abre desde Semana o Hidratación y se vuelve con la flecha
+  {
+    path: 'historial',
+    loadComponent: () => import('./pages/historial/historial.page').then((m) => m.HistorialPage),
+  },
   {
     path: '',
     loadComponent: () => import('./pages/tabs/tabs.page').then((m) => m.TabsPage),

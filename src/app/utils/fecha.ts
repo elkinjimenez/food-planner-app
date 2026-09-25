@@ -13,9 +13,9 @@ export function fechaHoy(): string {
   return `${d.getFullYear()}-${mes}-${dia}`;
 }
 
-/** Día de la semana de hoy: 0 = domingo, 1 = lunes, …, 6 = sábado. */
-export function diaSemanaHoy(): number {
-  return new Date().getDay();
+/** Día de la semana de una fecha YYYY-MM-DD: 0 = domingo, 1 = lunes, …, 6 = sábado. */
+export function diaSemana(fecha: string): number {
+  return aFechaUtc(fecha).getUTCDay();
 }
 
 /** Suma (o resta, si es negativo) días a una fecha YYYY-MM-DD. */
@@ -42,6 +42,48 @@ const formatoTexto = new Intl.DateTimeFormat(LOCALE_FECHAS, { ...FORMATO_FECHA, 
 export function formatearFecha(fecha: string): string {
   const d = aFechaUtc(fecha);
   return isNaN(d.getTime()) ? fecha : formatoTexto.format(d);
+}
+
+// ===== Meses, para el calendario del historial =====
+// Un mes se representa con la fecha de su primer día (YYYY-MM-01).
+
+/** Primer día del mes de una fecha YYYY-MM-DD. */
+export function inicioDeMes(fecha: string): string {
+  return fecha.slice(0, 8) + '01';
+}
+
+/** Primer día del mes que queda `meses` meses después (o antes, si es negativo). */
+export function sumarMeses(fecha: string, meses: number): string {
+  const d = aFechaUtc(inicioDeMes(fecha));
+  d.setUTCMonth(d.getUTCMonth() + meses);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Último día del mes de una fecha YYYY-MM-DD. */
+export function finDeMes(fecha: string): string {
+  return sumarDias(sumarMeses(fecha, 1), -1);
+}
+
+/**
+ * Casillas del calendario de un mes, con semanas de lunes a domingo: las fechas del mes,
+ * precedidas de null en las casillas vacías antes del día 1.
+ */
+export function casillasDelMes(fecha: string): (string | null)[] {
+  const inicio = inicioDeMes(fecha);
+  const fin = finDeMes(inicio);
+  const casillas: (string | null)[] = Array((diaSemana(inicio) + 6) % 7).fill(null); // lunes = 0
+  for (let f = inicio; f <= fin; f = sumarDias(f, 1)) {
+    casillas.push(f);
+  }
+  return casillas;
+}
+
+const formatoMes = new Intl.DateTimeFormat(LOCALE_FECHAS, { month: 'long', timeZone: 'UTC' });
+
+/** Nombre del mes con su año, p. ej. "Septiembre 2026". */
+export function nombreMes(fecha: string): string {
+  const mes = formatoMes.format(aFechaUtc(inicioDeMes(fecha)));
+  return `${mes.charAt(0).toUpperCase()}${mes.slice(1)} ${fecha.slice(0, 4)}`;
 }
 
 // Las fechas YYYY-MM-DD son días del calendario, no instantes: se operan como

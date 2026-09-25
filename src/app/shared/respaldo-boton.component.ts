@@ -29,7 +29,7 @@ export class RespaldoBotonComponent {
     const archivo = await this.respaldo.crearArchivo();
     const opciones = await this.actionSheetCtrl.create({
       header: 'Respaldo de tus datos',
-      subHeader: 'Guarda una copia de comidas, mercado, nevera y plan, o recupera una anterior',
+      subHeader: 'Guarda una copia de comidas, mercado, nevera, plan e historial, o recupera una anterior',
       cssClass: 'action-sheet-centered',
       buttons: [
         { text: 'Exportar respaldo', handler: () => void this.exportar(archivo) },
@@ -62,10 +62,12 @@ export class RespaldoBotonComponent {
       return;
     }
 
+    const diasHistorial = new Set([...datos.comidasConfirmadas, ...datos.agua].map((r) => r.fecha)).size;
     const confirmar = await this.alert.confirm(
       '¿Importar respaldo?',
       `Se reemplazarán todos tus datos actuales por los del respaldo: ${datos.comidas.length} comidas, ` +
-        `${datos.mercado.length} ítems de mercado y ${datos.nevera.length} productos de nevera.`,
+        `${datos.mercado.length} ítems de mercado, ${datos.nevera.length} productos de nevera ` +
+        `y ${diasHistorial} días de historial.`,
     );
     if (!confirmar) return;
 

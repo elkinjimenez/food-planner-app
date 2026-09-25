@@ -1,10 +1,12 @@
 import { Injectable, inject } from '@angular/core';
-import { DatosApp, StorageService } from './storage.service';
+import { DatosApp, StorageService, confirmacionesDelPlanAnterior } from './storage.service';
+import { RegistroAgua } from '../models/historial.model';
 import { fechaHoy } from '../utils/fecha';
 
 const APP = 'food-planner';
 // Subir la versión si cambia el formato de los datos; validarRespaldo() decide qué versiones acepta.
-const VERSION_RESPALDO = 1;
+// v2: historial por fecha (comidasConfirmadas y el agua de cada día).
+const VERSION_RESPALDO = 2;
 
 /** Contenido del archivo .json de respaldo. */
 interface ArchivoRespaldo {
@@ -77,8 +79,14 @@ export class RespaldoService {
   }
 }
 
-/** Comprueba que el JSON sea un respaldo de esta app y devuelve sus datos. */
-export function validarRespaldo(json: unknown): DatosApp {
+// v1: el agua era solo la del día en curso y lo confirmado iba en el plan, sin fecha
+type DatosV1 = Omit<DatosApp, 'comidasConfirmadas' | 'agua'> & { agua?: RegistroAgua | null };
+
+/**
+ * Comprueba que el JSON sea un respaldo de esta app y devuelve sus datos en el formato actual.
+ * Lo confirmado en un respaldo v1 queda en las fechas de la semana que empieza `hoy`.
+ */
+export function validarRespaldo(json: unknown, hoy = fechaHoy()): DatosApp {
   const respaldo = json as Partial<ArchivoRespaldo> | null;
   if (!respaldo || respaldo.app !== APP || typeof respaldo.version !== 'number' || !respaldo.datos) {
     throw new Error('El archivo no es un respaldo de Food Planner.');
@@ -86,11 +94,29 @@ export function validarRespaldo(json: unknown): DatosApp {
   if (respaldo.version > VERSION_RESPALDO) {
     throw new Error('El respaldo es de una versión más nueva de la app. Actualízala e inténtalo de nuevo.');
   }
-  const { comidas, mercado, nevera, plan, agua } = respaldo.datos;
-  const listaConIds = (lista: unknown) =>
-    Array.isArray(lista) && lista.every((x) => typeof (x as { id?: unknown })?.id === 'string');
-  if (!listaConIds(comidas) || !listaConIds(mercado) || !listaConIds(nevera) || typeof plan !== 'object' || !plan) {
-    throw new Error('El respaldo está incompleto o dañado.');
+  const incompleto = new Error('El respaldo está incompleto o dañado.');
+  const { comidas, mercado, nevera, plan } = respaldo.datos;
+  const listaCon = (llave: 'id' | 'fecha', lista: unknown) =>
+    Array.isArray(lista) && lista.every((x) => typeof (x as Record<string, unknown> | null)?.[llave] === 'string');
+  if (!listaCon('id', comidas) || !listaCon('id', mercado) || !listaCon('id', nevera) || typeof plan !== 'object' || !plan) {
+    throw incompleto;
   }
-  return { comidas, mercado, nevera, plan, agua: agua ?? null };
+
+  if (respaldo.version === 1) {
+    const { agua } = respaldo.datos as unknown as DatosV1;
+    return {
+      comidas,
+      mercado,
+      nevera,
+      plan,
+      comidasConfirmadas: confirmacionesDelPlanAnterior(plan, comidas, hoy),
+      agua: typeof agua?.fecha === 'string' ? [agua] : [],
+    };
+  }
+
+  const { comidasConfirmadas, agua } = respaldo.datos;
+  if (!listaCon('fecha', comidasConfirmadas) || !listaCon('fecha', agua)) {
+    throw incompleto;
+  }
+  return { comidas, mercado, nevera, plan, comidasConfirmadas, agua };
 }

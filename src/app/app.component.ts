@@ -22,6 +22,9 @@ import {
   timeOutline,
   arrowBackOutline,
   archiveOutline,
+  calendarNumberOutline,
+  chevronBackOutline,
+  chevronForwardOutline,
 } from 'ionicons/icons';
 import { StorageService } from './services/storage.service';
 import { AppUpdateService } from './services/app-update.service';
@@ -57,6 +60,9 @@ export class AppComponent implements OnInit {
       timeOutline,
       arrowBackOutline,
       archiveOutline,
+      calendarNumberOutline,
+      chevronBackOutline,
+      chevronForwardOutline,
     });
   }
 

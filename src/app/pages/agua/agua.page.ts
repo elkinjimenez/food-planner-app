@@ -1,20 +1,21 @@
 import { Component, HostListener, OnInit, signal, computed, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import {
   IonContent,
   IonButton,
   IonIcon,
   IonLabel,
+  IonRouterLink,
 } from '@ionic/angular';
-import { StorageService, RegistroAgua } from '../../services/storage.service';
+import { StorageService } from '../../services/storage.service';
+import { META_VASOS, RegistroAgua } from '../../models/historial.model';
 import { fechaHoy } from '../../utils/fecha';
-
-const META_VASOS = 8;
 
 @Component({
   selector: 'app-agua',
   templateUrl: 'agua.page.html',
   styleUrls: ['agua.page.scss'],
-  imports: [IonContent, IonButton, IonIcon, IonLabel],
+  imports: [IonContent, IonButton, IonIcon, IonLabel, RouterLink, IonRouterLink],
 })
 export class AguaPage implements OnInit {
   private storage = inject(StorageService);
@@ -41,7 +42,8 @@ export class AguaPage implements OnInit {
   }
 
   private async cargar(): Promise<void> {
-    const reg = await this.storage.getAgua();
+    // Cada día tiene su propio registro: los días anteriores quedan en el historial
+    const reg = await this.storage.getAgua(fechaHoy());
     this.registro.set(reg);
   }
 

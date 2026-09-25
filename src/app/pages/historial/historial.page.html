@@ -1,0 +1,119 @@
+<ion-content>
+  <div class="page-title-row">
+    <div class="titulo-con-volver">
+      <ion-back-button defaultHref="/semana" text="" icon="arrow-back-outline" aria-label="Volver"></ion-back-button>
+      <div class="page-title">Historial</div>
+    </div>
+  </div>
+  <p class="page-subtitle">Tus comidas confirmadas y el agua de cada día</p>
+
+  <ion-card class="calendario">
+    <div class="calendario-mes">
+      <ion-button fill="clear" size="small" aria-label="Mes anterior" (click)="cambiarMes(-1)">
+        <ion-icon name="chevron-back-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+      <span class="calendario-titulo">{{ titulo() }}</span>
+      <ion-button fill="clear" size="small" aria-label="Mes siguiente" [disabled]="!haySiguiente()" (click)="cambiarMes(1)">
+        <ion-icon name="chevron-forward-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </div>
+
+    <div class="calendario-grid">
+      @for (nombre of diasSemana; track $index) {
+        <span class="calendario-cabecera">{{ nombre }}</span>
+      }
+      @for (d of casillas(); track $index) {
+        @if (d) {
+          <button
+            type="button"
+            class="casilla"
+            [class.casilla--hoy]="d.fecha === hoy()"
+            [class.casilla--elegida]="d.fecha === seleccionada()"
+            [class.casilla--futura]="d.fecha > hoy()"
+            [attr.aria-label]="d.fecha | fecha"
+            (click)="seleccionada.set(d.fecha)"
+          >
+            <span class="casilla-numero">{{ d.numero }}</span>
+            <span class="casilla-marcas">
+              @if (d.desayuno) {
+                <i class="marca marca--desayuno"></i>
+              }
+              @if (d.cena) {
+                <i class="marca marca--cena"></i>
+              }
+              @if (d.vasos > 0) {
+                <i class="marca marca--agua" [class.marca--parcial]="d.vasos < meta"></i>
+              }
+            </span>
+          </button>
+        } @else {
+          <span></span>
+        }
+      }
+    </div>
+
+    <!-- Leyenda y resumen del mes -->
+    <div class="resumen">
+      <div class="resumen-item">
+        <span class="resumen-valor"><i class="marca marca--desayuno"></i>{{ resumen().desayunos }}</span>
+        <span class="resumen-label">Desayunos</span>
+      </div>
+      <div class="resumen-item">
+        <span class="resumen-valor"><i class="marca marca--cena"></i>{{ resumen().cenas }}</span>
+        <span class="resumen-label">Cenas</span>
+      </div>
+      <div class="resumen-item">
+        <span class="resumen-valor"><i class="marca marca--agua"></i>{{ resumen().metaAgua }}</span>
+        <span class="resumen-label">Días con meta de agua</span>
+      </div>
+    </div>
+  </ion-card>
+
+  <ion-card class="detalle">
+    <div class="detalle-titulo">
+      <span>{{ detalleTitulo() }}</span>
+      @if (detalle().fecha === hoy()) {
+        <span class="detalle-hoy">Hoy</span>
+      }
+    </div>
+
+    <div class="detalle-fila">
+      <div class="detalle-icono detalle-icono--desayuno"><ion-icon name="sunny-outline"></ion-icon></div>
+      <div class="detalle-info">
+        <span class="detalle-label">Desayuno</span>
+        @if (detalle().desayuno; as nombre) {
+          <span class="detalle-valor">{{ nombre }}</span>
+        } @else {
+          <span class="detalle-vacio">Sin confirmar</span>
+        }
+      </div>
+    </div>
+
+    <div class="detalle-fila">
+      <div class="detalle-icono detalle-icono--cena"><ion-icon name="moon-outline"></ion-icon></div>
+      <div class="detalle-info">
+        <span class="detalle-label">Cena</span>
+        @if (detalle().cena; as nombre) {
+          <span class="detalle-valor">{{ nombre }}</span>
+        } @else {
+          <span class="detalle-vacio">Sin confirmar</span>
+        }
+      </div>
+    </div>
+
+    <div class="detalle-fila">
+      <div class="detalle-icono detalle-icono--agua"><ion-icon name="water-outline"></ion-icon></div>
+      <div class="detalle-info">
+        <span class="detalle-label">Agua</span>
+        @if (detalle().vasos > 0) {
+          <span class="detalle-valor">{{ detalle().vasos }} de {{ meta }} vasos</span>
+        } @else {
+          <span class="detalle-vacio">Sin registro</span>
+        }
+      </div>
+      @if (detalle().vasos >= meta) {
+        <ion-icon name="checkmark-circle" class="detalle-meta" aria-label="Meta cumplida"></ion-icon>
+      }
+    </div>
+  </ion-card>
+</ion-content>
