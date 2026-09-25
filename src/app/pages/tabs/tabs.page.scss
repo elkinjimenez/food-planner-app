@@ -11,9 +11,10 @@ ion-tab-bar {
 
   contain: none;
   border-radius: 50px;
-  margin: 0 12px 12px;
-  padding: 6px 8px;
-  height: 64px;
+  // Por encima del indicador de inicio de iOS, para no tocar un tab al hacer el gesto de salir
+  margin: 0 16px calc(var(--ion-safe-area-bottom, 0px)  - 14px);
+  padding: 4px 8px;
+  height: 56px;
   box-shadow:
     0 4px 24px rgba(0, 0, 0, 0.08),
     0 1px 4px rgba(0, 0, 0, 0.06);

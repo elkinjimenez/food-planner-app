@@ -1,0 +1,15 @@
+# Saltos de línea LF siempre, también en Windows.
+# El service worker de Angular calcula hashes sobre los archivos del build;
+# si git los convierte al publicar (CRLF -> LF), el hash no coincide y el
+# iPhone rechaza la actualización.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary

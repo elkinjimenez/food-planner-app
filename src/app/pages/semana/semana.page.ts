@@ -20,6 +20,7 @@ import {
 } from '../../models/plan-semanal.model';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
+import { AppUpdateService } from '../../services/app-update.service';
 import { SeleccionarComidaModal } from './seleccionar-comida.modal';
 
 @Component({
@@ -46,6 +47,7 @@ export class SemanaPage implements OnInit {
     private alert: AlertService,
     private modalCtrl: ModalController,
     private toastCtrl: ToastController,
+    private appUpdate: AppUpdateService,
   ) { }
 
   async ngOnInit(): Promise<void> {
@@ -140,9 +142,8 @@ export class SemanaPage implements OnInit {
         : `${tipo.charAt(0).toUpperCase()}${tipo.slice(1)} aún pendiente`,
       duration: 1800,
       position: 'top',
-      color: confirmado ? 'success' : 'medium',
       icon: confirmado ? 'checkmark-circle' : 'time-outline',
-      cssClass: 'toast-confirmacion',
+      cssClass: ['toast-confirmacion', confirmado ? 'toast-ok' : 'toast-pendiente'],
     });
     await toast.present();
   }
@@ -190,6 +191,6 @@ export class SemanaPage implements OnInit {
   }
 
   async refresh(): Promise<void> {
-    document.location.reload();
+    await this.appUpdate.actualizarYRecargar();
   }
 }

@@ -25,7 +25,7 @@ import {
   closeOutline,
 } from 'ionicons/icons';
 import { StorageService } from './services/storage.service';
-import { SwUpdate } from '@angular/service-worker';
+import { AppUpdateService } from './services/app-update.service';
 
 @Component({
   selector: 'app-root',
@@ -35,7 +35,7 @@ import { SwUpdate } from '@angular/service-worker';
 export class AppComponent implements OnInit {
   constructor(
     private storage: StorageService,
-    private swUpdate: SwUpdate
+    private appUpdate: AppUpdateService
   ) {
     addIcons({
       calendarOutline,
@@ -64,18 +64,6 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     this.storage.init().catch((err) => console.error('Error inicializando storage:', err));
-    // Actualiza la aplicación si hay una nueva versión disponible
-    if (this.swUpdate.isEnabled) {
-      this.swUpdate.checkForUpdate();
-    }
-
-    // Escucha cuando hay update disponible
-    this.swUpdate.versionUpdates.subscribe(event => {
-      if (event.type === 'VERSION_READY') {
-        this.swUpdate.activateUpdate().then(() => {
-          document.location.reload();
-        });
-      }
-    });
+    this.appUpdate.init();
   }
 }
