@@ -1,0 +1,1 @@
+import{Ut as tx,_ as re}from"./main-3LZD6H3U.js";var n=(()=>{let r=class r{transform(e){return re(e)}};r.ɵfac=function(o){return new(o||r)},r.ɵpipe=tx({name:`fecha`,type:r,pure:!0});return r})();export{n as t};
