@@ -7,21 +7,20 @@ import {
   IonContent,
   IonFooter,
   IonIcon,
-  IonButton,
-  IonButtons,
   IonInput,
   IonDatetime,
   IonDatetimeButton,
   IonModal,
   ModalController,
 } from '@ionic/angular';
-import { FORMATO_FECHA, LOCALE_FECHAS, fechaHoy } from '../utils/fecha';
+import { FORMATO_FECHA, LOCALE_FECHAS, fechaHoy, sumarDias } from '../utils/fecha';
 
 // ion-datetime-button busca su ion-datetime por id en el documento: cada modal usa uno propio
 let contadorFechas = 0;
 
 export interface EditarItemConfig {
   titulo: string;
+  boton: 'Agregar' | 'Guardar';
   icono: string;
   label1: string;
   label2: string;
@@ -29,18 +28,15 @@ export interface EditarItemConfig {
   value2: string;
   input2Type?: 'text' | 'date';
   campo2Opcional?: boolean;
+  sugerencias2?: string[]; // atajos que rellenan el campo 2 cuando es de texto
 }
 
 @Component({
   selector: 'app-editar-item-modal',
   template: `
     <ion-header class="modal-header">
+      <div class="modal-handle"></div>
       <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-button (click)="cancelar()" class="close-btn" fill="clear">
-            <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-buttons>
         <ion-title class="modal-title">
           <div class="title-wrapper">
             <ion-icon [name]="config.icono" class="title-icon"></ion-icon>
@@ -69,7 +65,7 @@ export interface EditarItemConfig {
             <!-- Selector de Ionic y no <input type="date">: el nativo muestra la fecha en el
                  formato del sistema (p. ej. mes/día/año) y no se puede cambiar. -->
             <ion-datetime-button class="field-fecha" [datetime]="idFecha"></ion-datetime-button>
-            <ion-modal [keepContentsMounted]="true">
+            <ion-modal #modalFecha class="calendario" [keepContentsMounted]="true">
               <ng-template>
                 <ion-datetime
                   [id]="idFecha"
@@ -78,13 +74,20 @@ export interface EditarItemConfig {
                   [formatOptions]="formatoDatetime"
                   [firstDayOfWeek]="1"
                   [value]="value2"
-                  (ionChange)="fechaElegida($event.detail.value)"
-                  [showDefaultButtons]="true"
-                  doneText="Listo"
-                  cancelText="Cancelar"
+                  (ionChange)="fechaElegida($event.detail.value); modalFecha.dismiss()"
                 ></ion-datetime>
               </ng-template>
             </ion-modal>
+            <div class="sugerencias">
+              @for (s of sugerenciasFecha; track s.dias) {
+                <button
+                  type="button"
+                  class="sugerencia"
+                  [class.sugerencia--activa]="value2 === fechaEn(s.dias)"
+                  (click)="value2 = fechaEn(s.dias)"
+                >{{ s.texto }}</button>
+              }
+            </div>
           } @else {
             <ion-input
               class="field-input"
@@ -95,6 +98,18 @@ export interface EditarItemConfig {
               autocorrect="on"
               [spellcheck]="true"
             ></ion-input>
+            @if (config.sugerencias2) {
+              <div class="sugerencias">
+                @for (s of config.sugerencias2; track s) {
+                  <button
+                    type="button"
+                    class="sugerencia"
+                    [class.sugerencia--activa]="value2 === s"
+                    (click)="value2 = s"
+                  >{{ s }}</button>
+                }
+              </div>
+            }
           }
         </div>
       </div>
@@ -102,7 +117,7 @@ export interface EditarItemConfig {
     <ion-footer class="modal-footer">
       <div class="form-actions">
         <button class="btn-cancel" (click)="cancelar()">Cancelar</button>
-        <button class="btn-save" [class.btn-save--disabled]="!puedeGuardar()" [disabled]="!puedeGuardar()" (click)="guardar()">Guardar cambios</button>
+        <button class="btn-save" [class.btn-save--disabled]="!puedeGuardar()" [disabled]="!puedeGuardar()" (click)="guardar()">{{ config.boton }}</button>
       </div>
     </ion-footer>
   `,
@@ -111,10 +126,21 @@ export interface EditarItemConfig {
       --background: #ffffff;
       --border-width: 0;
       --min-height: 64px;
+      box-shadow: none;
     }
 
-    .close-btn {
-      --color: #98a4b0;
+    /* Misma pestaña que Ionic pone en los modales sheet: flota sobre la barra */
+    .modal-handle {
+      position: absolute;
+      top: 5px;
+      left: 0;
+      right: 0;
+      z-index: 11;
+      width: 36px;
+      height: 5px;
+      margin: 0 auto;
+      border-radius: 8px;
+      background: #c0c0be;
     }
 
     .save-btn {
@@ -122,10 +148,9 @@ export interface EditarItemConfig {
     }
 
     .modal-title {
-      /* En iOS, ion-title va en position absolute sobre toda la barra; static lo
-         deja después del botón de volver, igual que en Android. */
+      /* En iOS, ion-title va centrado en position absolute; static lo alinea a la izquierda, igual que en Android. */
       position: static;
-      padding-inline-start: 0;
+      padding-inline-start: 16px;
     }
 
     .title-wrapper {
@@ -195,6 +220,30 @@ export interface EditarItemConfig {
       font-size: 1rem;
     }
 
+    .sugerencias {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .sugerencia {
+      flex: 1 0 calc(25% - 6px);
+      padding: 8px 4px;
+      border: none;
+      border-radius: 10px;
+      background: #ffffff;
+      color: #7a8b99;
+      font-size: 0.85rem;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .sugerencia--activa {
+      background: #2dd36f;
+      color: #ffffff;
+    }
+
     .form-actions {
       display: flex;
       gap: 12px;
@@ -210,6 +259,7 @@ export interface EditarItemConfig {
       border: none;
       font-size: 1.05rem;
       font-weight: 600;
+      white-space: nowrap;
       cursor: pointer;
       transition: transform 0.15s ease;
 
@@ -243,8 +293,6 @@ export interface EditarItemConfig {
     IonContent,
     IonFooter,
     IonIcon,
-    IonButton,
-    IonButtons,
     IonInput,
     IonDatetime,
     IonDatetimeButton,
@@ -262,6 +310,13 @@ export class EditarItemModal implements OnInit {
   readonly idFecha = `fecha-${++contadorFechas}`;
   readonly localeFechas = LOCALE_FECHAS;
   readonly formatoDatetime = { date: FORMATO_FECHA };
+  // Un mes cuenta como 30 días, igual que la duración de los ítems de Mercado
+  readonly sugerenciasFecha = [
+    { texto: '3 días', dias: 3 },
+    { texto: '1 semana', dias: 7 },
+    { texto: '2 semanas', dias: 14 },
+    { texto: '1 mes', dias: 30 },
+  ];
 
   ngOnInit(): void {
     this.value1 = this.config.value1;
@@ -271,6 +326,10 @@ export class EditarItemModal implements OnInit {
     if (this.config.input2Type === 'date' && !this.value2) {
       this.value2 = fechaHoy();
     }
+  }
+
+  fechaEn(dias: number): string {
+    return sumarDias(fechaHoy(), dias);
   }
 
   /** El selector puede entregar la fecha con hora (YYYY-MM-DDTHH:mm:ss): se guarda solo YYYY-MM-DD. */

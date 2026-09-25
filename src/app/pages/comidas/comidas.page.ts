@@ -62,6 +62,7 @@ export class ComidasPage implements OnInit {
       componentProps: {
         config: {
           titulo: tipo === 'desayuno' ? 'Agregar desayuno' : 'Agregar cena',
+          boton: 'Agregar',
           icono: tipo === 'desayuno' ? 'sunny-outline' : 'moon-outline',
           label1: 'Nombre',
           label2: 'Ingredientes (opcional)',
@@ -111,6 +112,7 @@ export class ComidasPage implements OnInit {
       componentProps: {
         config: {
           titulo: 'Editar comida',
+          boton: 'Guardar',
           icono: 'restaurant-outline',
           label1: 'Nombre',
           label2: 'Ingredientes (opcional)',

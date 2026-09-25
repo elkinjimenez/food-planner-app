@@ -1,5 +1,8 @@
 import { fechaHoy, sumarDias } from './fecha';
 
+/** Atajos de duración que ofrece Mercado; todos los entiende parsearDuracionADias. */
+export const DURACIONES = ['3 días', '1 semana', '2 semanas', '1 mes', '3 meses', '6 meses', '1 año'];
+
 /**
  * Parsea un texto de duración aproximada y devuelve los días estimados de vencimiento.
  * Ejemplos que soporta:

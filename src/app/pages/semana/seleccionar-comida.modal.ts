@@ -1,17 +1,13 @@
 import { Component, Input, inject } from '@angular/core';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonButtons, IonNote, ModalController } from '@ionic/angular';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonNote, ModalController } from '@ionic/angular';
 import { Comida } from '../../models/comida.model';
 
 @Component({
   selector: 'app-seleccionar-comida-modal',
   template: `
     <ion-header class="modal-header">
+      <div class="modal-handle"></div>
       <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-button (click)="cancelar()" class="close-btn" fill="clear">
-            <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-buttons>
         <ion-title class="modal-title">
           <div class="title-wrapper">
             <ion-icon name="restaurant-outline" class="title-icon"></ion-icon>
@@ -51,17 +47,27 @@ import { Comida } from '../../models/comida.model';
       --background: #ffffff;
       --border-width: 0;
       --min-height: 64px;
+      box-shadow: none;
     }
 
-    .close-btn {
-      --color: #98a4b0;
+    /* Misma pestaña que Ionic pone en los modales sheet: flota sobre la barra */
+    .modal-handle {
+      position: absolute;
+      top: 5px;
+      left: 0;
+      right: 0;
+      z-index: 11;
+      width: 36px;
+      height: 5px;
+      margin: 0 auto;
+      border-radius: 8px;
+      background: #c0c0be;
     }
 
     .modal-title {
-      /* En iOS, ion-title va en position absolute sobre toda la barra; static lo
-         deja después del botón de volver, igual que en Android. */
+      /* En iOS, ion-title va centrado en position absolute; static lo alinea a la izquierda, igual que en Android. */
       position: static;
-      padding-inline-start: 0;
+      padding-inline-start: 16px;
     }
 
     .title-wrapper {
@@ -172,7 +178,7 @@ import { Comida } from '../../models/comida.model';
       flex-shrink: 0;
     }
   `],
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonButtons, IonNote],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonNote],
 })
 export class SeleccionarComidaModal {
   private modalCtrl = inject(ModalController);
@@ -187,9 +193,5 @@ export class SeleccionarComidaModal {
 
   seleccionar(comida: Comida): void {
     this.modalCtrl.dismiss(comida);
-  }
-
-  cancelar(): void {
-    this.modalCtrl.dismiss(null);
   }
 }

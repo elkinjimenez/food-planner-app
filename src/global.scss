@@ -37,7 +37,7 @@
 /* ===== Estilos globales personalizados ===== */
 :root {
   --ion-background-color: #f8faf9;
-  --ion-font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  --ion-font-family: -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
 }
 
 ion-app {
@@ -181,6 +181,37 @@ ion-note {
 .toast-confirmacion.toast-pendiente {
   &::part(icon) {
     color: #6b7a88;
+  }
+}
+
+// ===== Calendario del selector de fecha (ion-datetime-button) =====
+ion-modal.calendario {
+  --width: fit-content;
+  --height: auto;
+  --border-radius: 20px;
+  --box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  --backdrop-opacity: 0.2;
+  --background: #ffffff;
+
+  ion-datetime {
+    --background: #ffffff;
+    --background-rgb: 255, 255, 255;
+    padding: 0 4px 8px;
+  }
+
+  ion-datetime::part(calendar-day) {
+    font-weight: 500;
+  }
+
+  ion-datetime::part(calendar-day today) {
+    color: #2dd36f;
+    font-weight: 700;
+  }
+
+  ion-datetime::part(calendar-day active) {
+    background: #2dd36f;
+    color: #ffffff;
+    font-weight: 700;
   }
 }
 

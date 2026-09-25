@@ -54,7 +54,7 @@ export class HistorialPage implements OnInit {
     return `${DIAS_LABEL[diaSemanaDe(fecha)]} ${formatearFecha(fecha)}`;
   });
   resumen = computed(() => {
-    const dias = this.casillas().filter((d): d is DiaHistorial => !!d);
+    const dias = this.casillas().filter((d): d is DiaHistorial => !!d && d.fecha <= this.hoy());
     return {
       desayunos: dias.filter((d) => d.desayuno).length,
       cenas: dias.filter((d) => d.cena).length,

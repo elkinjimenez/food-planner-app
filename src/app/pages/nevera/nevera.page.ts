@@ -89,6 +89,7 @@ export class NeveraPage implements OnInit {
       componentProps: {
         config: {
           titulo: 'Agregar producto',
+          boton: 'Agregar',
           icono: 'snow-outline',
           label1: 'Nombre',
           label2: 'Fecha vencimiento',
@@ -119,6 +120,7 @@ export class NeveraPage implements OnInit {
       componentProps: {
         config: {
           titulo: 'Editar producto',
+          boton: 'Guardar',
           icono: 'snow-outline',
           label1: 'Nombre',
           label2: 'Fecha vencimiento',

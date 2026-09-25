@@ -33,7 +33,11 @@
       </div>
     } @else {
       <div class="meta-msg meta-msg--pendiente">
-        Faltan {{ meta - registro().vasos }} vasos para tu meta
+        @if (meta - registro().vasos === 1) {
+          Falta 1 vaso para tu meta
+        } @else {
+          Faltan {{ meta - registro().vasos }} vasos para tu meta
+        }
       </div>
     }
 

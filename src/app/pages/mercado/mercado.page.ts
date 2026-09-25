@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, signal, inject } from '@angular/core';
 import {
   IonContent,
   IonCheckbox,
@@ -14,7 +14,7 @@ import {
 import { CategoriaMercado, ItemMercado } from '../../models/item-mercado.model';
 import { ProductoNevera } from '../../models/producto-nevera.model';
 import { uuid } from '../../utils/uuid';
-import { parsearDuracionADias, calcularFechaVencimiento } from '../../utils/duracion';
+import { DURACIONES, parsearDuracionADias, calcularFechaVencimiento } from '../../utils/duracion';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
 import { EditarItemModal } from '../../shared/editar-item.modal';
@@ -39,6 +39,7 @@ export class MercadoPage implements OnInit {
   private alert = inject(AlertService);
   private modalCtrl = inject(ModalController);
   private actionSheetCtrl = inject(ActionSheetController);
+  private cdr = inject(ChangeDetectorRef);
 
   items = signal<ItemMercado[]>([]);
   supermercado = signal<ItemMercado[]>([]);
@@ -85,7 +86,20 @@ export class MercadoPage implements OnInit {
       }
     }
 
-    setTimeout(() => this.cargar(), 400);
+    setTimeout(() => this.reordenar(), 400);
+  }
+
+  /** Recarga la lista deslizando cada fila a su nuevo lugar (view transition) en vez de saltar. */
+  private reordenar(): void {
+    if (!document.startViewTransition) {
+      this.cargar();
+      return;
+    }
+    document.startViewTransition(async () => {
+      await this.cargar();
+      // La transición toma la foto final al resolver: el DOM ya debe estar actualizado
+      this.cdr.detectChanges();
+    });
   }
 
   async desmarcarTodo(): Promise<void> {
@@ -133,9 +147,11 @@ export class MercadoPage implements OnInit {
       componentProps: {
         config: {
           titulo: 'Agregar ítem',
+          boton: 'Agregar',
           icono: 'cart-outline',
           label1: 'Nombre',
           label2: 'Duración aprox.',
+          sugerencias2: DURACIONES,
           value1: '',
           value2: '',
         },
@@ -183,9 +199,11 @@ export class MercadoPage implements OnInit {
       componentProps: {
         config: {
           titulo: 'Editar ítem',
+          boton: 'Guardar',
           icono: 'cart-outline',
           label1: 'Nombre',
           label2: 'Duración aprox.',
+          sugerencias2: DURACIONES,
           value1: item.nombre,
           value2: item.duracion,
         },

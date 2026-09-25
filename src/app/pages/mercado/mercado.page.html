@@ -16,7 +16,7 @@
     <span class="section-count">{{ supermercado().length }}</span>
   </div>
   @for (item of supermercado(); track item.id) {
-    <ion-card class="item-card" [class.item-comprado]="item.comprado">
+    <ion-card class="item-card" [class.item-comprado]="item.comprado" [style.view-transition-name]="'item-' + item.id">
       <div class="item-card-body">
         <ion-checkbox [checked]="item.comprado" (ionChange)="toggleComprado(item)"></ion-checkbox>
         <div class="item-info">
@@ -50,7 +50,7 @@
     <span class="section-count">{{ fruver().length }}</span>
   </div>
   @for (item of fruver(); track item.id) {
-    <ion-card class="item-card" [class.item-comprado]="item.comprado">
+    <ion-card class="item-card" [class.item-comprado]="item.comprado" [style.view-transition-name]="'item-' + item.id">
       <div class="item-card-body">
         <ion-checkbox [checked]="item.comprado" (ionChange)="toggleComprado(item)"></ion-checkbox>
         <div class="item-info">
