@@ -112,16 +112,6 @@ export class StorageService {
     });
   }
 
-  private async clearStore(store: StoreName): Promise<void> {
-    const db = await this.getDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(store, 'readwrite');
-      tx.objectStore(store).clear();
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-  }
-
   private async getByKey<T>(store: StoreName, key: string): Promise<T | undefined> {
     const db = await this.getDb();
     return new Promise((resolve, reject) => {

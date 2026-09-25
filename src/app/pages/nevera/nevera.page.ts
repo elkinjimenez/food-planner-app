@@ -190,12 +190,4 @@ export class NeveraPage implements OnInit {
     }
     await this.cargar();
   }
-
-  private fechaValida(fecha: string): boolean {
-    if (!fecha) return false;
-    const regex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!regex.test(fecha)) return false;
-    const d = new Date(fecha + 'T00:00:00');
-    return !isNaN(d.getTime());
-  }
 }

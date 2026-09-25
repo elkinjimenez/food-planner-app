@@ -9,9 +9,7 @@ import {
   IonIcon,
   IonButton,
   IonButtons,
-  IonItem,
   IonInput,
-  IonLabel,
   ModalController,
 } from '@ionic/angular';
 

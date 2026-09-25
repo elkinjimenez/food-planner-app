@@ -8,7 +8,6 @@ import {
   ModalController,
   ToastController,
   IonButton,
-  IonLabel,
 } from '@ionic/angular';
 import { Comida } from '../../models/comida.model';
 import {
@@ -135,7 +134,6 @@ export class SemanaPage implements OnInit {
     await this.storage.putPlan(nuevoPlan);
 
     const confirmado = nuevoPlan[dia][keyConfirmado];
-    const comida = nuevoPlan[dia][tipo];
     const toast = await this.toastCtrl.create({
       message: confirmado
         ? `${tipo.charAt(0).toUpperCase()}${tipo.slice(1)} ${tipo == 'desayuno' ? 'confirmado' : 'confirmada'}`

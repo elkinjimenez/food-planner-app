@@ -19,10 +19,8 @@ import {
   leafOutline,
   checkmarkCircle,
   checkmarkSharp,
-  ellipseOutline,
   timeOutline,
   arrowBackOutline,
-  closeOutline,
 } from 'ionicons/icons';
 import { StorageService } from './services/storage.service';
 import { AppUpdateService } from './services/app-update.service';
@@ -55,10 +53,8 @@ export class AppComponent implements OnInit {
       leafOutline,
       checkmarkCircle,
       checkmarkSharp,
-      ellipseOutline,
       timeOutline,
       arrowBackOutline,
-      closeOutline,
     });
   }
 
