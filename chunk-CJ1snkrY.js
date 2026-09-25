@@ -1,0 +1,1 @@
+import{Y as Qw,_ as re}from"./main-NASYGWZC.js";var n=(()=>{let r=class r{transform(e){return re(e)}};r.ɵfac=function(o){return new(o||r)},r.ɵpipe=Qw({name:`fecha`,type:r,pure:!0});return r})();export{n as t};
