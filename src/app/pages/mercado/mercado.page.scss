@@ -1,15 +1,3 @@
-.section-icon {
-  &--cart {
-    background: var(--fondo-primario-suave);
-    color: var(--ion-color-primary-shade);
-  }
-
-  &--leaf {
-    background: var(--fondo-primario-tenue);
-    color: var(--ion-color-primary);
-  }
-}
-
 // Toda la fila marca o desmarca: la casilla solo muestra el estado
 .item-card {
   cursor: pointer;

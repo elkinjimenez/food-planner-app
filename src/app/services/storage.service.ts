@@ -3,7 +3,7 @@ import { Comida, TipoComida } from '../models/comida.model';
 import { CategoriaMercado, ItemMercado } from '../models/item-mercado.model';
 import { ProductoNevera } from '../models/producto-nevera.model';
 import { ComidaDelDia, DIAS_SEMANA, DiaSemana, PlanSemanal, semanaDesde } from '../models/plan-semanal.model';
-import { RegistroAgua, RegistroComidas } from '../models/historial.model';
+import { META_VASOS, RegistroAgua, RegistroComidas } from '../models/historial.model';
 import { comidasBase, mercadoBase, planSemanalVacio } from '../data/seed.data';
 import { fechaHoy } from '../utils/fecha';
 import { AppUpdateService } from './app-update.service';
@@ -195,52 +195,22 @@ export class StorageService {
   }
 
   private put<T>(store: StoreName, value: T): Promise<void> {
-    return this.conReintento(
-      (db) =>
-        new Promise((resolve, reject) => {
-          const tx = db.transaction(store, 'readwrite');
-          tx.objectStore(store).put(value);
-          tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
-        }),
-    );
+    return this.enTransaccion([store], (tx) => tx.objectStore(store).put(value));
   }
 
   private putWithKey<T>(store: StoreName, key: string, value: T): Promise<void> {
-    return this.conReintento(
-      (db) =>
-        new Promise((resolve, reject) => {
-          const tx = db.transaction(store, 'readwrite');
-          tx.objectStore(store).put(value, key);
-          tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
-        }),
-    );
+    return this.enTransaccion([store], (tx) => tx.objectStore(store).put(value, key));
   }
 
   private delete(store: StoreName, id: string): Promise<void> {
-    return this.conReintento(
-      (db) =>
-        new Promise((resolve, reject) => {
-          const tx = db.transaction(store, 'readwrite');
-          tx.objectStore(store).delete(id);
-          tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
-        }),
-    );
+    return this.enTransaccion([store], (tx) => tx.objectStore(store).delete(id));
   }
 
   private putAll<T>(store: StoreName, values: T[]): Promise<void> {
-    return this.conReintento(
-      (db) =>
-        new Promise((resolve, reject) => {
-          const tx = db.transaction(store, 'readwrite');
-          const os = tx.objectStore(store);
-          values.forEach((v) => os.put(v));
-          tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
-        }),
-    );
+    return this.enTransaccion([store], (tx) => {
+      const os = tx.objectStore(store);
+      values.forEach((v) => os.put(v));
+    });
   }
 
   /**
@@ -255,7 +225,13 @@ export class StorageService {
           tx.oncomplete = () => resolve();
           tx.onerror = () => reject(tx.error);
           tx.onabort = () => reject(tx.error);
-          operacion(tx);
+          try {
+            operacion(tx);
+          } catch (error) {
+            // Si falla a mitad, lo que alcanzó a pedirse tampoco se guarda
+            tx.abort();
+            reject(error);
+          }
         }),
     );
   }
@@ -324,6 +300,14 @@ export class StorageService {
       }
     };
   }
+  /** Quita la comida del plan y de lo confirmado de hoy en adelante (p. ej. si cambió de tipo). */
+  async quitarComidaDeLaSemana(id: string): Promise<void> {
+    const plan = await this.getPlan();
+    if (quitarComidaDelPlan(plan, id)) await this.putPlan(plan);
+    for (const registro of await this.getComidasConfirmadas(fechaHoy())) {
+      if (quitarComidaConfirmada(registro, id)) await this.saveComidasConfirmadas(registro);
+    }
+  }
   /** Vuelve a cargar las comidas base de un tipo (se ofrece cuando la sección queda vacía). */
   restaurarComidasBase(tipo: TipoComida): Promise<void> {
     return this.putAll(STORE_COMIDAS, comidasBase(tipo));
@@ -336,28 +320,48 @@ export class StorageService {
   saveItemMercado(item: ItemMercado): Promise<void> {
     return this.put(STORE_MERCADO, item);
   }
-  deleteItemMercado(id: string): Promise<void> {
-    return this.delete(STORE_MERCADO, id);
-  }
-  /** Guarda el ítem como comprado y agrega a la nevera el producto que salió de él. */
-  marcarComprado(item: ItemMercado, producto: ProductoNevera): Promise<void> {
+  /** Borra el ítem; lo que salió de él se queda en la nevera con el nombre que tenía el ítem. */
+  deleteItemMercado(item: ItemMercado): Promise<void> {
     return this.enTransaccion([STORE_MERCADO, STORE_NEVERA], (tx) => {
-      tx.objectStore(STORE_MERCADO).put(item);
-      tx.objectStore(STORE_NEVERA).put(producto);
-    });
-  }
-  /** Guarda el ítem como no comprado y saca de la nevera lo que salió de él. */
-  desmarcarComprado(item: ItemMercado): Promise<void> {
-    return this.enTransaccion([STORE_MERCADO, STORE_NEVERA], (tx) => {
-      tx.objectStore(STORE_MERCADO).put(item);
+      tx.objectStore(STORE_MERCADO).delete(item.id);
       const nevera = tx.objectStore(STORE_NEVERA);
       const req = nevera.getAll();
       req.onsuccess = () => {
         for (const producto of req.result as ProductoNevera[]) {
-          if (producto.itemMercadoId === item.id) nevera.delete(producto.id);
+          if (producto.itemMercadoId === item.id) nevera.put({ ...producto, nombre: item.nombre });
         }
       };
     });
+  }
+  /**
+   * Guarda los ítems como comprados y agrega a la nevera los productos que salieron de ellos.
+   * También deshace desmarcarComprados() y sacarDeNevera().
+   */
+  marcarComprados(items: ItemMercado[], productos: ProductoNevera[]): Promise<void> {
+    return this.enTransaccion([STORE_MERCADO, STORE_NEVERA], (tx) => {
+      items.forEach((item) => tx.objectStore(STORE_MERCADO).put({ ...item, comprado: true }));
+      productos.forEach((producto) => tx.objectStore(STORE_NEVERA).put(producto));
+    });
+  }
+  /** Guarda los ítems como no comprados y saca de la nevera lo que salió de ellos. Devuelve lo que sacó. */
+  async desmarcarComprados(items: ItemMercado[]): Promise<ProductoNevera[]> {
+    const ids = new Set(items.map((i) => i.id));
+    const sacados: ProductoNevera[] = [];
+    await this.enTransaccion([STORE_MERCADO, STORE_NEVERA], (tx) => {
+      sacados.length = 0; // por si conReintento la corre otra vez
+      items.forEach((item) => tx.objectStore(STORE_MERCADO).put({ ...item, comprado: false }));
+      const nevera = tx.objectStore(STORE_NEVERA);
+      const req = nevera.getAll();
+      req.onsuccess = () => {
+        for (const producto of req.result as ProductoNevera[]) {
+          if (producto.itemMercadoId && ids.has(producto.itemMercadoId)) {
+            nevera.delete(producto.id);
+            sacados.push(producto);
+          }
+        }
+      };
+    });
+    return sacados;
   }
   /** Vuelve a cargar la lista base de una categoría (se ofrece cuando la sección queda vacía). */
   restaurarMercadoBase(categoria: CategoriaMercado): Promise<void> {
@@ -371,8 +375,25 @@ export class StorageService {
   saveProductoNevera(producto: ProductoNevera): Promise<void> {
     return this.put(STORE_NEVERA, producto);
   }
-  deleteProductoNevera(id: string): Promise<void> {
-    return this.delete(STORE_NEVERA, id);
+  /** Saca los productos de la nevera y desmarca en Mercado los ítems de donde salieron. Devuelve esos ítems. */
+  async sacarDeNevera(productos: ProductoNevera[]): Promise<ItemMercado[]> {
+    const ids = new Set(productos.map((p) => p.itemMercadoId));
+    const desmarcados: ItemMercado[] = [];
+    await this.enTransaccion([STORE_MERCADO, STORE_NEVERA], (tx) => {
+      desmarcados.length = 0; // por si conReintento la corre otra vez
+      productos.forEach((producto) => tx.objectStore(STORE_NEVERA).delete(producto.id));
+      const mercado = tx.objectStore(STORE_MERCADO);
+      const req = mercado.getAll();
+      req.onsuccess = () => {
+        for (const item of req.result as ItemMercado[]) {
+          if (item.comprado && ids.has(item.id)) {
+            mercado.put({ ...item, comprado: false });
+            desmarcados.push(item);
+          }
+        }
+      };
+    });
+    return desmarcados;
   }
 
   // ===== Plan Semanal =====
@@ -406,6 +427,17 @@ export class StorageService {
   putAgua(registro: RegistroAgua): Promise<void> {
     return this.putWithKey(STORE_AGUA, registro.fecha, registro);
   }
+  /** La meta de agua vigente: la del último día con registro. */
+  getMetaVasos(): Promise<number> {
+    return this.conReintento(
+      (db) =>
+        new Promise((resolve, reject) => {
+          const req = db.transaction(STORE_AGUA, 'readonly').objectStore(STORE_AGUA).openCursor(null, 'prev');
+          req.onsuccess = () => resolve((req.result?.value as RegistroAgua | undefined)?.meta ?? META_VASOS);
+          req.onerror = () => reject(req.error);
+        }),
+    );
+  }
   /** El agua de cada día entre dos fechas (incluidas); los días sin registro no vienen. */
   getAguaEntre(desde: string, hasta: string): Promise<RegistroAgua[]> {
     return this.getAll<RegistroAgua>(STORE_AGUA, rangoDeFechas(desde, hasta));
@@ -426,27 +458,15 @@ export class StorageService {
 
   /** Reemplaza todos los datos en una sola transacción: si algo falla, no cambia nada. */
   reemplazarDatos(datos: DatosApp): Promise<void> {
-    return this.conReintento(
-      (db) =>
-        new Promise((resolve, reject) => {
-          const tx = db.transaction(TODOS_LOS_STORES, 'readwrite');
-          tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
-          tx.onabort = () => reject(tx.error);
-          try {
-            TODOS_LOS_STORES.forEach((store) => tx.objectStore(store).clear());
-            datos.comidas.forEach((c) => tx.objectStore(STORE_COMIDAS).put(c));
-            datos.mercado.forEach((i) => tx.objectStore(STORE_MERCADO).put(i));
-            datos.nevera.forEach((p) => tx.objectStore(STORE_NEVERA).put(p));
-            tx.objectStore(STORE_PLAN).put(normalizarPlan(datos.plan), PLAN_KEY);
-            datos.comidasConfirmadas.forEach((r) => tx.objectStore(STORE_CONFIRMADAS).put(r));
-            datos.agua.forEach((r) => tx.objectStore(STORE_AGUA).put(r, r.fecha));
-          } catch (error) {
-            tx.abort();
-            reject(error);
-          }
-        }),
-    );
+    return this.enTransaccion(TODOS_LOS_STORES, (tx) => {
+      TODOS_LOS_STORES.forEach((store) => tx.objectStore(store).clear());
+      datos.comidas.forEach((c) => tx.objectStore(STORE_COMIDAS).put(c));
+      datos.mercado.forEach((i) => tx.objectStore(STORE_MERCADO).put(i));
+      datos.nevera.forEach((p) => tx.objectStore(STORE_NEVERA).put(p));
+      tx.objectStore(STORE_PLAN).put(normalizarPlan(datos.plan), PLAN_KEY);
+      datos.comidasConfirmadas.forEach((r) => tx.objectStore(STORE_CONFIRMADAS).put(r));
+      datos.agua.forEach((r) => tx.objectStore(STORE_AGUA).put(r, r.fecha));
+    });
   }
 }
 

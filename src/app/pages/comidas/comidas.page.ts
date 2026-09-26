@@ -6,19 +6,27 @@ import {
   IonFabButton,
   IonCard,
   IonButton,
-  ModalController,
 } from '@ionic/angular';
 import { Comida, TipoComida } from '../../models/comida.model';
 import { uuid } from '../../utils/uuid';
 import { deslizarFilas } from '../../utils/deslizar-filas';
-import { StorageService, quitarComidaDelPlan } from '../../services/storage.service';
+import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
-import { EditarItemConfig, EditarItemModal, EditarItemResultado } from '../../shared/editar-item.modal';
+import { EditarItemConfig, injectAbrirEditor } from '../../shared/editar-item.modal';
+import { SeccionPlegableComponent } from '../../shared/seccion-plegable.component';
 
-const OPCIONES_TIPO = [
-  { valor: 'desayuno', texto: 'Desayuno' },
-  { valor: 'cena', texto: 'Cena' },
-];
+// Lo común del modal de agregar y editar
+const EDITOR_COMIDA = {
+  icono: 'restaurant-outline',
+  label1: 'Nombre',
+  label2: 'Ingredientes (opcional)',
+  campo2Opcional: true,
+  labelOpcion: 'Tipo',
+  opciones: [
+    { valor: 'desayuno', texto: 'Desayuno' },
+    { valor: 'cena', texto: 'Cena' },
+  ],
+} satisfies Partial<EditarItemConfig>;
 
 /** Datos de cada sección de la vista (Desayunos y Cenas): la plantilla las dibuja con un solo @for. */
 interface SeccionComidas {
@@ -42,12 +50,13 @@ interface SeccionComidas {
     IonFabButton,
     IonCard,
     IonButton,
+    SeccionPlegableComponent,
   ],
 })
 export class ComidasPage {
   private storage = inject(StorageService);
   private alert = inject(AlertService);
-  private modalCtrl = inject(ModalController);
+  private abrirEditor = injectAbrirEditor();
   private cdr = inject(ChangeDetectorRef);
 
   desayunos = signal<Comida[]>([]);
@@ -73,18 +82,6 @@ export class ComidasPage {
     },
   ];
   private filas = viewChildren('fila', { read: ElementRef<HTMLElement> });
-  // Secciones plegadas: todas empiezan abiertas
-  private plegadas = signal(new Set<TipoComida>());
-
-  plegada(tipo: TipoComida): boolean {
-    return this.plegadas().has(tipo);
-  }
-
-  alternar(tipo: TipoComida): void {
-    const plegadas = new Set(this.plegadas());
-    if (!plegadas.delete(tipo)) plegadas.add(tipo);
-    this.plegadas.set(plegadas);
-  }
 
   // Ionic lo llama también al entrar la primera vez: no hace falta cargar en ngOnInit
   async ionViewWillEnter(): Promise<void> {
@@ -114,39 +111,17 @@ export class ComidasPage {
     await this.cargar();
   }
 
-  /** Modal de agregar o editar: solo cambian el título, el botón y los valores iniciales. */
-  private async abrirModal(
-    titulo: string,
-    boton: EditarItemConfig['boton'],
-    { nombre, ingredientes, tipo }: { nombre: string; ingredientes: string; tipo: TipoComida },
-  ): Promise<EditarItemResultado | null> {
-    const config: EditarItemConfig = {
-      titulo,
-      boton,
-      icono: 'restaurant-outline',
-      label1: 'Nombre',
-      label2: 'Ingredientes (opcional)',
-      value1: nombre,
-      value2: ingredientes,
-      campo2Opcional: true,
-      labelOpcion: 'Tipo',
-      opciones: OPCIONES_TIPO,
-      opcion: tipo,
-    };
-    const modal = await this.modalCtrl.create({
-      component: EditarItemModal,
-      componentProps: { config },
-      presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
-    });
-    await modal.present();
-    const { data } = await modal.onWillDismiss<EditarItemResultado | null>();
-    return data?.value1 ? data : null;
-  }
-
   /** El tipo se elige en el mismo modal; empieza en desayuno. */
   async agregar(tipo: TipoComida = 'desayuno'): Promise<void> {
     // Título general: el tipo se puede cambiar en el selector
-    const data = await this.abrirModal('Agregar comida', 'Agregar', { nombre: '', ingredientes: '', tipo });
+    const data = await this.abrirEditor({
+      ...EDITOR_COMIDA,
+      titulo: 'Agregar comida',
+      boton: 'Agregar',
+      value1: '',
+      value2: '',
+      opcion: tipo,
+    });
     if (!data) return;
     const nueva: Comida = {
       id: uuid(),
@@ -159,21 +134,25 @@ export class ComidasPage {
   }
 
   async editar(comida: Comida): Promise<void> {
-    const data = await this.abrirModal('Editar comida', 'Guardar', {
-      nombre: comida.nombre,
-      ingredientes: comida.ingredientes ?? '',
-      tipo: comida.tipo,
+    const data = await this.abrirEditor({
+      ...EDITOR_COMIDA,
+      titulo: 'Editar comida',
+      boton: 'Guardar',
+      value1: comida.nombre,
+      value2: comida.ingredientes ?? '',
+      opcion: comida.tipo,
     });
     if (!data) return;
-    const cambioTipo = comida.tipo !== data.opcion;
-    comida.nombre = data.value1;
-    comida.ingredientes = data.value2 || undefined;
-    comida.tipo = data.opcion as TipoComida;
-    await this.storage.saveComida(comida);
-    if (cambioTipo) {
-      // En el plan estaba como el tipo anterior (p. ej. de desayuno): se deja ese día sin asignar
-      const plan = await this.storage.getPlan();
-      if (quitarComidaDelPlan(plan, comida.id)) await this.storage.putPlan(plan);
+    const editada: Comida = {
+      ...comida,
+      nombre: data.value1,
+      ingredientes: data.value2 || undefined,
+      tipo: data.opcion as TipoComida,
+    };
+    await this.storage.saveComida(editada);
+    if (editada.tipo !== comida.tipo) {
+      // En el plan y en lo confirmado estaba como el tipo anterior (p. ej. de desayuno): se deja sin asignar
+      await this.storage.quitarComidaDeLaSemana(comida.id);
     }
     await this.cargar();
   }

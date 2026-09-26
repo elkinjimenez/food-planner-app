@@ -35,20 +35,15 @@ export function parsearDuracionADias(duracion: string): number {
     return 30;
   }
 
-  // Determinar unidad
-  if (texto.includes('mes') || texto.includes('meses')) {
+  // Unidad: sin "mes" ni "semana" son días, lo diga o no (p. ej. "5 días abierta" o solo "5")
+  if (texto.includes('mes')) {
     dias = numero * 30;
   } else if (texto.includes('semana')) {
     dias = numero * 7;
-  } else if (texto.includes('día') || texto.includes('dias') || texto.includes('días')) {
-    dias = numero;
   } else {
-    // Si hay número pero no unidad, asumir días
     dias = numero;
   }
 
-  // Si el texto tiene "/" (ej: "3-4 meses sin abrir / 5 días abierta")
-  // tomar la primera opción (sin abrir) que suele ser la mayor
   return dias > 0 ? dias : 30;
 }
 

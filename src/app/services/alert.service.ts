@@ -44,6 +44,27 @@ export class AlertService {
     });
   }
 
+  /** Pide un número entero entre `min` y `max` (no se cierra con uno fuera de rango). Devuelve null si se cancela. */
+  async pedirNumero(
+    header: string,
+    valor: number,
+    { min, max, message }: { min: number; max: number; message?: string },
+  ): Promise<number | null> {
+    const esValido = (n: number) => Number.isInteger(n) && n >= min && n <= max;
+    const alert = await this.alertCtrl.create({
+      header,
+      message,
+      inputs: [{ name: 'valor', type: 'number', value: valor, min, max, attributes: { inputmode: 'numeric' } }],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        { text: 'Guardar', role: 'guardar', handler: ({ valor }) => esValido(Number(valor)) },
+      ],
+    });
+    await alert.present();
+    const { data, role } = await alert.onDidDismiss<{ values: { valor: string } }>();
+    return role === 'guardar' && data ? Number(data.values.valor) : null;
+  }
+
   /** Mensaje informativo con un solo botón. */
   async aviso(header: string, message?: string): Promise<void> {
     const alert = await this.alertCtrl.create({ header, message, buttons: ['Entendido'] });

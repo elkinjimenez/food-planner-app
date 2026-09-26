@@ -17,6 +17,7 @@ import {
   ModalController,
 } from '@ionic/angular';
 import { FORMATO_FECHA, LOCALE_FECHAS, fechaHoy, sumarDias } from '../utils/fecha';
+import { injectAbrirModal } from './abrir-modal';
 
 // ion-datetime-button busca su ion-datetime por id en el documento: cada modal usa uno propio
 let contadorFechas = 0;
@@ -335,4 +336,13 @@ export class EditarItemModal implements OnInit {
   cancelar(): void {
     this.modalCtrl.dismiss(null);
   }
+}
+
+/** Para un campo de la página: devuelve abrirEditor(config), que entrega lo guardado o null si se cancela. */
+export function injectAbrirEditor(): (config: EditarItemConfig) => Promise<EditarItemResultado | null> {
+  const abrirModal = injectAbrirModal();
+  return async (config) => {
+    const { data } = await abrirModal<EditarItemResultado | null>(EditarItemModal, { config });
+    return data?.value1 ? data : null;
+  };
 }

@@ -4,53 +4,37 @@
   </div>
   <p class="page-subtitle">Tus opciones para planear la semana</p>
   @for (s of secciones; track s.tipo) {
-    <div
-      class="section-header section-header--plegable"
-      [class.section-header--plegada]="plegada(s.tipo)"
-      role="button"
-      [attr.aria-expanded]="!plegada(s.tipo)"
-      (click)="alternar(s.tipo)"
-    >
-      <div class="section-icon {{ s.tono }}">
-        <ion-icon [name]="s.icono"></ion-icon>
-      </div>
-      <span class="section-title">{{ s.titulo }}</span>
-      <span class="section-count">{{ s.comidas().length }}</span>
-      <ion-icon class="section-chevron" name="chevron-down-outline"></ion-icon>
-    </div>
-    <div class="seccion-plegable" [class.seccion-plegable--plegada]="plegada(s.tipo)">
-      <div class="seccion-contenido">
-        @for (comida of s.comidas(); track comida.id) {
-          <ion-card #fila class="item-card">
-            <div class="item-card-body">
-              <div class="item-icon {{ s.tono }}">
-                <ion-icon [name]="s.icono"></ion-icon>
-              </div>
-              <div class="item-info">
-                <span class="item-nombre">{{ comida.nombre }}</span>
-                @if (comida.ingredientes) {
-                  <span class="item-sub">{{ comida.ingredientes }}</span>
-                }
-              </div>
-              <button class="action-btn action-btn--edit" [attr.aria-label]="'Editar ' + comida.nombre" (click)="editar(comida)">
-                <ion-icon name="create-outline"></ion-icon>
-              </button>
-              <button class="action-btn action-btn--delete" [attr.aria-label]="'Eliminar ' + comida.nombre" (click)="eliminar(comida)">
-                <ion-icon name="trash-outline"></ion-icon>
-              </button>
+    <app-seccion-plegable [titulo]="s.titulo" [icono]="s.icono" [tono]="s.tono" [cantidad]="s.comidas().length">
+      @for (comida of s.comidas(); track comida.id) {
+        <ion-card #fila class="item-card">
+          <div class="item-card-body">
+            <div class="item-icon {{ s.tono }}">
+              <ion-icon [name]="s.icono"></ion-icon>
             </div>
-          </ion-card>
-        } @empty {
-          <div class="seccion-vacia">
-            <span>{{ s.vacio }}</span>
-            <ion-button fill="clear" size="small" (click)="restaurarBase(s.tipo)">
-              <ion-icon name="refresh-outline" slot="start"></ion-icon>
-              {{ s.restaurar }}
-            </ion-button>
+            <div class="item-info">
+              <span class="item-nombre">{{ comida.nombre }}</span>
+              @if (comida.ingredientes) {
+                <span class="item-sub">{{ comida.ingredientes }}</span>
+              }
+            </div>
+            <button class="action-btn action-btn--edit" [attr.aria-label]="'Editar ' + comida.nombre" (click)="editar(comida)">
+              <ion-icon name="create-outline"></ion-icon>
+            </button>
+            <button class="action-btn action-btn--delete" [attr.aria-label]="'Eliminar ' + comida.nombre" (click)="eliminar(comida)">
+              <ion-icon name="trash-outline"></ion-icon>
+            </button>
           </div>
-        }
-      </div>
-    </div>
+        </ion-card>
+      } @empty {
+        <div class="seccion-vacia">
+          <span>{{ s.vacio }}</span>
+          <ion-button fill="clear" size="small" (click)="restaurarBase(s.tipo)">
+            <ion-icon name="refresh-outline" slot="start"></ion-icon>
+            {{ s.restaurar }}
+          </ion-button>
+        </div>
+      }
+    </app-seccion-plegable>
   }
 </ion-content>
 

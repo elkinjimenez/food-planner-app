@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, Signal, signal, inject, viewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Signal, computed, signal, inject, viewChildren } from '@angular/core';
 import {
   IonContent,
   IonCheckbox,
@@ -8,7 +8,6 @@ import {
   IonFab,
   IonFabButton,
   IonCard,
-  ModalController,
   ActionSheetController,
 } from '@ionic/angular';
 import { CategoriaMercado, ItemMercado } from '../../models/item-mercado.model';
@@ -18,21 +17,31 @@ import { DURACIONES, parsearDuracionADias, calcularFechaVencimiento } from '../.
 import { deslizarFilas } from '../../utils/deslizar-filas';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
-import { EditarItemConfig, EditarItemModal, EditarItemResultado } from '../../shared/editar-item.modal';
+import { EditarItemConfig, injectAbrirEditor } from '../../shared/editar-item.modal';
+import { SeccionPlegableComponent } from '../../shared/seccion-plegable.component';
 
-const OPCIONES_CATEGORIA = [
-  { valor: 'supermercado', texto: 'Supermercado' },
-  { valor: 'fruver', texto: 'Fruver' },
-];
+// Lo común del modal de agregar y editar
+const EDITOR_MERCADO = {
+  icono: 'cart-outline',
+  label1: 'Nombre',
+  label2: 'Duración aprox.',
+  sugerencias2: DURACIONES,
+  labelOpcion: 'Categoría',
+  opciones: [
+    { valor: 'supermercado', texto: 'Supermercado' },
+    { valor: 'fruver', texto: 'Fruver' },
+  ],
+} satisfies Partial<EditarItemConfig>;
 
 /** Datos de cada sección de la vista (Supermercado y Fruver): la plantilla las dibuja con un solo @for. */
 interface SeccionMercado {
   categoria: CategoriaMercado;
   titulo: string;
   icono: string;
-  claseIcono: string;
+  tono: string;
   vacio: string;
   items: Signal<ItemMercado[]>;
+  cantidad: Signal<string>; // comprados/total
 }
 
 @Component({
@@ -48,48 +57,41 @@ interface SeccionMercado {
     IonFab,
     IonFabButton,
     IonCard,
+    SeccionPlegableComponent,
   ],
 })
 export class MercadoPage {
   private storage = inject(StorageService);
   private alert = inject(AlertService);
-  private modalCtrl = inject(ModalController);
+  private abrirEditor = injectAbrirEditor();
   private actionSheetCtrl = inject(ActionSheetController);
   private cdr = inject(ChangeDetectorRef);
 
+  // En el orden de la pantalla (los comprados al final): solo se reordena al cargar
   items = signal<ItemMercado[]>([]);
-  supermercado = signal<ItemMercado[]>([]);
-  fruver = signal<ItemMercado[]>([]);
+  hayComprados = computed(() => this.items().some((i) => i.comprado));
   readonly secciones: SeccionMercado[] = [
-    {
+    this.seccion({
       categoria: 'supermercado',
       titulo: 'Supermercado',
       icono: 'cart-outline',
-      claseIcono: 'section-icon--cart',
+      tono: 'tono-supermercado',
       vacio: 'Tu lista de supermercado está vacía',
-      items: this.supermercado,
-    },
-    {
+    }),
+    this.seccion({
       categoria: 'fruver',
       titulo: 'Fruver',
       icono: 'leaf-outline',
-      claseIcono: 'section-icon--leaf',
+      tono: 'tono-fruver',
       vacio: 'Tu lista de fruver está vacía',
-      items: this.fruver,
-    },
+    }),
   ];
   private filas = viewChildren('fila', { read: ElementRef<HTMLElement> });
-  // Secciones plegadas: todas empiezan abiertas
-  private plegadas = signal(new Set<CategoriaMercado>());
 
-  plegada(categoria: CategoriaMercado): boolean {
-    return this.plegadas().has(categoria);
-  }
-
-  alternar(categoria: CategoriaMercado): void {
-    const plegadas = new Set(this.plegadas());
-    if (!plegadas.delete(categoria)) plegadas.add(categoria);
-    this.plegadas.set(plegadas);
+  private seccion(datos: Omit<SeccionMercado, 'items' | 'cantidad'>): SeccionMercado {
+    const items = computed(() => this.items().filter((i) => i.categoria === datos.categoria));
+    const cantidad = computed(() => `${items().filter((i) => i.comprado).length}/${items().length}`);
+    return { ...datos, items, cantidad };
   }
 
   // Ionic lo llama también al entrar la primera vez: no hace falta cargar en ngOnInit
@@ -102,13 +104,7 @@ export class MercadoPage {
   }
 
   private mostrar(data: ItemMercado[]): void {
-    this.items.set(data);
-    this.supermercado.set(
-      data.filter((i) => i.categoria === 'supermercado').sort((a, b) => Number(a.comprado) - Number(b.comprado)),
-    );
-    this.fruver.set(
-      data.filter((i) => i.categoria === 'fruver').sort((a, b) => Number(a.comprado) - Number(b.comprado)),
-    );
+    this.items.set(data.sort((a, b) => Number(a.comprado) - Number(b.comprado)));
   }
 
   /**
@@ -116,7 +112,9 @@ export class MercadoPage {
    * completo y en orden.
    */
   async toggleComprado(item: ItemMercado, comprado: boolean): Promise<void> {
-    item.comprado = comprado;
+    const actualizado: ItemMercado = { ...item, comprado };
+    // Se marca en su lugar: cargarDeslizando() lo lleva después a su nuevo puesto
+    this.items.update((items) => items.map((i) => (i.id === item.id ? actualizado : i)));
 
     if (comprado) {
       // Al marcar como comprado, agregar a nevera con fecha de vencimiento calculada
@@ -127,10 +125,10 @@ export class MercadoPage {
         fechaVencimiento: calcularFechaVencimiento(dias),
         itemMercadoId: item.id,
       };
-      await this.storage.marcarComprado(item, producto);
+      await this.storage.marcarComprados([actualizado], [producto]);
     } else {
       // Al desmarcar, quitar de la nevera lo que salió de este ítem
-      await this.storage.desmarcarComprado(item);
+      await this.storage.desmarcarComprados([actualizado]);
     }
 
     setTimeout(() => this.cargarDeslizando(), 400);
@@ -143,15 +141,6 @@ export class MercadoPage {
       this.mostrar(data);
       this.cdr.detectChanges();
     });
-  }
-
-  // Métodos y no computed: toggleComprado cambia el ítem sin pasar por el signal
-  hayComprados(): boolean {
-    return this.items().some((i) => i.comprado);
-  }
-
-  comprados(items: ItemMercado[]): number {
-    return items.filter((i) => i.comprado).length;
   }
 
   async desmarcarTodo(): Promise<void> {
@@ -169,32 +158,26 @@ export class MercadoPage {
       header: '¿Desmarcar todo?',
       subHeader: `${carrito}${detalle}`,
       buttons: [
-        {
-          text: 'Sí, desmarcar',
-          role: 'destructive',
-          handler: () => this.ejecutarDesmarcarTodo(),
-        },
+        { text: 'Sí, desmarcar', role: 'destructive' },
         { text: 'Cancelar', role: 'cancel' },
       ],
     });
     await actionSheet.present();
+    // Después de cerrarse y no en el handler: el action sheet espera al handler para cerrarse
+    // y este espera al aviso de "Deshacer"
+    const { role } = await actionSheet.onDidDismiss();
+    if (role === 'destructive') await this.ejecutarDesmarcarTodo();
   }
 
   private async ejecutarDesmarcarTodo(): Promise<void> {
     const comprados = this.items().filter((i) => i.comprado);
-    const ids = new Set(comprados.map((i) => i.id));
-    // Quitar de la nevera lo que salió de los ítems comprados
-    const nevera = await this.storage.getNevera();
-    for (const producto of nevera) {
-      if (producto.itemMercadoId && ids.has(producto.itemMercadoId)) {
-        await this.storage.deleteProductoNevera(producto.id);
-      }
-    }
-    for (const item of comprados) {
-      item.comprado = false;
-      await this.storage.saveItemMercado(item);
-    }
-    await this.cargar();
+    const sacados = await this.storage.desmarcarComprados(comprados);
+    await this.cargarDeslizando();
+    const productos = comprados.length === 1 ? '1 producto' : `${comprados.length} productos`;
+    const deshacer = await this.alert.toast(productos, { tipo: 'pendiente', header: 'Lista desmarcada', deshacer: true });
+    if (!deshacer) return;
+    await this.storage.marcarComprados(comprados, sacados);
+    await this.cargarDeslizando();
   }
 
   async restaurarBase(categoria: CategoriaMercado): Promise<void> {
@@ -202,38 +185,16 @@ export class MercadoPage {
     await this.cargar();
   }
 
-  /** Modal de agregar o editar: solo cambian el título, el botón y los valores iniciales. */
-  private async abrirModal(
-    titulo: string,
-    boton: EditarItemConfig['boton'],
-    { nombre, duracion, categoria }: { nombre: string; duracion: string; categoria: CategoriaMercado },
-  ): Promise<EditarItemResultado | null> {
-    const config: EditarItemConfig = {
-      titulo,
-      boton,
-      icono: 'cart-outline',
-      label1: 'Nombre',
-      label2: 'Duración aprox.',
-      sugerencias2: DURACIONES,
-      value1: nombre,
-      value2: duracion,
-      labelOpcion: 'Categoría',
-      opciones: OPCIONES_CATEGORIA,
-      opcion: categoria,
-    };
-    const modal = await this.modalCtrl.create({
-      component: EditarItemModal,
-      componentProps: { config },
-      presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
-    });
-    await modal.present();
-    const { data } = await modal.onWillDismiss<EditarItemResultado | null>();
-    return data?.value1 ? data : null;
-  }
-
   /** La categoría se elige en el mismo modal; empieza en supermercado. */
   async agregar(categoria: CategoriaMercado = 'supermercado'): Promise<void> {
-    const data = await this.abrirModal('Agregar producto', 'Agregar', { nombre: '', duracion: '', categoria });
+    const data = await this.abrirEditor({
+      ...EDITOR_MERCADO,
+      titulo: 'Agregar producto',
+      boton: 'Agregar',
+      value1: '',
+      value2: '',
+      opcion: categoria,
+    });
     if (!data) return;
     const nuevo: ItemMercado = {
       id: uuid(),
@@ -247,21 +208,26 @@ export class MercadoPage {
   }
 
   async editar(item: ItemMercado): Promise<void> {
-    const data = await this.abrirModal('Editar producto', 'Guardar', {
-      nombre: item.nombre,
-      duracion: item.duracion,
-      categoria: item.categoria,
+    const data = await this.abrirEditor({
+      ...EDITOR_MERCADO,
+      titulo: 'Editar producto',
+      boton: 'Guardar',
+      value1: item.nombre,
+      value2: item.duracion,
+      opcion: item.categoria,
     });
     if (!data) return;
-    item.nombre = data.value1;
-    item.duracion = data.value2 || '';
-    item.categoria = data.opcion as CategoriaMercado;
-    await this.storage.saveItemMercado(item);
+    await this.storage.saveItemMercado({
+      ...item,
+      nombre: data.value1,
+      duracion: data.value2 || '',
+      categoria: data.opcion as CategoriaMercado,
+    });
     await this.cargar();
   }
 
   async eliminar(item: ItemMercado): Promise<void> {
-    await this.storage.deleteItemMercado(item.id);
+    await this.storage.deleteItemMercado(item);
     await this.cargarDeslizando();
     const deshacer = await this.alert.toast(item.nombre, { tipo: 'eliminado', header: 'Producto eliminado', deshacer: true });
     if (!deshacer) return;

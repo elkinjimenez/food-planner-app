@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, HostListener, computed, signal, inject, viewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, computed, signal, inject, viewChildren } from '@angular/core';
 import {
   IonContent,
   IonButton,
@@ -8,7 +8,6 @@ import {
   IonFab,
   IonFabButton,
   IonCard,
-  ModalController,
   ActionSheetController,
 } from '@ionic/angular';
 import { ProductoNevera } from '../../models/producto-nevera.model';
@@ -18,8 +17,17 @@ import { diasHasta } from '../../utils/fecha';
 import { deslizarFilas } from '../../utils/deslizar-filas';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
-import { EditarItemModal } from '../../shared/editar-item.modal';
+import { HoyService } from '../../services/hoy.service';
+import { EditarItemConfig, injectAbrirEditor } from '../../shared/editar-item.modal';
 import { FechaPipe } from '../../shared/fecha.pipe';
+
+// Lo común del modal de agregar y editar
+const EDITOR_NEVERA = {
+  icono: 'snow-outline',
+  label1: 'Nombre',
+  label2: 'Fecha vencimiento',
+  input2Type: 'date',
+} satisfies Partial<EditarItemConfig>;
 
 type EstadoVencimiento = 'verde' | 'amarillo' | 'rojo';
 
@@ -27,6 +35,7 @@ const COLOR_ESTADO: Record<EstadoVencimiento, string> = { verde: 'success', amar
 
 interface ProductoConEstado {
   producto: ProductoNevera;
+  nombre: string;
   estado: EstadoVencimiento;
   label: string;
   color: string;
@@ -64,20 +73,26 @@ function estadoLabel(dias: number): string {
 export class NeveraPage {
   private storage = inject(StorageService);
   private alert = inject(AlertService);
-  private modalCtrl = inject(ModalController);
+  private abrirEditor = injectAbrirEditor();
   private actionSheetCtrl = inject(ActionSheetController);
   private cdr = inject(ChangeDetectorRef);
 
+  private hoy = inject(HoyService).hoy;
   productos = signal<ProductoNevera[]>([]);
+  private mercadoPorId = signal(new Map<string, ItemMercado>());
   // El estado se calcula una vez por producto en cada carga, no en cada detección de cambios
-  // (cargar() corre también al volver a la app, por si cambió el día)
-  conEstado = computed<ProductoConEstado[]>(() =>
-    this.productos().map((producto) => {
-      const dias = diasHasta(producto.fechaVencimiento);
+  // (y otra vez si cambia el día)
+  conEstado = computed<ProductoConEstado[]>(() => {
+    const mercado = this.mercadoPorId();
+    const hoy = this.hoy();
+    return this.productos().map((producto) => {
+      const dias = diasHasta(producto.fechaVencimiento, hoy);
       const e = estado(dias);
-      return { producto, estado: e, label: estadoLabel(dias), color: COLOR_ESTADO[e] };
-    }),
-  );
+      // Si salió de Mercado, el nombre es el del ítem: editarlo allá se ve aquí
+      const nombre = mercado.get(producto.itemMercadoId ?? '')?.nombre ?? producto.nombre;
+      return { producto, nombre, estado: e, label: estadoLabel(dias), color: COLOR_ESTADO[e] };
+    });
+  });
   private filas = viewChildren('fila', { read: ElementRef<HTMLElement> });
 
   // Ionic lo llama también al entrar la primera vez: no hace falta cargar en ngOnInit
@@ -85,53 +100,39 @@ export class NeveraPage {
     await this.cargar();
   }
 
-  // En iOS la PWA se reanuda sin recargarse: al volver a la app el día pudo haber cambiado
-  @HostListener('document:visibilitychange')
-  async alVolverALaApp(): Promise<void> {
-    if (document.visibilityState === 'visible') {
-      await this.cargar();
-    }
-  }
-
   private async cargar(): Promise<void> {
-    this.mostrar(await this.storage.getNevera());
+    this.mostrar(...(await this.leer()));
   }
 
   /** Recarga la lista deslizando cada fila a su nuevo lugar en vez de saltar. */
   private async cargarDeslizando(): Promise<void> {
-    const data = await this.storage.getNevera();
+    const datos = await this.leer();
     deslizarFilas(this.filas(), () => {
-      this.mostrar(data);
+      this.mostrar(...datos);
       this.cdr.detectChanges();
     });
   }
 
-  private mostrar(data: ProductoNevera[]): void {
+  private leer(): Promise<[ProductoNevera[], ItemMercado[]]> {
+    return Promise.all([this.storage.getNevera(), this.storage.getMercado()]);
+  }
+
+  private mostrar(data: ProductoNevera[], mercado: ItemMercado[]): void {
     // Ordenar por fecha de vencimiento ascendente
     data.sort((a, b) => a.fechaVencimiento.localeCompare(b.fechaVencimiento));
+    this.mercadoPorId.set(new Map(mercado.map((i) => [i.id, i])));
     this.productos.set(data);
   }
 
   async agregar(): Promise<void> {
-    const modal = await this.modalCtrl.create({
-      component: EditarItemModal,
-      componentProps: {
-        config: {
-          titulo: 'Agregar producto',
-          boton: 'Agregar',
-          icono: 'snow-outline',
-          label1: 'Nombre',
-          label2: 'Fecha vencimiento',
-          value1: '',
-          value2: '',
-          input2Type: 'date' as const,
-        },
-      },
-      presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
+    const data = await this.abrirEditor({
+      ...EDITOR_NEVERA,
+      titulo: 'Agregar producto',
+      boton: 'Agregar',
+      value1: '',
+      value2: '',
     });
-    await modal.present();
-    const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
-    if (!data || !data.value1 || !data.value2) return;
+    if (!data || !data.value2) return;
     const nuevo: ProductoNevera = {
       id: uuid(),
       nombre: data.value1,
@@ -141,43 +142,30 @@ export class NeveraPage {
     await this.cargar();
   }
 
-  async editar(producto: ProductoNevera): Promise<void> {
-    const modal = await this.modalCtrl.create({
-      component: EditarItemModal,
-      componentProps: {
-        config: {
-          titulo: 'Editar producto',
-          boton: 'Guardar',
-          icono: 'snow-outline',
-          label1: 'Nombre',
-          label2: 'Fecha vencimiento',
-          value1: producto.nombre,
-          value2: producto.fechaVencimiento,
-          input2Type: 'date' as const,
-        },
-      },
-      presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
+  async editar({ producto, nombre }: ProductoConEstado): Promise<void> {
+    const data = await this.abrirEditor({
+      ...EDITOR_NEVERA,
+      titulo: 'Editar producto',
+      boton: 'Guardar',
+      value1: nombre,
+      value2: producto.fechaVencimiento,
     });
-    await modal.present();
-    const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
-    if (!data || !data.value1) return;
-    producto.nombre = data.value1;
-    producto.fechaVencimiento = data.value2;
-    await this.storage.saveProductoNevera(producto);
+    if (!data) return;
+    // El nombre de lo que salió de Mercado es el del ítem: se cambia allá
+    const item = this.mercadoPorId().get(producto.itemMercadoId ?? '');
+    if (item && item.nombre !== data.value1) {
+      await this.storage.saveItemMercado({ ...item, nombre: data.value1 });
+    }
+    await this.storage.saveProductoNevera({ ...producto, nombre: data.value1, fechaVencimiento: data.value2 });
     await this.cargar();
   }
 
-  async eliminar(producto: ProductoNevera): Promise<void> {
-    await this.storage.deleteProductoNevera(producto.id);
-    const desmarcados = await this.desmarcarEnMercado([producto]);
+  async eliminar({ producto, nombre }: ProductoConEstado): Promise<void> {
+    const desmarcados = await this.storage.sacarDeNevera([producto]);
     await this.cargarDeslizando();
-    const deshacer = await this.alert.toast(producto.nombre, { tipo: 'eliminado', header: 'Producto eliminado', deshacer: true });
+    const deshacer = await this.alert.toast(nombre, { tipo: 'eliminado', header: 'Producto eliminado', deshacer: true });
     if (!deshacer) return;
-    await this.storage.saveProductoNevera(producto);
-    for (const item of desmarcados) {
-      item.comprado = true;
-      await this.storage.saveItemMercado(item);
-    }
+    await this.storage.marcarComprados(desmarcados, [producto]);
     await this.cargarDeslizando();
   }
 
@@ -186,35 +174,25 @@ export class NeveraPage {
       header: '¿Vaciar nevera?',
       subHeader: 'Se eliminarán todos los productos',
       buttons: [
-        {
-          text: 'Sí, vaciar',
-          role: 'destructive',
-          handler: () => this.ejecutarVaciarNevera(),
-        },
+        { text: 'Sí, vaciar', role: 'destructive' },
         { text: 'Cancelar', role: 'cancel' },
       ],
     });
     await actionSheet.present();
+    // Después de cerrarse y no en el handler: el action sheet espera al handler para cerrarse
+    // y este espera al aviso de "Deshacer"
+    const { role } = await actionSheet.onDidDismiss();
+    if (role === 'destructive') await this.ejecutarVaciarNevera();
   }
 
   private async ejecutarVaciarNevera(): Promise<void> {
-    // Eliminar todos los productos de nevera
-    for (const producto of this.productos()) {
-      await this.storage.deleteProductoNevera(producto.id);
-    }
-    await this.desmarcarEnMercado(this.productos());
+    const productos = this.productos();
+    const desmarcados = await this.storage.sacarDeNevera(productos);
     await this.cargar();
-  }
-
-  /** Desmarca en Mercado los ítems de los que salieron estos productos y los devuelve. */
-  private async desmarcarEnMercado(productos: ProductoNevera[]): Promise<ItemMercado[]> {
-    const ids = new Set(productos.map((p) => p.itemMercadoId));
-    const mercado = await this.storage.getMercado();
-    const desmarcados = mercado.filter((item) => item.comprado && ids.has(item.id));
-    for (const item of desmarcados) {
-      item.comprado = false;
-      await this.storage.saveItemMercado(item);
-    }
-    return desmarcados;
+    const total = productos.length === 1 ? '1 producto' : `${productos.length} productos`;
+    const deshacer = await this.alert.toast(total, { tipo: 'eliminado', header: 'Nevera vaciada', deshacer: true });
+    if (!deshacer) return;
+    await this.storage.marcarComprados(desmarcados, productos);
+    await this.cargar();
   }
 }

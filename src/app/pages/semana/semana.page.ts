@@ -1,4 +1,5 @@
-import { Component, HostListener, computed, signal, inject } from '@angular/core';
+import { Component, computed, signal, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import {
   IonContent,
@@ -6,7 +7,6 @@ import {
   IonCard,
   IonFab,
   IonFabButton,
-  ModalController,
   IonButton,
   IonRouterLink,
 } from '@ionic/angular';
@@ -22,12 +22,14 @@ import { ComidaConfirmada, RegistroComidas } from '../../models/historial.model'
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
 import { AppUpdateService } from '../../services/app-update.service';
-import { fechaHoy, sumarDias } from '../../utils/fecha';
+import { HoyService } from '../../services/hoy.service';
+import { sumarDias } from '../../utils/fecha';
 import { sortearDias } from '../../utils/sorteo';
 import { vibrar } from '../../utils/vibrar';
 import { planSemanalVacio } from '../../data/seed.data';
 import { SeleccionarComidaModal } from './seleccionar-comida.modal';
 import { RespaldoBotonComponent } from '../../shared/respaldo-boton.component';
+import { injectAbrirModal } from '../../shared/abrir-modal';
 
 const TIPO_LABEL: Record<TipoComida, string> = { desayuno: 'Desayuno', cena: 'Cena' };
 
@@ -63,14 +65,15 @@ interface DiaVista {
 export class SemanaPage {
   private storage = inject(StorageService);
   private alert = inject(AlertService);
-  private modalCtrl = inject(ModalController);
+  private abrirModal = injectAbrirModal();
   private appUpdate = inject(AppUpdateService);
 
   plan = signal<PlanSemanal>(planSemanalVacio());
   comidas = signal<Comida[]>([]);
   // Lo confirmado en las fechas que están en pantalla (historial), por fecha
   confirmadas = signal(new Map<string, RegistroComidas>());
-  hoy = signal(fechaHoy());
+  private hoyService = inject(HoyService);
+  hoy = this.hoyService.hoy;
   // La semana empieza hoy y cada tarjeta es una fecha. El plan dice qué comida toca ese día
   // de la semana (y se repite cada semana); lo confirmado se guarda por fecha, así la
   // confirmación de este lunes queda en el historial y no pasa al lunes siguiente.
@@ -109,28 +112,24 @@ export class SemanaPage {
   });
   diasLabel = DIAS_LABEL;
 
+  constructor() {
+    // Si cambia el día, la semana tiene otras fechas: se carga lo confirmado en ellas
+    this.hoyService.cambioDeDia.pipe(takeUntilDestroyed()).subscribe(() => void this.cargar());
+  }
+
   // Ionic lo llama también al entrar la primera vez: no hace falta cargar en ngOnInit
   async ionViewWillEnter(): Promise<void> {
     await this.cargar();
   }
 
-  // En iOS la PWA se reanuda sin recargarse: al volver a la app el día pudo haber cambiado
-  @HostListener('document:visibilitychange')
-  async alVolverALaApp(): Promise<void> {
-    if (document.visibilityState === 'visible') {
-      await this.cargar();
-    }
-  }
-
   private async cargar(): Promise<void> {
-    const hoy = fechaHoy();
+    const hoy = this.hoy();
     const [plan, comidas, confirmadas, hayPlanGuardado] = await Promise.all([
       this.storage.getPlan(),
       this.storage.getComidas(),
       this.storage.getComidasConfirmadas(hoy, sumarDias(hoy, 6)),
       this.storage.hayPlanGuardado(),
     ]);
-    this.hoy.set(hoy);
     this.plan.set(plan);
     this.comidas.set(comidas);
     this.confirmadas.set(new Map(confirmadas.map((r) => [r.fecha, r])));
@@ -149,50 +148,63 @@ export class SemanaPage {
       return;
     }
 
-    const modal = await this.modalCtrl.create({
-      component: SeleccionarComidaModal,
-      componentProps: {
-        titulo: `${TIPO_LABEL[tipo]} · ${DIAS_LABEL[d.dia]}`,
-        comidas: opciones,
-        seleccionadaId: d[tipo]?.id ?? null,
-      },
-      presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
+    const { data, role } = await this.abrirModal<Comida | null>(SeleccionarComidaModal, {
+      titulo: `${TIPO_LABEL[tipo]} · ${DIAS_LABEL[d.dia]}`,
+      comidas: opciones,
+      seleccionadaId: d[tipo]?.id ?? null,
     });
-    await modal.present();
-
-    const { data, role } = await modal.onWillDismiss<Comida | null>();
     if (role === 'quitar') {
       await this.quitarComida(d, tipo);
       return;
     }
     if (!data) return;
 
+    const anterior = d[tipo];
+    const restaurar = this.estadoActual(d, tipo);
     await this.guardarPlan(d.dia, tipo, data.id);
 
     // Si ese día tenía otra comida confirmada, la nueva queda pendiente de confirmar
     const confirmado = tipo === 'desayuno' ? d.desayunoConfirmado : d.cenaConfirmado;
-    if (confirmado && d[tipo]?.id !== data.id) {
+    if (confirmado && anterior?.id !== data.id) {
       await this.guardarConfirmacion(d.fecha, tipo, undefined);
     }
+
+    // Solo al cambiar una comida por otra: asignar un espacio vacío se deshace con "Quitar"
+    if (!anterior || anterior.id === data.id) return;
+    const deshacer = await this.alert.toast(data.nombre, {
+      header: `${TIPO_LABEL[tipo]} ${tipo === 'desayuno' ? 'cambiado' : 'cambiada'}`,
+      deshacer: true,
+    });
+    if (deshacer) await restaurar();
   }
 
   /** Deja el desayuno o la cena de ese día sin asignar (y sin confirmar), con opción de deshacer. */
   private async quitarComida(d: DiaVista, tipo: TipoComida): Promise<void> {
     const comida = d[tipo];
     if (!comida) return;
-    const planAntes = this.plan()[d.dia][`${tipo}Id` as const];
-    const confirmadaAntes = this.confirmadas().get(d.fecha)?.[tipo];
+    const restaurar = this.estadoActual(d, tipo);
     await this.guardarPlan(d.dia, tipo, undefined);
-    if (confirmadaAntes) await this.guardarConfirmacion(d.fecha, tipo, undefined);
+    if (this.confirmadas().get(d.fecha)?.[tipo]) await this.guardarConfirmacion(d.fecha, tipo, undefined);
 
     const deshacer = await this.alert.toast(comida.nombre, {
       tipo: 'eliminado',
       header: `${TIPO_LABEL[tipo]} ${tipo === 'desayuno' ? 'quitado' : 'quitada'}`,
       deshacer: true,
     });
-    if (!deshacer) return;
-    await this.guardarPlan(d.dia, tipo, planAntes);
-    if (confirmadaAntes) await this.guardarConfirmacion(d.fecha, tipo, confirmadaAntes);
+    if (deshacer) await restaurar();
+  }
+
+  /**
+   * Guarda cómo está ahora el desayuno o la cena de ese día (lo planificado y lo confirmado) y
+   * devuelve una función que lo deja otra vez así: es el "Deshacer" de cambiar y quitar.
+   */
+  private estadoActual(d: DiaVista, tipo: TipoComida): () => Promise<void> {
+    const planAntes = this.plan()[d.dia][`${tipo}Id` as const];
+    const confirmadaAntes = this.confirmadas().get(d.fecha)?.[tipo];
+    return async () => {
+      await this.guardarPlan(d.dia, tipo, planAntes);
+      await this.guardarConfirmacion(d.fecha, tipo, confirmadaAntes);
+    };
   }
 
   /** Asigna (con el id) o deja sin asignar (sin él) el desayuno o la cena de un día de la semana. */

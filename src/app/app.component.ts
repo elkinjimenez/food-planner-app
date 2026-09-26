@@ -26,6 +26,7 @@ import {
   chevronBackOutline,
   chevronForwardOutline,
   chevronDownOutline,
+  flagOutline,
 } from 'ionicons/icons';
 import { StorageService } from './services/storage.service';
 import { AppUpdateService } from './services/app-update.service';
@@ -65,6 +66,7 @@ export class AppComponent implements OnInit {
       chevronBackOutline,
       chevronForwardOutline,
       chevronDownOutline,
+      flagOutline,
     });
   }
 

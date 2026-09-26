@@ -465,6 +465,16 @@ ion-modal.calendario {
   color: var(--color-agua);
 }
 
+.tono-supermercado {
+  background: var(--fondo-primario-suave);
+  color: var(--ion-color-primary-shade);
+}
+
+.tono-fruver {
+  background: var(--fondo-primario-tenue);
+  color: var(--ion-color-primary);
+}
+
 /* Etiqueta "Hoy" junto al nombre del día */
 .badge-hoy {
   font-size: 0.65rem;

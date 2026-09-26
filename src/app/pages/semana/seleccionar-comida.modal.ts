@@ -21,35 +21,37 @@ import { Comida } from '../../models/comida.model';
         <ion-note>{{ comidas.length }} opciones disponibles</ion-note>
       </div>
       @if (seleccionadaId) {
-        <div class="comida-card comida-card--quitar" (click)="quitar()">
-          <div class="comida-card__icon">
+        <button type="button" class="comida-card comida-card--quitar" (click)="quitar()">
+          <span class="comida-card__icon">
             <ion-icon name="trash-outline"></ion-icon>
-          </div>
-          <div class="comida-card__body">
+          </span>
+          <span class="comida-card__body">
             <span class="comida-card__nombre">Quitar</span>
             <span class="comida-card__ingredientes">Dejar sin asignar</span>
-          </div>
-        </div>
+          </span>
+        </button>
       }
       @for (comida of comidas; track comida.id) {
-        <div
+        <button
+          type="button"
           class="comida-card"
           [class.comida-card--selected]="isSeleccionada(comida)"
+          [attr.aria-current]="isSeleccionada(comida) ? 'true' : null"
           (click)="seleccionar(comida)"
         >
-          <div class="comida-card__icon">
+          <span class="comida-card__icon">
             <ion-icon name="restaurant-outline"></ion-icon>
-          </div>
-          <div class="comida-card__body">
+          </span>
+          <span class="comida-card__body">
             <span class="comida-card__nombre">{{ comida.nombre }}</span>
             @if (comida.ingredientes) {
               <span class="comida-card__ingredientes">{{ comida.ingredientes }}</span>
             }
-          </div>
+          </span>
           @if (isSeleccionada(comida)) {
             <ion-icon name="checkmark-circle" class="comida-card__check"></ion-icon>
           }
-        </div>
+        </button>
       }
     </ion-content>
   `,
@@ -69,16 +71,26 @@ import { Comida } from '../../models/comida.model';
       display: flex;
       align-items: center;
       gap: 14px;
+      width: calc(100% - 24px);
       margin: 0 12px 10px;
       padding: 14px 16px;
+      border: none;
       background: var(--fondo-tarjeta);
       border-radius: 14px;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+      font: inherit;
+      color: inherit;
+      text-align: start;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
       cursor: pointer;
 
       &:active {
         transform: scale(0.98);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--ion-color-primary);
+        outline-offset: 2px;
       }
 
       &--selected {

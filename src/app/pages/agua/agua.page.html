@@ -1,9 +1,14 @@
 <ion-content>
   <div class="page-title-row">
     <div class="page-title">Hidratación</div>
-    <ion-button fill="clear" size="small" class="page-title-btn" aria-label="Historial" routerLink="/historial">
-      <ion-icon name="calendar-number-outline" slot="start"></ion-icon>
-    </ion-button>
+    <div class="page-title-acciones">
+      <ion-button fill="clear" size="small" class="page-title-btn" aria-label="Cambiar meta diaria" (click)="cambiarMeta()">
+        <ion-icon name="flag-outline" slot="start"></ion-icon>
+      </ion-button>
+      <ion-button fill="clear" size="small" class="page-title-btn" aria-label="Historial" routerLink="/historial">
+        <ion-icon name="calendar-number-outline" slot="start"></ion-icon>
+      </ion-button>
+    </div>
   </div>
   <p class="page-subtitle">Registra los vasos de agua que tomas hoy</p>
   <div class="agua-container">
@@ -22,7 +27,7 @@
       <div class="ring-center">
         <ion-icon name="water" class="ring-icon"></ion-icon>
         <span class="ring-vasos">{{ registro().vasos }}</span>
-        <span class="ring-meta">/ {{ meta }} vasos</span>
+        <span class="ring-meta">/ {{ meta() }} vasos</span>
       </div>
     </div>
 
@@ -33,10 +38,10 @@
       </div>
     } @else {
       <div class="meta-msg meta-msg--pendiente">
-        @if (meta - registro().vasos === 1) {
+        @if (meta() - registro().vasos === 1) {
           Falta 1 vaso para tu meta
         } @else {
-          Faltan {{ meta - registro().vasos }} vasos para tu meta
+          Faltan {{ meta() - registro().vasos }} vasos para tu meta
         }
       </div>
     }
@@ -56,7 +61,7 @@
       <ion-label>Reiniciar</ion-label>
     </ion-button>
 
-    <span class="nota">Cada vaso ≈ 250 ml · Meta: {{ meta * 250 }} ml</span>
+    <span class="nota">Cada vaso ≈ 250 ml · Meta: {{ meta() * 250 }} ml</span>
 
     <!-- Últimos 7 días -->
     <div class="semana-agua">

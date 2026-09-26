@@ -26,8 +26,8 @@ export function sumarDias(fecha: string, dias: number): string {
 }
 
 /** Días que faltan desde hoy hasta la fecha YYYY-MM-DD; negativo si ya pasó. */
-export function diasHasta(fecha: string): number {
-  return Math.round((aFechaUtc(fecha).getTime() - aFechaUtc(fechaHoy()).getTime()) / MS_POR_DIA);
+export function diasHasta(fecha: string, hoy = fechaHoy()): number {
+  return Math.round((aFechaUtc(fecha).getTime() - aFechaUtc(hoy).getTime()) / MS_POR_DIA);
 }
 
 // Formato único para mostrar fechas en toda la app: día/mes/año (DD/MM/AAAA).

@@ -42,7 +42,7 @@
                 <i class="marca marca--cena"></i>
               }
               @if (d.vasos > 0) {
-                <i class="marca marca--agua" [class.marca--parcial]="d.vasos < meta"></i>
+                <i class="marca marca--agua" [class.marca--parcial]="d.vasos < d.meta"></i>
               }
             </span>
           </button>
@@ -106,12 +106,12 @@
       <div class="item-info">
         <span class="item-label">Agua</span>
         @if (detalle().vasos > 0) {
-          <span class="item-nombre">{{ detalle().vasos }} de {{ meta }} vasos</span>
+          <span class="item-nombre">{{ detalle().vasos }} de {{ detalle().meta }} vasos</span>
         } @else {
           <span class="detalle-vacio">Sin registro</span>
         }
       </div>
-      @if (detalle().vasos >= meta) {
+      @if (detalle().vasos >= detalle().meta) {
         <ion-icon name="checkmark-circle" class="detalle-meta" aria-label="Meta cumplida"></ion-icon>
       }
     </div>

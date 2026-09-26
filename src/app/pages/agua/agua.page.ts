@@ -1,4 +1,5 @@
-import { Component, HostListener, signal, computed, inject } from '@angular/core';
+import { Component, signal, computed, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import {
   IonContent,
@@ -8,6 +9,8 @@ import {
   IonRouterLink,
 } from '@ionic/angular';
 import { StorageService } from '../../services/storage.service';
+import { AlertService } from '../../services/alert.service';
+import { HoyService } from '../../services/hoy.service';
 import { META_VASOS, RegistroAgua } from '../../models/historial.model';
 import { diaSemana, fechaHoy, sumarDias } from '../../utils/fecha';
 
@@ -29,11 +32,13 @@ interface BarraDia {
 })
 export class AguaPage {
   private storage = inject(StorageService);
+  private alert = inject(AlertService);
+  private hoyService = inject(HoyService);
 
   registro = signal<RegistroAgua>({ fecha: '', vasos: 0 });
-  meta = META_VASOS;
-  progreso = computed(() => Math.min(this.registro().vasos / this.meta, 1));
-  cumplido = computed(() => this.registro().vasos >= this.meta);
+  meta = signal(META_VASOS);
+  progreso = computed(() => Math.min(this.registro().vasos / this.meta(), 1));
+  cumplido = computed(() => this.registro().vasos >= this.meta());
   // Los 6 días anteriores; hoy sale de `registro`, así la gráfica sigue cada vaso
   private anteriores = signal<RegistroAgua[]>([]);
   ultimosDias = computed<BarraDia[]>(() => {
@@ -42,40 +47,52 @@ export class AguaPage {
     return [...this.anteriores(), hoy].map((r) => ({
       ...r,
       letra: LETRAS_DIA[diaSemana(r.fecha)],
-      alto: Math.min(r.vasos / this.meta, 1),
+      // Cada día con la meta que tenía
+      alto: Math.min(r.vasos / (r === hoy ? this.meta() : (r.meta ?? META_VASOS)), 1),
       esHoy: r === hoy,
     }));
   });
+
+  constructor() {
+    // Si cambia el día, el registro en pantalla es de ayer: se carga el de hoy
+    this.hoyService.cambioDeDia.pipe(takeUntilDestroyed()).subscribe(() => void this.cargar());
+  }
 
   // Ionic lo llama también al entrar la primera vez: no hace falta cargar en ngOnInit
   async ionViewWillEnter(): Promise<void> {
     await this.cargar();
   }
 
-  // En iOS la PWA se reanuda sin recargarse: al volver a la app el día pudo haber cambiado
-  @HostListener('document:visibilitychange')
-  async alVolverALaApp(): Promise<void> {
-    if (document.visibilityState === 'visible') {
-      await this.cargar();
-    }
-  }
-
   private async cargar(): Promise<void> {
     // Cada día tiene su propio registro: los días anteriores quedan en el historial
-    const hoy = fechaHoy();
+    const hoy = this.hoyService.hoy();
     const desde = sumarDias(hoy, -6);
-    const [reg, anteriores] = await Promise.all([
+    const [reg, anteriores, meta] = await Promise.all([
       this.storage.getAgua(hoy),
       this.storage.getAguaEntre(desde, sumarDias(hoy, -1)),
+      this.storage.getMetaVasos(),
     ]);
-    const vasos = new Map(anteriores.map((r) => [r.fecha, r.vasos]));
+    const porFecha = new Map(anteriores.map((r) => [r.fecha, r]));
     this.anteriores.set(
       Array.from({ length: 6 }, (_, i) => {
         const fecha = sumarDias(desde, i);
-        return { fecha, vasos: vasos.get(fecha) ?? 0 };
+        return porFecha.get(fecha) ?? { fecha, vasos: 0 };
       }),
     );
+    this.meta.set(meta);
     this.registro.set(reg);
+  }
+
+  async cambiarMeta(): Promise<void> {
+    const meta = await this.alert.pedirNumero('Meta diaria', this.meta(), {
+      min: 1,
+      max: 30,
+      message: 'Vasos de unos 250 ml al día',
+    });
+    if (meta === null || meta === this.meta()) return;
+    this.meta.set(meta);
+    // Se guarda en el registro de hoy: así queda como la vigente y como la de hoy en el historial
+    await this.guardar(this.registroDeHoy());
   }
 
   async sumarVaso(): Promise<void> {
@@ -89,7 +106,16 @@ export class AguaPage {
   }
 
   async reiniciar(): Promise<void> {
-    await this.guardar({ fecha: fechaHoy(), vasos: 0 });
+    const antes = this.registroDeHoy();
+    if (antes.vasos === 0) return;
+    await this.guardar({ ...antes, vasos: 0 });
+    const deshacer = await this.alert.toast(`${antes.vasos} ${antes.vasos === 1 ? 'vaso' : 'vasos'} de hoy`, {
+      tipo: 'eliminado',
+      header: 'Agua reiniciada',
+      deshacer: true,
+    });
+    // Se suman los vasos que se hayan agregado mientras estaba el aviso
+    if (deshacer) await this.guardar({ ...antes, vasos: antes.vasos + this.registroDeHoy().vasos });
   }
 
   // Si la app quedó abierta de un día para otro, el registro en pantalla es de ayer:
@@ -99,8 +125,10 @@ export class AguaPage {
     return reg.fecha === fechaHoy() ? reg : { fecha: fechaHoy(), vasos: 0 };
   }
 
+  /** Guarda el registro con la meta vigente. */
   private async guardar(reg: RegistroAgua): Promise<void> {
-    this.registro.set(reg);
-    await this.storage.putAgua(reg);
+    const conMeta = { ...reg, meta: this.meta() };
+    this.registro.set(conMeta);
+    await this.storage.putAgua(conMeta);
   }
 }

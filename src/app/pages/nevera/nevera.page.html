@@ -28,14 +28,14 @@
         <div class="item-card-body">
           <div class="estado-dot estado-dot--{{ p.estado }}"></div>
           <div class="item-info">
-            <span class="item-nombre">{{ p.producto.nombre }}</span>
+            <span class="item-nombre">{{ p.nombre }}</span>
             <span class="item-sub">Vence: {{ p.producto.fechaVencimiento | fecha }}</span>
           </div>
           <ion-badge [color]="p.color">{{ p.label }}</ion-badge>
-          <button class="action-btn action-btn--edit" [attr.aria-label]="'Editar ' + p.producto.nombre" (click)="editar(p.producto)">
+          <button class="action-btn action-btn--edit" [attr.aria-label]="'Editar ' + p.nombre" (click)="editar(p)">
             <ion-icon name="create-outline"></ion-icon>
           </button>
-          <button class="action-btn action-btn--delete" [attr.aria-label]="'Eliminar ' + p.producto.nombre" (click)="eliminar(p.producto)">
+          <button class="action-btn action-btn--delete" [attr.aria-label]="'Eliminar ' + p.nombre" (click)="eliminar(p)">
             <ion-icon name="trash-outline"></ion-icon>
           </button>
         </div>

@@ -1,13 +1,13 @@
-import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { IonBackButton, IonButton, IonCard, IonContent, IonIcon } from '@ionic/angular';
 import { Comida } from '../../models/comida.model';
 import { DIAS_LABEL, DIAS_SEMANA, diaSemanaDe } from '../../models/plan-semanal.model';
 import { ComidaConfirmada, META_VASOS, RegistroAgua, RegistroComidas } from '../../models/historial.model';
 import { StorageService } from '../../services/storage.service';
+import { HoyService } from '../../services/hoy.service';
 import { FechaPipe } from '../../shared/fecha.pipe';
 import {
   casillasDelMes,
-  fechaHoy,
   finDeMes,
   formatearFecha,
   inicioDeMes,
@@ -23,6 +23,7 @@ interface DiaHistorial {
   desayuno?: string; // nombre de la comida confirmada
   cena?: string;
   vasos: number;
+  meta: number; // la meta de agua de ese día
 }
 
 @Component({
@@ -34,12 +35,11 @@ interface DiaHistorial {
 export class HistorialPage implements OnInit {
   private storage = inject(StorageService);
 
-  readonly meta = META_VASOS;
   readonly diasSemana = DIAS_SEMANA.map((d) => DIAS_LABEL[d].slice(0, 2)); // Lu, Ma, Mi…
 
-  hoy = signal(fechaHoy());
-  mes = signal(inicioDeMes(fechaHoy())); // primer día del mes en pantalla
-  seleccionada = signal(fechaHoy());
+  hoy = inject(HoyService).hoy;
+  mes = signal(inicioDeMes(this.hoy())); // primer día del mes en pantalla
+  seleccionada = signal(this.hoy());
   private confirmadas = signal(new Map<string, RegistroComidas>());
   private agua = signal(new Map<string, RegistroAgua>());
   private comidas = signal(new Map<string, Comida>());
@@ -58,21 +58,12 @@ export class HistorialPage implements OnInit {
     return {
       desayunos: dias.filter((d) => d.desayuno).length,
       cenas: dias.filter((d) => d.cena).length,
-      metaAgua: dias.filter((d) => d.vasos >= this.meta).length,
+      metaAgua: dias.filter((d) => d.vasos >= d.meta).length,
     };
   });
 
   async ngOnInit(): Promise<void> {
     await this.cargar();
-  }
-
-  // En iOS la PWA se reanuda sin recargarse: al volver a la app el día pudo haber cambiado
-  @HostListener('document:visibilitychange')
-  async alVolverALaApp(): Promise<void> {
-    if (document.visibilityState === 'visible') {
-      this.hoy.set(fechaHoy());
-      await this.cargar();
-    }
   }
 
   async cambiarMes(meses: number): Promise<void> {
@@ -100,6 +91,7 @@ export class HistorialPage implements OnInit {
 
   private dia(fecha: string): DiaHistorial {
     const registro = this.confirmadas().get(fecha);
+    const agua = this.agua().get(fecha);
     // El nombre actual si la comida sigue en "Mis Comidas"; si se borró, el que tenía ese día
     const nombre = (comida?: ComidaConfirmada) => comida && (this.comidas().get(comida.id)?.nombre ?? comida.nombre);
     return {
@@ -107,7 +99,8 @@ export class HistorialPage implements OnInit {
       numero: Number(fecha.slice(8)),
       desayuno: nombre(registro?.desayuno),
       cena: nombre(registro?.cena),
-      vasos: this.agua().get(fecha)?.vasos ?? 0,
+      vasos: agua?.vasos ?? 0,
+      meta: agua?.meta ?? META_VASOS,
     };
   }
 }
