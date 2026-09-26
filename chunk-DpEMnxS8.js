@@ -1,0 +1,1 @@
+import{Lt as ox,i as Fe}from"./main-SJGG2EOB.js";var n=(()=>{let r=class r{transform(e){return Fe(e)}};r.ɵfac=function(o){return new(o||r)},r.ɵpipe=ox({name:`fecha`,type:r,pure:!0});return r})();export{n as t};

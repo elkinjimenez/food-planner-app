@@ -1,1 +1,0 @@
-import{Rt as ox,u as Ue}from"./main-IFUNANAL.js";var n=(()=>{let r=class r{transform(e){return Ue(e)}};r.ɵfac=function(o){return new(o||r)},r.ɵpipe=ox({name:`fecha`,type:r,pure:!0});return r})();export{n as t};
