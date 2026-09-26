@@ -146,10 +146,25 @@ export class StorageService {
   // Los productos que vinieron de Mercado antes de existir itemMercadoId se enlazaban por
   // nombre: aquí se enlazan por id (solo toca productos aún sin enlazar).
   async init(): Promise<void> {
+    void this.pedirPersistencia();
     const [nevera, mercado] = await Promise.all([this.getNevera(), this.getMercado()]);
     const enlazados = enlazarNeveraConMercado(nevera, mercado);
     if (enlazados.length > 0) {
       await this.putAll(STORE_NEVERA, enlazados);
+    }
+  }
+
+  /**
+   * Pide almacenamiento persistente: así el navegador no borra los datos por su cuenta cuando
+   * el teléfono se queda sin espacio (solo se borran si el usuario lo hace).
+   */
+  private async pedirPersistencia(): Promise<void> {
+    try {
+      if (navigator.storage?.persist && !(await navigator.storage.persisted())) {
+        await navigator.storage.persist();
+      }
+    } catch (err) {
+      console.warn('No se pudo pedir almacenamiento persistente:', err);
     }
   }
 
@@ -224,6 +239,23 @@ export class StorageService {
           values.forEach((v) => os.put(v));
           tx.oncomplete = () => resolve();
           tx.onerror = () => reject(tx.error);
+        }),
+    );
+  }
+
+  /**
+   * Varias operaciones en una sola transacción: se guardan todas o ninguna, y las transacciones
+   * sobre los mismos stores corren en el orden en que se piden, sin mezclarse.
+   */
+  private enTransaccion(stores: StoreName[], operacion: (tx: IDBTransaction) => void): Promise<void> {
+    return this.conReintento(
+      (db) =>
+        new Promise((resolve, reject) => {
+          const tx = db.transaction(stores, 'readwrite');
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+          tx.onabort = () => reject(tx.error);
+          operacion(tx);
         }),
     );
   }
@@ -307,6 +339,26 @@ export class StorageService {
   deleteItemMercado(id: string): Promise<void> {
     return this.delete(STORE_MERCADO, id);
   }
+  /** Guarda el ítem como comprado y agrega a la nevera el producto que salió de él. */
+  marcarComprado(item: ItemMercado, producto: ProductoNevera): Promise<void> {
+    return this.enTransaccion([STORE_MERCADO, STORE_NEVERA], (tx) => {
+      tx.objectStore(STORE_MERCADO).put(item);
+      tx.objectStore(STORE_NEVERA).put(producto);
+    });
+  }
+  /** Guarda el ítem como no comprado y saca de la nevera lo que salió de él. */
+  desmarcarComprado(item: ItemMercado): Promise<void> {
+    return this.enTransaccion([STORE_MERCADO, STORE_NEVERA], (tx) => {
+      tx.objectStore(STORE_MERCADO).put(item);
+      const nevera = tx.objectStore(STORE_NEVERA);
+      const req = nevera.getAll();
+      req.onsuccess = () => {
+        for (const producto of req.result as ProductoNevera[]) {
+          if (producto.itemMercadoId === item.id) nevera.delete(producto.id);
+        }
+      };
+    });
+  }
   /** Vuelve a cargar la lista base de una categoría (se ofrece cuando la sección queda vacía). */
   restaurarMercadoBase(categoria: CategoriaMercado): Promise<void> {
     return this.putAll(STORE_MERCADO, mercadoBase(categoria));
@@ -329,6 +381,10 @@ export class StorageService {
   }
   putPlan(plan: PlanSemanal): Promise<void> {
     return this.putWithKey(STORE_PLAN, PLAN_KEY, plan);
+  }
+  /** Si ya se guardó algún plan (aunque esté vacío): no lo hay solo antes del primero. */
+  async hayPlanGuardado(): Promise<boolean> {
+    return (await this.getByKey<unknown>(STORE_PLAN, PLAN_KEY)) !== undefined;
   }
 
   // ===== Comidas confirmadas (historial por fecha) =====

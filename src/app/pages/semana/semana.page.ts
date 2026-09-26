@@ -125,19 +125,20 @@ export class SemanaPage implements OnInit {
 
   private async cargar(): Promise<void> {
     const hoy = fechaHoy();
-    const [plan, comidas, confirmadas] = await Promise.all([
+    const [plan, comidas, confirmadas, hayPlanGuardado] = await Promise.all([
       this.storage.getPlan(),
       this.storage.getComidas(),
       this.storage.getComidasConfirmadas(hoy, sumarDias(hoy, 6)),
+      this.storage.hayPlanGuardado(),
     ]);
     this.hoy.set(hoy);
     this.plan.set(plan);
     this.comidas.set(comidas);
     this.confirmadas.set(new Map(confirmadas.map((r) => [r.fecha, r])));
 
-    // Si no hay nada planificado y hay comidas disponibles, generar semana aleatoria
-    const tieneAlgo = this.semana().some((d) => d.desayuno || d.cena);
-    if (!tieneAlgo && comidas.length > 0) {
+    // Solo la primera vez (aún no hay plan guardado) se genera una semana aleatoria:
+    // si después se quitan todas las comidas, la semana se queda vacía
+    if (!hayPlanGuardado && comidas.length > 0) {
       await this.generarSemanaAleatoria();
     }
   }
@@ -240,12 +241,23 @@ export class SemanaPage implements OnInit {
     await this.storage.saveComidasConfirmadas(registro);
   }
 
-  async generarSemanaAleatoria(): Promise<void> {
+  /** Botón de sortear: genera la semana al azar con opción de volver al plan anterior. */
+  async sortearSemana(): Promise<void> {
+    const planAntes = this.plan();
+    if (!(await this.generarSemanaAleatoria())) return;
+    const deshacer = await this.alert.toast('Semana generada al azar', { deshacer: true });
+    if (!deshacer) return;
+    this.plan.set(planAntes);
+    await this.storage.putPlan(planAntes);
+  }
+
+  /** Devuelve false si no había comidas para generarla. */
+  private async generarSemanaAleatoria(): Promise<boolean> {
     const desayunos = this.comidas().filter((c) => c.tipo === 'desayuno');
     const cenas = this.comidas().filter((c) => c.tipo === 'cena');
     if (desayunos.length === 0 && cenas.length === 0) {
       await this.alert.aviso('No hay comidas', 'Agrega comidas en la pestaña Comidas.');
-      return;
+      return false;
     }
     const semana = this.semana();
     // Lo ya confirmado se mantiene
@@ -266,6 +278,7 @@ export class SemanaPage implements OnInit {
     });
     this.plan.set(nuevoPlan);
     await this.storage.putPlan(nuevoPlan);
+    return true;
   }
 
   async refresh(): Promise<void> {

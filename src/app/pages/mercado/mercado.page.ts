@@ -20,6 +20,11 @@ import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
 import { EditarItemModal } from '../../shared/editar-item.modal';
 
+const OPCIONES_CATEGORIA = [
+  { valor: 'supermercado', texto: 'Supermercado' },
+  { valor: 'fruver', texto: 'Fruver' },
+];
+
 @Component({
   selector: 'app-mercado',
   templateUrl: 'mercado.page.html',
@@ -69,11 +74,14 @@ export class MercadoPage implements OnInit {
     );
   }
 
-  async toggleComprado(item: ItemMercado): Promise<void> {
-    item.comprado = !item.comprado;
-    await this.storage.saveItemMercado(item);
+  /**
+   * Marca o desmarca en una sola transacción: con toques muy seguidos cada uno corre
+   * completo y en orden.
+   */
+  async toggleComprado(item: ItemMercado, comprado: boolean): Promise<void> {
+    item.comprado = comprado;
 
-    if (item.comprado) {
+    if (comprado) {
       // Al marcar como comprado, agregar a nevera con fecha de vencimiento calculada
       const dias = parsearDuracionADias(item.duracion);
       const producto: ProductoNevera = {
@@ -82,13 +90,10 @@ export class MercadoPage implements OnInit {
         fechaVencimiento: calcularFechaVencimiento(dias),
         itemMercadoId: item.id,
       };
-      await this.storage.saveProductoNevera(producto);
+      await this.storage.marcarComprado(item, producto);
     } else {
       // Al desmarcar, quitar de la nevera lo que salió de este ítem
-      const nevera = await this.storage.getNevera();
-      for (const producto of nevera.filter((p) => p.itemMercadoId === item.id)) {
-        await this.storage.deleteProductoNevera(producto.id);
-      }
+      await this.storage.desmarcarComprado(item);
     }
 
     setTimeout(() => this.cargarDeslizando(), 400);
@@ -101,6 +106,11 @@ export class MercadoPage implements OnInit {
       this.mostrar(data);
       this.cdr.detectChanges();
     });
+  }
+
+  // Método y no computed: toggleComprado cambia el ítem sin pasar por el signal
+  hayComprados(): boolean {
+    return this.items().some((i) => i.comprado);
   }
 
   async desmarcarTodo(): Promise<void> {
@@ -164,18 +174,21 @@ export class MercadoPage implements OnInit {
           sugerencias2: DURACIONES,
           value1: '',
           value2: '',
+          labelOpcion: 'Categoría',
+          opciones: OPCIONES_CATEGORIA,
+          opcion: categoria,
         },
       },
       presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
     });
     await modal.present();
-    const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
+    const { data } = await modal.onWillDismiss<{ value1: string; value2: string; opcion: string } | null>();
     if (!data || !data.value1) return;
     const nuevo: ItemMercado = {
       id: uuid(),
       nombre: data.value1,
       duracion: data.value2 || '',
-      categoria,
+      categoria: data.opcion as CategoriaMercado,
       comprado: false,
     };
     await this.storage.saveItemMercado(nuevo);
@@ -213,15 +226,19 @@ export class MercadoPage implements OnInit {
           sugerencias2: DURACIONES,
           value1: item.nombre,
           value2: item.duracion,
+          labelOpcion: 'Categoría',
+          opciones: OPCIONES_CATEGORIA,
+          opcion: item.categoria,
         },
       },
       presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
     });
     await modal.present();
-    const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
+    const { data } = await modal.onWillDismiss<{ value1: string; value2: string; opcion: string } | null>();
     if (!data || !data.value1) return;
     item.nombre = data.value1;
     item.duracion = data.value2 || '';
+    item.categoria = data.opcion as CategoriaMercado;
     await this.storage.saveItemMercado(item);
     await this.cargar();
   }

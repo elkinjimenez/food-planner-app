@@ -11,6 +11,9 @@ import {
   IonDatetime,
   IonDatetimeButton,
   IonModal,
+  IonSegment,
+  IonSegmentButton,
+  IonLabel,
   ModalController,
 } from '@ionic/angular';
 import { FORMATO_FECHA, LOCALE_FECHAS, fechaHoy, sumarDias } from '../utils/fecha';
@@ -29,6 +32,10 @@ export interface EditarItemConfig {
   input2Type?: 'text' | 'date';
   campo2Opcional?: boolean;
   sugerencias2?: string[]; // atajos que rellenan el campo 2 cuando es de texto
+  // Selector de una opción arriba de los campos (p. ej. la categoría o el tipo)
+  labelOpcion?: string;
+  opciones?: { valor: string; texto: string }[];
+  opcion?: string;
 }
 
 @Component({
@@ -47,6 +54,18 @@ export interface EditarItemConfig {
     </ion-header>
     <ion-content class="modal-content">
       <div class="edit-form">
+        @if (config.opciones) {
+          <div class="form-field">
+            <span class="field-label">{{ config.labelOpcion }}</span>
+            <ion-segment [(ngModel)]="opcion">
+              @for (o of config.opciones; track o.valor) {
+                <ion-segment-button [value]="o.valor">
+                  <ion-label>{{ o.texto }}</ion-label>
+                </ion-segment-button>
+              }
+            </ion-segment>
+          </div>
+        }
         <div class="form-field">
           <span class="field-label">{{ config.label1 }}</span>
           <ion-input
@@ -245,6 +264,9 @@ export interface EditarItemConfig {
     IonDatetime,
     IonDatetimeButton,
     IonModal,
+    IonSegment,
+    IonSegmentButton,
+    IonLabel,
   ],
 })
 export class EditarItemModal implements OnInit {
@@ -254,6 +276,7 @@ export class EditarItemModal implements OnInit {
 
   value1 = '';
   value2 = '';
+  opcion = '';
 
   readonly idFecha = `fecha-${++contadorFechas}`;
   readonly localeFechas = LOCALE_FECHAS;
@@ -269,6 +292,7 @@ export class EditarItemModal implements OnInit {
   ngOnInit(): void {
     this.value1 = this.config.value1;
     this.value2 = this.config.value2;
+    this.opcion = this.config.opcion ?? '';
     // El selector siempre muestra una fecha (hoy, si no hay ninguna): se usa esa misma
     // para que lo que se ve sea lo que se guarda.
     if (this.config.input2Type === 'date' && !this.value2) {
@@ -297,6 +321,7 @@ export class EditarItemModal implements OnInit {
     this.modalCtrl.dismiss({
       value1: this.value1.trim(),
       value2: this.value2.trim(),
+      opcion: this.opcion,
     });
   }
 

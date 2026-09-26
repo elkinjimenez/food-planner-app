@@ -10,6 +10,19 @@
   }
 }
 
+// Toda la fila marca o desmarca: la casilla solo muestra el estado
+.item-card {
+  cursor: pointer;
+
+  &:active:not(:has(.action-btn:active)) {
+    --background: var(--fondo-presionado);
+  }
+
+  ion-checkbox {
+    pointer-events: none;
+  }
+}
+
 .item-comprado {
   .item-nombre {
     text-decoration: line-through;

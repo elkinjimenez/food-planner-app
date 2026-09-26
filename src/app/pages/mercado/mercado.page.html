@@ -1,10 +1,12 @@
 <ion-content>
   <div class="page-title-row">
     <span class="page-title">Mercado</span>
-    <ion-button fill="clear" size="small" class="page-title-btn" (click)="desmarcarTodo()">
-      <ion-icon name="refresh-outline" slot="start"></ion-icon>
-      <ion-label>Desmarcar todo</ion-label>
-    </ion-button>
+    @if (hayComprados()) {
+      <ion-button fill="clear" size="small" class="page-title-btn" (click)="desmarcarTodo()">
+        <ion-icon name="refresh-outline" slot="start"></ion-icon>
+        <ion-label>Desmarcar todo</ion-label>
+      </ion-button>
+    }
   </div>
   <p class="page-subtitle">Lo que marques como comprado pasa a la nevera</p>
   <!-- Supermercado -->
@@ -16,17 +18,17 @@
     <span class="section-count">{{ supermercado().length }}</span>
   </div>
   @for (item of supermercado(); track item.id) {
-    <ion-card #fila class="item-card" [class.item-comprado]="item.comprado">
+    <ion-card #fila class="item-card" [class.item-comprado]="item.comprado" (click)="toggleComprado(item, !item.comprado)">
       <div class="item-card-body">
-        <ion-checkbox [checked]="item.comprado" (ionChange)="toggleComprado(item)"></ion-checkbox>
+        <ion-checkbox [checked]="item.comprado"></ion-checkbox>
         <div class="item-info">
           <span class="item-nombre">{{ item.nombre }}</span>
           <span class="item-sub">{{ item.duracion }}</span>
         </div>
-        <button class="action-btn action-btn--edit" (click)="editar(item)">
+        <button class="action-btn action-btn--edit" (click)="editar(item); $event.stopPropagation()">
           <ion-icon name="create-outline"></ion-icon>
         </button>
-        <button class="action-btn action-btn--delete" (click)="eliminar(item)">
+        <button class="action-btn action-btn--delete" (click)="eliminar(item); $event.stopPropagation()">
           <ion-icon name="trash-outline"></ion-icon>
         </button>
       </div>
@@ -50,17 +52,17 @@
     <span class="section-count">{{ fruver().length }}</span>
   </div>
   @for (item of fruver(); track item.id) {
-    <ion-card #fila class="item-card" [class.item-comprado]="item.comprado">
+    <ion-card #fila class="item-card" [class.item-comprado]="item.comprado" (click)="toggleComprado(item, !item.comprado)">
       <div class="item-card-body">
-        <ion-checkbox [checked]="item.comprado" (ionChange)="toggleComprado(item)"></ion-checkbox>
+        <ion-checkbox [checked]="item.comprado"></ion-checkbox>
         <div class="item-info">
           <span class="item-nombre">{{ item.nombre }}</span>
           <span class="item-sub">{{ item.duracion }}</span>
         </div>
-        <button class="action-btn action-btn--edit" (click)="editar(item)">
+        <button class="action-btn action-btn--edit" (click)="editar(item); $event.stopPropagation()">
           <ion-icon name="create-outline"></ion-icon>
         </button>
-        <button class="action-btn action-btn--delete" (click)="eliminar(item)">
+        <button class="action-btn action-btn--delete" (click)="eliminar(item); $event.stopPropagation()">
           <ion-icon name="trash-outline"></ion-icon>
         </button>
       </div>

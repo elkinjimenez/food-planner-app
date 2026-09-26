@@ -12,9 +12,14 @@ import {
 import { Comida, TipoComida } from '../../models/comida.model';
 import { uuid } from '../../utils/uuid';
 import { deslizarFilas } from '../../utils/deslizar-filas';
-import { StorageService } from '../../services/storage.service';
+import { StorageService, quitarComidaDelPlan } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
 import { EditarItemModal } from '../../shared/editar-item.modal';
+
+const OPCIONES_TIPO = [
+  { valor: 'desayuno', texto: 'Desayuno' },
+  { valor: 'cena', texto: 'Cena' },
+];
 
 @Component({
   selector: 'app-comidas',
@@ -76,26 +81,30 @@ export class ComidasPage implements OnInit {
       component: EditarItemModal,
       componentProps: {
         config: {
-          titulo: tipo === 'desayuno' ? 'Agregar desayuno' : 'Agregar cena',
+          // Título general: el tipo se puede cambiar en el selector
+          titulo: 'Agregar comida',
           boton: 'Agregar',
-          icono: tipo === 'desayuno' ? 'sunny-outline' : 'moon-outline',
+          icono: 'restaurant-outline',
           label1: 'Nombre',
           label2: 'Ingredientes (opcional)',
           value1: '',
           value2: '',
           campo2Opcional: true,
+          labelOpcion: 'Tipo',
+          opciones: OPCIONES_TIPO,
+          opcion: tipo,
         },
       },
       presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
     });
     await modal.present();
-    const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
+    const { data } = await modal.onWillDismiss<{ value1: string; value2: string; opcion: string } | null>();
     if (!data || !data.value1) return;
     const nueva: Comida = {
       id: uuid(),
       nombre: data.value1,
       ingredientes: data.value2 || undefined,
-      tipo,
+      tipo: data.opcion as TipoComida,
     };
     await this.storage.saveComida(nueva);
     await this.cargar();
@@ -132,16 +141,26 @@ export class ComidasPage implements OnInit {
           value1: comida.nombre,
           value2: comida.ingredientes ?? '',
           campo2Opcional: true,
+          labelOpcion: 'Tipo',
+          opciones: OPCIONES_TIPO,
+          opcion: comida.tipo,
         },
       },
       presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
     });
     await modal.present();
-    const { data } = await modal.onWillDismiss<{ value1: string; value2: string } | null>();
+    const { data } = await modal.onWillDismiss<{ value1: string; value2: string; opcion: string } | null>();
     if (!data || !data.value1) return;
+    const cambioTipo = comida.tipo !== data.opcion;
     comida.nombre = data.value1;
     comida.ingredientes = data.value2 || undefined;
+    comida.tipo = data.opcion as TipoComida;
     await this.storage.saveComida(comida);
+    if (cambioTipo) {
+      // En el plan estaba como el tipo anterior (p. ej. de desayuno): se deja ese día sin asignar
+      const plan = await this.storage.getPlan();
+      if (quitarComidaDelPlan(plan, comida.id)) await this.storage.putPlan(plan);
+    }
     await this.cargar();
   }
 
