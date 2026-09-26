@@ -1,0 +1,1 @@
+import{$t as ox,b as qe}from"./main-W6SMZIQT.js";var n=(()=>{let r=class r{transform(e){return qe(e)}};r.ɵfac=function(o){return new(o||r)},r.ɵpipe=ox({name:`fecha`,type:r,pure:!0});return r})();export{n as t};
