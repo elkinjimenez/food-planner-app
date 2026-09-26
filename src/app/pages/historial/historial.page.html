@@ -4,6 +4,12 @@
       <ion-back-button defaultHref="/semana" text="" icon="arrow-back-outline" aria-label="Volver"></ion-back-button>
       <div class="page-title">Historial</div>
     </div>
+    @if (seleccionada() !== hoy()) {
+      <ion-button fill="clear" size="small" class="page-title-btn" (click)="irAHoy()">
+        <ion-icon name="today-outline" slot="start"></ion-icon>
+        <ion-label>Hoy</ion-label>
+      </ion-button>
+    }
   </div>
   <p class="page-subtitle">Tus comidas confirmadas y el agua de cada día</p>
 
@@ -115,5 +121,24 @@
         <ion-icon name="checkmark-circle" class="detalle-meta" aria-label="Meta cumplida"></ion-icon>
       }
     </div>
+  </ion-card>
+
+  <ion-card class="detalle">
+    <div class="detalle-titulo">Lo que más comiste este mes</div>
+    @for (c of masFrecuentes(); track c.id) {
+      <div class="detalle-fila">
+        <div class="item-icon {{ c.tipo === 'desayuno' ? 'tono-desayuno' : 'tono-cena' }}">
+          <ion-icon [name]="c.tipo === 'desayuno' ? 'sunny-outline' : 'moon-outline'"></ion-icon>
+        </div>
+        <div class="item-info">
+          <span class="item-nombre">{{ c.nombre }}</span>
+        </div>
+        <span class="section-count">{{ c.veces }} {{ c.veces === 1 ? 'vez' : 'veces' }}</span>
+      </div>
+    } @empty {
+      <div class="detalle-fila">
+        <span class="detalle-vacio">Aún no hay comidas confirmadas este mes</span>
+      </div>
+    }
   </ion-card>
 </ion-content>

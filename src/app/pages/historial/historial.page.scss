@@ -202,6 +202,12 @@ ion-content {
   color: var(--color-texto-tenue);
 }
 
+// Veces en "Lo que más comiste": no se parte en dos líneas
+.detalle-fila .section-count {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .detalle-meta {
   font-size: 22px;
   color: var(--ion-color-primary);

@@ -1,12 +1,19 @@
 <ion-content>
   <div class="page-title-row">
     <span class="page-title">Mercado</span>
-    @if (hayComprados()) {
-      <ion-button fill="clear" size="small" class="page-title-btn" (click)="desmarcarTodo()">
-        <ion-icon name="refresh-outline" slot="start"></ion-icon>
-        <ion-label>Desmarcar todo</ion-label>
-      </ion-button>
-    }
+    <div class="page-title-acciones">
+      @if (hayPendientes()) {
+        <ion-button fill="clear" size="small" class="page-title-btn" aria-label="Compartir lista" (click)="compartirLista()">
+          <ion-icon name="share-outline" slot="start"></ion-icon>
+        </ion-button>
+      }
+      @if (hayComprados()) {
+        <ion-button fill="clear" size="small" class="page-title-btn" (click)="desmarcarTodo()">
+          <ion-icon name="refresh-outline" slot="start"></ion-icon>
+          <ion-label>Desmarcar todo</ion-label>
+        </ion-button>
+      }
+    </div>
   </div>
   <p class="page-subtitle">Lo que marques como comprado pasa a la nevera</p>
   @for (s of secciones; track s.categoria) {

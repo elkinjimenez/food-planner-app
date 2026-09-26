@@ -70,6 +70,7 @@ export class MercadoPage {
   // En el orden de la pantalla (los comprados al final): solo se reordena al cargar
   items = signal<ItemMercado[]>([]);
   hayComprados = computed(() => this.items().some((i) => i.comprado));
+  hayPendientes = computed(() => this.items().some((i) => !i.comprado));
   readonly secciones: SeccionMercado[] = [
     this.seccion({
       categoria: 'supermercado',
@@ -105,6 +106,60 @@ export class MercadoPage {
 
   private mostrar(data: ItemMercado[]): void {
     this.items.set(data.sort((a, b) => Number(a.comprado) - Number(b.comprado)));
+  }
+
+  /**
+   * Comparte lo que falta por comprar, por categoría, como texto (p. ej. por WhatsApp).
+   * En computador lo copia. Sin await antes de compartir o copiar: iOS solo lo permite durante el toque.
+   */
+  async compartirLista(): Promise<void> {
+    const texto = this.textoLista();
+    if (matchMedia('(pointer: coarse)').matches && navigator.share) {
+      try {
+        await navigator.share({ text: texto });
+        return;
+      } catch (error) {
+        if ((error as DOMException).name === 'AbortError') return; // cerró el menú de compartir
+        // iOS a veces lo rechaza (p. ej. si un compartir anterior quedó "en curso")
+        console.warn('No se abrió el menú de compartir:', error);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(texto);
+        await this.alert.toast('Lista copiada');
+        return;
+      } catch (error) {
+        console.warn('No se pudo copiar la lista:', error);
+      }
+    }
+    // Tras un intento fallido el toque ya no sirve para compartir ni copiar: se ofrece en un
+    // menú, donde cada opción es un toque nuevo
+    const opciones = await this.actionSheetCtrl.create({
+      header: 'Compartir lista',
+      buttons: [
+        { text: 'Enviar por WhatsApp', handler: () => void (location.href = `whatsapp://send?text=${encodeURIComponent(texto)}`) },
+        { text: 'Copiar lista', handler: () => void this.copiar(texto) },
+        { text: 'Cancelar', role: 'cancel' },
+      ],
+    });
+    await opciones.present();
+  }
+
+  private textoLista(): string {
+    const categorias = this.secciones
+      .map((s) => ({ titulo: s.titulo, pendientes: s.items().filter((i) => !i.comprado) }))
+      .filter((s) => s.pendientes.length > 0)
+      .map((s) => [`*${s.titulo}*`, ...s.pendientes.map((i) => `• ${i.nombre}`)].join('\n'));
+    return ['🛒 Lista de mercado', ...categorias].join('\n\n');
+  }
+
+  private async copiar(texto: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(texto);
+      await this.alert.toast('Lista copiada');
+    } catch {
+      await this.alert.aviso('No se pudo copiar', 'Inténtalo de nuevo.');
+    }
   }
 
   /**
