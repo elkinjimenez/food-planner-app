@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, HostListener, signal, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   IonContent,
@@ -27,7 +27,7 @@ interface BarraDia {
   styleUrls: ['agua.page.scss'],
   imports: [IonContent, IonButton, IonIcon, IonLabel, RouterLink, IonRouterLink],
 })
-export class AguaPage implements OnInit {
+export class AguaPage {
   private storage = inject(StorageService);
 
   registro = signal<RegistroAgua>({ fecha: '', vasos: 0 });
@@ -47,10 +47,7 @@ export class AguaPage implements OnInit {
     }));
   });
 
-  async ngOnInit(): Promise<void> {
-    await this.cargar();
-  }
-
+  // Ionic lo llama también al entrar la primera vez: no hace falta cargar en ngOnInit
   async ionViewWillEnter(): Promise<void> {
     await this.cargar();
   }

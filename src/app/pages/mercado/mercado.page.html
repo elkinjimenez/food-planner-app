@@ -9,95 +9,51 @@
     }
   </div>
   <p class="page-subtitle">Lo que marques como comprado pasa a la nevera</p>
-  <!-- Supermercado -->
-  <div
-    class="section-header section-header--plegable"
-    [class.section-header--plegada]="plegada('supermercado')"
-    role="button"
-    [attr.aria-expanded]="!plegada('supermercado')"
-    (click)="alternar('supermercado')"
-  >
-    <div class="section-icon section-icon--cart">
-      <ion-icon name="cart-outline"></ion-icon>
+  @for (s of secciones; track s.categoria) {
+    <div
+      class="section-header section-header--plegable"
+      [class.section-header--plegada]="plegada(s.categoria)"
+      role="button"
+      [attr.aria-expanded]="!plegada(s.categoria)"
+      (click)="alternar(s.categoria)"
+    >
+      <div class="section-icon {{ s.claseIcono }}">
+        <ion-icon [name]="s.icono"></ion-icon>
+      </div>
+      <span class="section-title">{{ s.titulo }}</span>
+      <span class="section-count">{{ comprados(s.items()) }}/{{ s.items().length }}</span>
+      <ion-icon class="section-chevron" name="chevron-down-outline"></ion-icon>
     </div>
-    <span class="section-title">Supermercado</span>
-    <span class="section-count">{{ comprados(supermercado()) }}/{{ supermercado().length }}</span>
-    <ion-icon class="section-chevron" name="chevron-down-outline"></ion-icon>
-  </div>
-  <div class="seccion-plegable" [class.seccion-plegable--plegada]="plegada('supermercado')">
-    <div class="seccion-contenido">
-      @for (item of supermercado(); track item.id) {
-        <ion-card #fila class="item-card" [class.item-comprado]="item.comprado" (click)="toggleComprado(item, !item.comprado)">
-          <div class="item-card-body">
-            <ion-checkbox [checked]="item.comprado"></ion-checkbox>
-            <div class="item-info">
-              <span class="item-nombre">{{ item.nombre }}</span>
-              <span class="item-sub">{{ item.duracion }}</span>
+    <div class="seccion-plegable" [class.seccion-plegable--plegada]="plegada(s.categoria)">
+      <div class="seccion-contenido">
+        @for (item of s.items(); track item.id) {
+          <ion-card #fila class="item-card" [class.item-comprado]="item.comprado" (click)="toggleComprado(item, !item.comprado)">
+            <div class="item-card-body">
+              <ion-checkbox [checked]="item.comprado"></ion-checkbox>
+              <div class="item-info">
+                <span class="item-nombre">{{ item.nombre }}</span>
+                <span class="item-sub">{{ item.duracion }}</span>
+              </div>
+              <button class="action-btn action-btn--edit" [attr.aria-label]="'Editar ' + item.nombre" (click)="editar(item); $event.stopPropagation()">
+                <ion-icon name="create-outline"></ion-icon>
+              </button>
+              <button class="action-btn action-btn--delete" [attr.aria-label]="'Eliminar ' + item.nombre" (click)="eliminar(item); $event.stopPropagation()">
+                <ion-icon name="trash-outline"></ion-icon>
+              </button>
             </div>
-            <button class="action-btn action-btn--edit" (click)="editar(item); $event.stopPropagation()">
-              <ion-icon name="create-outline"></ion-icon>
-            </button>
-            <button class="action-btn action-btn--delete" (click)="eliminar(item); $event.stopPropagation()">
-              <ion-icon name="trash-outline"></ion-icon>
-            </button>
+          </ion-card>
+        } @empty {
+          <div class="seccion-vacia">
+            <span>{{ s.vacio }}</span>
+            <ion-button fill="clear" size="small" (click)="restaurarBase(s.categoria)">
+              <ion-icon name="refresh-outline" slot="start"></ion-icon>
+              Cargar lista base
+            </ion-button>
           </div>
-        </ion-card>
-      } @empty {
-        <div class="seccion-vacia">
-          <span>Tu lista de supermercado está vacía</span>
-          <ion-button fill="clear" size="small" (click)="restaurarBase('supermercado')">
-            <ion-icon name="refresh-outline" slot="start"></ion-icon>
-            Cargar lista base
-          </ion-button>
-        </div>
-      }
+        }
+      </div>
     </div>
-  </div>
-
-  <!-- Fruver -->
-  <div
-    class="section-header section-header--plegable"
-    [class.section-header--plegada]="plegada('fruver')"
-    role="button"
-    [attr.aria-expanded]="!plegada('fruver')"
-    (click)="alternar('fruver')"
-  >
-    <div class="section-icon section-icon--leaf">
-      <ion-icon name="leaf-outline"></ion-icon>
-    </div>
-    <span class="section-title">Fruver</span>
-    <span class="section-count">{{ comprados(fruver()) }}/{{ fruver().length }}</span>
-    <ion-icon class="section-chevron" name="chevron-down-outline"></ion-icon>
-  </div>
-  <div class="seccion-plegable" [class.seccion-plegable--plegada]="plegada('fruver')">
-    <div class="seccion-contenido">
-      @for (item of fruver(); track item.id) {
-        <ion-card #fila class="item-card" [class.item-comprado]="item.comprado" (click)="toggleComprado(item, !item.comprado)">
-          <div class="item-card-body">
-            <ion-checkbox [checked]="item.comprado"></ion-checkbox>
-            <div class="item-info">
-              <span class="item-nombre">{{ item.nombre }}</span>
-              <span class="item-sub">{{ item.duracion }}</span>
-            </div>
-            <button class="action-btn action-btn--edit" (click)="editar(item); $event.stopPropagation()">
-              <ion-icon name="create-outline"></ion-icon>
-            </button>
-            <button class="action-btn action-btn--delete" (click)="eliminar(item); $event.stopPropagation()">
-              <ion-icon name="trash-outline"></ion-icon>
-            </button>
-          </div>
-        </ion-card>
-      } @empty {
-        <div class="seccion-vacia">
-          <span>Tu lista de fruver está vacía</span>
-          <ion-button fill="clear" size="small" (click)="restaurarBase('fruver')">
-            <ion-icon name="refresh-outline" slot="start"></ion-icon>
-            Cargar lista base
-          </ion-button>
-        </div>
-      }
-    </div>
-  </div>
+  }
 </ion-content>
 
 <ion-fab slot="fixed" horizontal="end" vertical="bottom">

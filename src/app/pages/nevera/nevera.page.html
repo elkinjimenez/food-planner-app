@@ -32,10 +32,10 @@
             <span class="item-sub">Vence: {{ p.producto.fechaVencimiento | fecha }}</span>
           </div>
           <ion-badge [color]="p.color">{{ p.label }}</ion-badge>
-          <button class="action-btn action-btn--edit" (click)="editar(p.producto)">
+          <button class="action-btn action-btn--edit" [attr.aria-label]="'Editar ' + p.producto.nombre" (click)="editar(p.producto)">
             <ion-icon name="create-outline"></ion-icon>
           </button>
-          <button class="action-btn action-btn--delete" (click)="eliminar(p.producto)">
+          <button class="action-btn action-btn--delete" [attr.aria-label]="'Eliminar ' + p.producto.nombre" (click)="eliminar(p.producto)">
             <ion-icon name="trash-outline"></ion-icon>
           </button>
         </div>

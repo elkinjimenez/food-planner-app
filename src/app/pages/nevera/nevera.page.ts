@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, computed, signal, inject, viewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, computed, signal, inject, viewChildren } from '@angular/core';
 import {
   IonContent,
   IonButton,
@@ -61,7 +61,7 @@ function estadoLabel(dias: number): string {
     FechaPipe,
   ],
 })
-export class NeveraPage implements OnInit {
+export class NeveraPage {
   private storage = inject(StorageService);
   private alert = inject(AlertService);
   private modalCtrl = inject(ModalController);
@@ -80,10 +80,7 @@ export class NeveraPage implements OnInit {
   );
   private filas = viewChildren('fila', { read: ElementRef<HTMLElement> });
 
-  async ngOnInit(): Promise<void> {
-    await this.cargar();
-  }
-
+  // Ionic lo llama también al entrar la primera vez: no hace falta cargar en ngOnInit
   async ionViewWillEnter(): Promise<void> {
     await this.cargar();
   }

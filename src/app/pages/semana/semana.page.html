@@ -34,38 +34,62 @@
         }
       </div>
       <div class="comidas-row">
-        <div class="comida-slot" [class.comida-slot--filled]="!!d.desayuno" [class.comida-slot--confirmed]="d.desayunoConfirmado" (click)="asignarComida(d, 'desayuno')">
+        <div class="comida-slot" [class.comida-slot--filled]="!!d.desayuno" [class.comida-slot--confirmed]="d.desayunoConfirmado">
           <div class="item-icon tono-desayuno">
             <ion-icon name="sunny-outline"></ion-icon>
           </div>
-          <div class="item-info">
+          <button
+            type="button"
+            class="item-info comida-slot-btn"
+            [attr.aria-label]="'Desayuno del ' + diasLabel[d.dia] + ': ' + (d.desayuno?.nombre ?? 'sin asignar')"
+            (click)="asignarComida(d, 'desayuno')"
+          >
             <span class="item-label">Desayuno</span>
             @if (d.desayuno) {
               <span class="item-nombre">{{ d.desayuno.nombre }}</span>
             } @else {
               <span class="comida-placeholder">Toca para asignar</span>
             }
-          </div>
+          </button>
           @if (d.desayuno) {
-            <button class="confirm-btn" [class.confirm-btn--active]="d.desayunoConfirmado" (click)="toggleConfirmar(d, 'desayuno'); $event.stopPropagation()">
+            <button
+              type="button"
+              class="confirm-btn"
+              [class.confirm-btn--active]="d.desayunoConfirmado"
+              [attr.aria-label]="'Confirmar desayuno del ' + diasLabel[d.dia]"
+              [attr.aria-pressed]="d.desayunoConfirmado"
+              (click)="toggleConfirmar(d, 'desayuno')"
+            >
               <ion-icon [name]="d.desayunoConfirmado ? 'checkmark-sharp' : 'time-outline'"></ion-icon>
             </button>
           }
         </div>
-        <div class="comida-slot" [class.comida-slot--filled]="!!d.cena" [class.comida-slot--confirmed]="d.cenaConfirmado" (click)="asignarComida(d, 'cena')">
+        <div class="comida-slot" [class.comida-slot--filled]="!!d.cena" [class.comida-slot--confirmed]="d.cenaConfirmado">
           <div class="item-icon tono-cena">
             <ion-icon name="moon-outline"></ion-icon>
           </div>
-          <div class="item-info">
+          <button
+            type="button"
+            class="item-info comida-slot-btn"
+            [attr.aria-label]="'Cena del ' + diasLabel[d.dia] + ': ' + (d.cena?.nombre ?? 'sin asignar')"
+            (click)="asignarComida(d, 'cena')"
+          >
             <span class="item-label">Cena</span>
             @if (d.cena) {
               <span class="item-nombre">{{ d.cena.nombre }}</span>
             } @else {
               <span class="comida-placeholder">Toca para asignar</span>
             }
-          </div>
+          </button>
           @if (d.cena) {
-            <button class="confirm-btn" [class.confirm-btn--active]="d.cenaConfirmado" (click)="toggleConfirmar(d, 'cena'); $event.stopPropagation()">
+            <button
+              type="button"
+              class="confirm-btn"
+              [class.confirm-btn--active]="d.cenaConfirmado"
+              [attr.aria-label]="'Confirmar cena del ' + diasLabel[d.dia]"
+              [attr.aria-pressed]="d.cenaConfirmado"
+              (click)="toggleConfirmar(d, 'cena')"
+            >
               <ion-icon [name]="d.cenaConfirmado ? 'checkmark-sharp' : 'time-outline'"></ion-icon>
             </button>
           }

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, OnInit, signal, inject, viewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Signal, signal, inject, viewChildren } from '@angular/core';
 import {
   IonContent,
   IonCheckbox,
@@ -18,12 +18,22 @@ import { DURACIONES, parsearDuracionADias, calcularFechaVencimiento } from '../.
 import { deslizarFilas } from '../../utils/deslizar-filas';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
-import { EditarItemModal } from '../../shared/editar-item.modal';
+import { EditarItemConfig, EditarItemModal, EditarItemResultado } from '../../shared/editar-item.modal';
 
 const OPCIONES_CATEGORIA = [
   { valor: 'supermercado', texto: 'Supermercado' },
   { valor: 'fruver', texto: 'Fruver' },
 ];
+
+/** Datos de cada sección de la vista (Supermercado y Fruver): la plantilla las dibuja con un solo @for. */
+interface SeccionMercado {
+  categoria: CategoriaMercado;
+  titulo: string;
+  icono: string;
+  claseIcono: string;
+  vacio: string;
+  items: Signal<ItemMercado[]>;
+}
 
 @Component({
   selector: 'app-mercado',
@@ -40,7 +50,7 @@ const OPCIONES_CATEGORIA = [
     IonCard,
   ],
 })
-export class MercadoPage implements OnInit {
+export class MercadoPage {
   private storage = inject(StorageService);
   private alert = inject(AlertService);
   private modalCtrl = inject(ModalController);
@@ -50,6 +60,24 @@ export class MercadoPage implements OnInit {
   items = signal<ItemMercado[]>([]);
   supermercado = signal<ItemMercado[]>([]);
   fruver = signal<ItemMercado[]>([]);
+  readonly secciones: SeccionMercado[] = [
+    {
+      categoria: 'supermercado',
+      titulo: 'Supermercado',
+      icono: 'cart-outline',
+      claseIcono: 'section-icon--cart',
+      vacio: 'Tu lista de supermercado está vacía',
+      items: this.supermercado,
+    },
+    {
+      categoria: 'fruver',
+      titulo: 'Fruver',
+      icono: 'leaf-outline',
+      claseIcono: 'section-icon--leaf',
+      vacio: 'Tu lista de fruver está vacía',
+      items: this.fruver,
+    },
+  ];
   private filas = viewChildren('fila', { read: ElementRef<HTMLElement> });
   // Secciones plegadas: todas empiezan abiertas
   private plegadas = signal(new Set<CategoriaMercado>());
@@ -64,10 +92,7 @@ export class MercadoPage implements OnInit {
     this.plegadas.set(plegadas);
   }
 
-  async ngOnInit(): Promise<void> {
-    await this.cargar();
-  }
-
+  // Ionic lo llama también al entrar la primera vez: no hace falta cargar en ngOnInit
   async ionViewWillEnter(): Promise<void> {
     await this.cargar();
   }
@@ -177,30 +202,39 @@ export class MercadoPage implements OnInit {
     await this.cargar();
   }
 
-  /** La categoría se elige en el mismo modal; empieza en supermercado. */
-  async agregar(categoria: CategoriaMercado = 'supermercado'): Promise<void> {
+  /** Modal de agregar o editar: solo cambian el título, el botón y los valores iniciales. */
+  private async abrirModal(
+    titulo: string,
+    boton: EditarItemConfig['boton'],
+    { nombre, duracion, categoria }: { nombre: string; duracion: string; categoria: CategoriaMercado },
+  ): Promise<EditarItemResultado | null> {
+    const config: EditarItemConfig = {
+      titulo,
+      boton,
+      icono: 'cart-outline',
+      label1: 'Nombre',
+      label2: 'Duración aprox.',
+      sugerencias2: DURACIONES,
+      value1: nombre,
+      value2: duracion,
+      labelOpcion: 'Categoría',
+      opciones: OPCIONES_CATEGORIA,
+      opcion: categoria,
+    };
     const modal = await this.modalCtrl.create({
       component: EditarItemModal,
-      componentProps: {
-        config: {
-          titulo: 'Agregar producto',
-          boton: 'Agregar',
-          icono: 'cart-outline',
-          label1: 'Nombre',
-          label2: 'Duración aprox.',
-          sugerencias2: DURACIONES,
-          value1: '',
-          value2: '',
-          labelOpcion: 'Categoría',
-          opciones: OPCIONES_CATEGORIA,
-          opcion: categoria,
-        },
-      },
+      componentProps: { config },
       presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
     });
     await modal.present();
-    const { data } = await modal.onWillDismiss<{ value1: string; value2: string; opcion: string } | null>();
-    if (!data || !data.value1) return;
+    const { data } = await modal.onWillDismiss<EditarItemResultado | null>();
+    return data?.value1 ? data : null;
+  }
+
+  /** La categoría se elige en el mismo modal; empieza en supermercado. */
+  async agregar(categoria: CategoriaMercado = 'supermercado'): Promise<void> {
+    const data = await this.abrirModal('Agregar producto', 'Agregar', { nombre: '', duracion: '', categoria });
+    if (!data) return;
     const nuevo: ItemMercado = {
       id: uuid(),
       nombre: data.value1,
@@ -213,28 +247,12 @@ export class MercadoPage implements OnInit {
   }
 
   async editar(item: ItemMercado): Promise<void> {
-    const modal = await this.modalCtrl.create({
-      component: EditarItemModal,
-      componentProps: {
-        config: {
-          titulo: 'Editar producto',
-          boton: 'Guardar',
-          icono: 'cart-outline',
-          label1: 'Nombre',
-          label2: 'Duración aprox.',
-          sugerencias2: DURACIONES,
-          value1: item.nombre,
-          value2: item.duracion,
-          labelOpcion: 'Categoría',
-          opciones: OPCIONES_CATEGORIA,
-          opcion: item.categoria,
-        },
-      },
-      presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
+    const data = await this.abrirModal('Editar producto', 'Guardar', {
+      nombre: item.nombre,
+      duracion: item.duracion,
+      categoria: item.categoria,
     });
-    await modal.present();
-    const { data } = await modal.onWillDismiss<{ value1: string; value2: string; opcion: string } | null>();
-    if (!data || !data.value1) return;
+    if (!data) return;
     item.nombre = data.value1;
     item.duracion = data.value2 || '';
     item.categoria = data.opcion as CategoriaMercado;

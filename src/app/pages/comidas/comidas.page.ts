@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, OnInit, signal, inject, viewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Signal, signal, inject, viewChildren } from '@angular/core';
 import {
   IonContent,
   IonIcon,
@@ -13,12 +13,23 @@ import { uuid } from '../../utils/uuid';
 import { deslizarFilas } from '../../utils/deslizar-filas';
 import { StorageService, quitarComidaDelPlan } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
-import { EditarItemModal } from '../../shared/editar-item.modal';
+import { EditarItemConfig, EditarItemModal, EditarItemResultado } from '../../shared/editar-item.modal';
 
 const OPCIONES_TIPO = [
   { valor: 'desayuno', texto: 'Desayuno' },
   { valor: 'cena', texto: 'Cena' },
 ];
+
+/** Datos de cada sección de la vista (Desayunos y Cenas): la plantilla las dibuja con un solo @for. */
+interface SeccionComidas {
+  tipo: TipoComida;
+  titulo: string;
+  icono: string;
+  tono: string;
+  vacio: string;
+  restaurar: string;
+  comidas: Signal<Comida[]>;
+}
 
 @Component({
   selector: 'app-comidas',
@@ -33,7 +44,7 @@ const OPCIONES_TIPO = [
     IonButton,
   ],
 })
-export class ComidasPage implements OnInit {
+export class ComidasPage {
   private storage = inject(StorageService);
   private alert = inject(AlertService);
   private modalCtrl = inject(ModalController);
@@ -41,6 +52,26 @@ export class ComidasPage implements OnInit {
 
   desayunos = signal<Comida[]>([]);
   cenas = signal<Comida[]>([]);
+  readonly secciones: SeccionComidas[] = [
+    {
+      tipo: 'desayuno',
+      titulo: 'Desayunos',
+      icono: 'sunny-outline',
+      tono: 'tono-desayuno',
+      vacio: 'No tienes desayunos',
+      restaurar: 'Cargar desayunos base',
+      comidas: this.desayunos,
+    },
+    {
+      tipo: 'cena',
+      titulo: 'Cenas',
+      icono: 'moon-outline',
+      tono: 'tono-cena',
+      vacio: 'No tienes cenas',
+      restaurar: 'Cargar cenas base',
+      comidas: this.cenas,
+    },
+  ];
   private filas = viewChildren('fila', { read: ElementRef<HTMLElement> });
   // Secciones plegadas: todas empiezan abiertas
   private plegadas = signal(new Set<TipoComida>());
@@ -55,10 +86,7 @@ export class ComidasPage implements OnInit {
     this.plegadas.set(plegadas);
   }
 
-  async ngOnInit(): Promise<void> {
-    await this.cargar();
-  }
-
+  // Ionic lo llama también al entrar la primera vez: no hace falta cargar en ngOnInit
   async ionViewWillEnter(): Promise<void> {
     await this.cargar();
   }
@@ -86,31 +114,40 @@ export class ComidasPage implements OnInit {
     await this.cargar();
   }
 
-  /** El tipo se elige en el mismo modal; empieza en desayuno. */
-  async agregar(tipo: TipoComida = 'desayuno'): Promise<void> {
+  /** Modal de agregar o editar: solo cambian el título, el botón y los valores iniciales. */
+  private async abrirModal(
+    titulo: string,
+    boton: EditarItemConfig['boton'],
+    { nombre, ingredientes, tipo }: { nombre: string; ingredientes: string; tipo: TipoComida },
+  ): Promise<EditarItemResultado | null> {
+    const config: EditarItemConfig = {
+      titulo,
+      boton,
+      icono: 'restaurant-outline',
+      label1: 'Nombre',
+      label2: 'Ingredientes (opcional)',
+      value1: nombre,
+      value2: ingredientes,
+      campo2Opcional: true,
+      labelOpcion: 'Tipo',
+      opciones: OPCIONES_TIPO,
+      opcion: tipo,
+    };
     const modal = await this.modalCtrl.create({
       component: EditarItemModal,
-      componentProps: {
-        config: {
-          // Título general: el tipo se puede cambiar en el selector
-          titulo: 'Agregar comida',
-          boton: 'Agregar',
-          icono: 'restaurant-outline',
-          label1: 'Nombre',
-          label2: 'Ingredientes (opcional)',
-          value1: '',
-          value2: '',
-          campo2Opcional: true,
-          labelOpcion: 'Tipo',
-          opciones: OPCIONES_TIPO,
-          opcion: tipo,
-        },
-      },
+      componentProps: { config },
       presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
     });
     await modal.present();
-    const { data } = await modal.onWillDismiss<{ value1: string; value2: string; opcion: string } | null>();
-    if (!data || !data.value1) return;
+    const { data } = await modal.onWillDismiss<EditarItemResultado | null>();
+    return data?.value1 ? data : null;
+  }
+
+  /** El tipo se elige en el mismo modal; empieza en desayuno. */
+  async agregar(tipo: TipoComida = 'desayuno'): Promise<void> {
+    // Título general: el tipo se puede cambiar en el selector
+    const data = await this.abrirModal('Agregar comida', 'Agregar', { nombre: '', ingredientes: '', tipo });
+    if (!data) return;
     const nueva: Comida = {
       id: uuid(),
       nombre: data.value1,
@@ -122,28 +159,12 @@ export class ComidasPage implements OnInit {
   }
 
   async editar(comida: Comida): Promise<void> {
-    const modal = await this.modalCtrl.create({
-      component: EditarItemModal,
-      componentProps: {
-        config: {
-          titulo: 'Editar comida',
-          boton: 'Guardar',
-          icono: 'restaurant-outline',
-          label1: 'Nombre',
-          label2: 'Ingredientes (opcional)',
-          value1: comida.nombre,
-          value2: comida.ingredientes ?? '',
-          campo2Opcional: true,
-          labelOpcion: 'Tipo',
-          opciones: OPCIONES_TIPO,
-          opcion: comida.tipo,
-        },
-      },
-      presentingElement: document.querySelector('ion-router-outlet') ?? undefined,
+    const data = await this.abrirModal('Editar comida', 'Guardar', {
+      nombre: comida.nombre,
+      ingredientes: comida.ingredientes ?? '',
+      tipo: comida.tipo,
     });
-    await modal.present();
-    const { data } = await modal.onWillDismiss<{ value1: string; value2: string; opcion: string } | null>();
-    if (!data || !data.value1) return;
+    if (!data) return;
     const cambioTipo = comida.tipo !== data.opcion;
     comida.nombre = data.value1;
     comida.ingredientes = data.value2 || undefined;

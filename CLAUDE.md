@@ -3,3 +3,4 @@
 - Instrucciones cortas y concisas cuando se le pide un plan.
 - No generes tests salvo que te los pida explícitamente.
 - No agregues comentarios obvios ni documentación extra.
+- Siempre ten encuenta estas instrucciones.

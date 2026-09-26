@@ -78,6 +78,7 @@
 }
 
 .comida-slot {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -103,6 +104,33 @@
     border-color: var(--ion-color-primary);
     box-shadow: 0 2px 8px rgba(var(--ion-color-primary-rgb), 0.15);
   }
+
+  // Al navegar con teclado, el foco se marca en todo el espacio
+  &:has(.comida-slot-btn:focus-visible) {
+    outline: 2px solid var(--ion-color-primary);
+    outline-offset: 2px;
+  }
+}
+
+// Botón de la comida sin estilo propio: su ::after cubre todo el espacio, así se toca en
+// cualquier parte (el botón de confirmar queda por encima). No envuelve al de confirmar
+// porque un botón dentro de otro no es válido.
+.comida-slot-btn {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  outline: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
 }
 
 // El nombre de la comida ocupa hasta dos líneas
@@ -124,6 +152,8 @@
 }
 
 .confirm-btn {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, computed, signal, inject } from '@angular/core';
+import { Component, HostListener, computed, signal, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   IonContent,
@@ -24,6 +24,7 @@ import { AlertService } from '../../services/alert.service';
 import { AppUpdateService } from '../../services/app-update.service';
 import { fechaHoy, sumarDias } from '../../utils/fecha';
 import { sortearDias } from '../../utils/sorteo';
+import { vibrar } from '../../utils/vibrar';
 import { planSemanalVacio } from '../../data/seed.data';
 import { SeleccionarComidaModal } from './seleccionar-comida.modal';
 import { RespaldoBotonComponent } from '../../shared/respaldo-boton.component';
@@ -59,7 +60,7 @@ interface DiaVista {
     RespaldoBotonComponent,
   ],
 })
-export class SemanaPage implements OnInit {
+export class SemanaPage {
   private storage = inject(StorageService);
   private alert = inject(AlertService);
   private modalCtrl = inject(ModalController);
@@ -108,10 +109,7 @@ export class SemanaPage implements OnInit {
   });
   diasLabel = DIAS_LABEL;
 
-  async ngOnInit(): Promise<void> {
-    await this.cargar();
-  }
-
+  // Ionic lo llama también al entrar la primera vez: no hace falta cargar en ngOnInit
   async ionViewWillEnter(): Promise<void> {
     await this.cargar();
   }
@@ -240,6 +238,7 @@ export class SemanaPage implements OnInit {
 
   /** Botón de sortear: genera la semana al azar con opción de volver al plan anterior. */
   async sortearSemana(): Promise<void> {
+    vibrar();
     const planAntes = this.plan();
     if (!(await this.generarSemanaAleatoria())) return;
     const deshacer = await this.alert.toast('Semana generada al azar', { deshacer: true });

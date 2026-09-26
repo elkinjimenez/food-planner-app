@@ -38,6 +38,13 @@ export interface EditarItemConfig {
   opcion?: string;
 }
 
+/** Lo que devuelve el modal al guardar (al cancelar devuelve null). */
+export interface EditarItemResultado {
+  value1: string;
+  value2: string;
+  opcion: string;
+}
+
 @Component({
   selector: 'app-editar-item-modal',
   template: `
