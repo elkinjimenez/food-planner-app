@@ -1,0 +1,1 @@
+import{Wt as lx,b as qe}from"./main-I6ARBKG6.js";var n=(()=>{let r=class r{transform(e){return qe(e)}};r.ɵfac=function(o){return new(o||r)},r.ɵpipe=lx({name:`fecha`,type:r,pure:!0});return r})();export{n as t};
