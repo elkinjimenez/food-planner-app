@@ -1,7 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { Location } from '@angular/common';
-import { Router } from '@angular/router';
-import { IonButton, IonCard, IonContent, IonIcon, IonLabel } from '@ionic/angular';
+import { IonBackButton, IonButton, IonCard, IonContent, IonIcon, IonLabel } from '@ionic/angular';
 import { Comida, TipoComida } from '../../models/comida.model';
 import { DIAS_LABEL, DIAS_SEMANA, diaSemanaDe } from '../../models/plan-semanal.model';
 import { ComidaConfirmada, META_VASOS, RegistroAgua, RegistroComidas } from '../../models/historial.model';
@@ -41,12 +39,10 @@ const TIPOS_COMIDA: TipoComida[] = ['desayuno', 'cena'];
   selector: 'app-historial',
   templateUrl: 'historial.page.html',
   styleUrls: ['historial.page.scss'],
-  imports: [IonContent, IonCard, IonButton, IonIcon, IonLabel, FechaPipe],
+  imports: [IonContent, IonCard, IonButton, IonIcon, IonLabel, IonBackButton, FechaPipe],
 })
 export class HistorialPage implements OnInit {
   private storage = inject(StorageService);
-  private location = inject(Location);
-  private router = inject(Router);
 
   readonly diasSemana = DIAS_SEMANA.map((d) => DIAS_LABEL[d].slice(0, 2)); // Lu, Ma, Mi…
 
@@ -92,13 +88,6 @@ export class HistorialPage implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.cargar();
-  }
-
-  // Atrás real del navegador para no apilar otra entrada; si se abrió directo, va a Semana
-  volver(): void {
-    const estado = this.location.getState() as { navigationId?: number } | null;
-    if ((estado?.navigationId ?? 0) > 1) this.location.back();
-    else this.router.navigateByUrl('/semana', { replaceUrl: true });
   }
 
   async cambiarMes(meses: number): Promise<void> {
