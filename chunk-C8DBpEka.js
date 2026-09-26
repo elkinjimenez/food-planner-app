@@ -1,1 +1,0 @@
-import{At as ix,i as Fe}from"./main-CDPZSRYA.js";var n=(()=>{let r=class r{transform(e){return Fe(e)}};r.ɵfac=function(o){return new(o||r)},r.ɵpipe=ix({name:`fecha`,type:r,pure:!0});return r})();export{n as t};
