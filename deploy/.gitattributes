@@ -1,0 +1,4 @@
+# Se copia a la raíz de www (ver assets en angular.json). Al publicar en gh-pages, git no
+# debe convertir saltos de línea: si cambia un solo byte, el archivo publicado no coincide
+# con el hash del service worker y el iPhone rechaza la actualización.
+* -text

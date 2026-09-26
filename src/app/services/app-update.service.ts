@@ -46,6 +46,22 @@ export class AppUpdateService {
     document.location.reload();
   }
 
+  /**
+   * Pasa esta ventana a la versión más nueva y recarga, solo si existe una. Si el Service Worker
+   * la encuentra, VERSION_READY la aplica; si ya la tenía descargada, checkForUpdate() devuelve
+   * false aunque esta ventana siga en una anterior, y activateUpdate() la pasa a la nueva.
+   */
+  async pasarAVersionNueva(): Promise<void> {
+    if (!this.swUpdate.isEnabled) return;
+    try {
+      if (!(await this.swUpdate.checkForUpdate()) && (await this.swUpdate.activateUpdate())) {
+        document.location.reload();
+      }
+    } catch (err) {
+      console.error('Error buscando actualización:', err);
+    }
+  }
+
   private async buscarActualizacion(): Promise<void> {
     if (this.buscando) return;
     this.buscando = true;

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Comida, TipoComida } from '../models/comida.model';
 import { CategoriaMercado, ItemMercado } from '../models/item-mercado.model';
 import { ProductoNevera } from '../models/producto-nevera.model';
@@ -6,6 +6,7 @@ import { ComidaDelDia, DIAS_SEMANA, DiaSemana, PlanSemanal, semanaDesde } from '
 import { RegistroAgua, RegistroComidas } from '../models/historial.model';
 import { comidasBase, mercadoBase, planSemanalVacio } from '../data/seed.data';
 import { fechaHoy } from '../utils/fecha';
+import { AppUpdateService } from './app-update.service';
 
 /** Todos los datos de la app: lo que se exporta e importa en un respaldo. */
 export interface DatosApp {
@@ -27,6 +28,7 @@ const STORE_PLAN = 'plan';
 const STORE_CONFIRMADAS = 'comidasConfirmadas'; // un registro por fecha (llave: fecha)
 const STORE_AGUA = 'agua'; // un registro por fecha (llave: fecha)
 const PLAN_KEY = 'semana';
+const LIMITE_APERTURA_MS = 3000;
 // Hasta v2 solo se guardaba el agua del día en curso, siempre en esta llave
 const AGUA_KEY_ANTERIOR = 'hoy';
 
@@ -56,7 +58,10 @@ function rangoDeFechas(desde: string, hasta?: string): IDBKeyRange {
 
 @Injectable({ providedIn: 'root' })
 export class StorageService {
+  private appUpdate = inject(AppUpdateService);
+
   private dbPromise: Promise<IDBDatabase> | null = null;
+  private buscoVersionNueva = false;
 
   // ===== Inicialización =====
   private getDb(): Promise<IDBDatabase> {
@@ -69,14 +74,39 @@ export class StorageService {
   private openDb(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
-      request.onerror = () => reject(request.error);
+      // En iOS la apertura a veces no responde nunca: pasado el límite se da por fallida
+      // (conReintento abre otra conexión)
+      let vencida = false;
+      const limite = setTimeout(() => {
+        vencida = true;
+        reject(new Error('IndexedDB no respondió'));
+      }, LIMITE_APERTURA_MS);
+      request.onerror = () => {
+        clearTimeout(limite);
+        // La base ya la actualizó una versión más nueva de la app y esta ventana corre una
+        // anterior, que no puede abrirla: se busca la nueva (una sola vez, para no recargar en bucle)
+        if (request.error?.name === 'VersionError' && !this.buscoVersionNueva) {
+          this.buscoVersionNueva = true;
+          this.appUpdate.pasarAVersionNueva();
+        }
+        reject(request.error);
+      };
       request.onsuccess = () => {
+        clearTimeout(limite);
         const db = request.result;
+        // Respondió tarde, cuando ya se estaba abriendo otra conexión
+        if (vencida) {
+          db.close();
+          return;
+        }
         // Otra pestaña abrió una versión más nueva de la app que actualiza la base de datos:
         // se cierra esta conexión para no bloquearla y se recarga con la versión nueva.
         db.onversionchange = () => {
           db.close();
           location.reload();
+        };
+        db.onclose = () => {
+          this.dbPromise = null;
         };
         resolve(db);
       };
@@ -124,65 +154,90 @@ export class StorageService {
   }
 
   // ===== Operaciones genéricas =====
-  private async getAll<T>(store: StoreName, rango?: IDBKeyRange): Promise<T[]> {
-    const db = await this.getDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(store, 'readonly');
-      const req = tx.objectStore(store).getAll(rango);
-      req.onsuccess = () => resolve(req.result as T[]);
-      req.onerror = () => reject(req.error);
-    });
+  /**
+   * iOS cierra la conexión cuando la PWA queda suspendida y al volver todas las operaciones
+   * fallan: si una falla, se abre una conexión nueva y se reintenta una vez.
+   */
+  private async conReintento<T>(operacion: (db: IDBDatabase) => Promise<T>): Promise<T> {
+    try {
+      return await operacion(await this.getDb());
+    } catch {
+      this.dbPromise = null;
+      return operacion(await this.getDb());
+    }
   }
 
-  private async put<T>(store: StoreName, value: T): Promise<void> {
-    const db = await this.getDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(store, 'readwrite');
-      tx.objectStore(store).put(value);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
+  private getAll<T>(store: StoreName, rango?: IDBKeyRange): Promise<T[]> {
+    return this.conReintento(
+      (db) =>
+        new Promise((resolve, reject) => {
+          const tx = db.transaction(store, 'readonly');
+          const req = tx.objectStore(store).getAll(rango);
+          req.onsuccess = () => resolve(req.result as T[]);
+          req.onerror = () => reject(req.error);
+        }),
+    );
   }
 
-  private async putWithKey<T>(store: StoreName, key: string, value: T): Promise<void> {
-    const db = await this.getDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(store, 'readwrite');
-      tx.objectStore(store).put(value, key);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
+  private put<T>(store: StoreName, value: T): Promise<void> {
+    return this.conReintento(
+      (db) =>
+        new Promise((resolve, reject) => {
+          const tx = db.transaction(store, 'readwrite');
+          tx.objectStore(store).put(value);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        }),
+    );
   }
 
-  private async delete(store: StoreName, id: string): Promise<void> {
-    const db = await this.getDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(store, 'readwrite');
-      tx.objectStore(store).delete(id);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
+  private putWithKey<T>(store: StoreName, key: string, value: T): Promise<void> {
+    return this.conReintento(
+      (db) =>
+        new Promise((resolve, reject) => {
+          const tx = db.transaction(store, 'readwrite');
+          tx.objectStore(store).put(value, key);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        }),
+    );
   }
 
-  private async putAll<T>(store: StoreName, values: T[]): Promise<void> {
-    const db = await this.getDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(store, 'readwrite');
-      const os = tx.objectStore(store);
-      values.forEach((v) => os.put(v));
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
+  private delete(store: StoreName, id: string): Promise<void> {
+    return this.conReintento(
+      (db) =>
+        new Promise((resolve, reject) => {
+          const tx = db.transaction(store, 'readwrite');
+          tx.objectStore(store).delete(id);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        }),
+    );
   }
 
-  private async getByKey<T>(store: StoreName, key: string): Promise<T | undefined> {
-    const db = await this.getDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(store, 'readonly');
-      const req = tx.objectStore(store).get(key);
-      req.onsuccess = () => resolve(req.result as T | undefined);
-      req.onerror = () => reject(req.error);
-    });
+  private putAll<T>(store: StoreName, values: T[]): Promise<void> {
+    return this.conReintento(
+      (db) =>
+        new Promise((resolve, reject) => {
+          const tx = db.transaction(store, 'readwrite');
+          const os = tx.objectStore(store);
+          values.forEach((v) => os.put(v));
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        }),
+    );
+  }
+
+  private getByKey<T>(store: StoreName, key: string): Promise<T | undefined> {
+    return this.conReintento(
+      (db) =>
+        new Promise((resolve, reject) => {
+          const tx = db.transaction(store, 'readonly');
+          const req = tx.objectStore(store).get(key);
+          req.onsuccess = () => resolve(req.result as T | undefined);
+          req.onerror = () => reject(req.error);
+        }),
+    );
   }
 
   // ===== Comidas =====
@@ -314,26 +369,28 @@ export class StorageService {
   }
 
   /** Reemplaza todos los datos en una sola transacción: si algo falla, no cambia nada. */
-  async reemplazarDatos(datos: DatosApp): Promise<void> {
-    const db = await this.getDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(TODOS_LOS_STORES, 'readwrite');
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-      tx.onabort = () => reject(tx.error);
-      try {
-        TODOS_LOS_STORES.forEach((store) => tx.objectStore(store).clear());
-        datos.comidas.forEach((c) => tx.objectStore(STORE_COMIDAS).put(c));
-        datos.mercado.forEach((i) => tx.objectStore(STORE_MERCADO).put(i));
-        datos.nevera.forEach((p) => tx.objectStore(STORE_NEVERA).put(p));
-        tx.objectStore(STORE_PLAN).put(normalizarPlan(datos.plan), PLAN_KEY);
-        datos.comidasConfirmadas.forEach((r) => tx.objectStore(STORE_CONFIRMADAS).put(r));
-        datos.agua.forEach((r) => tx.objectStore(STORE_AGUA).put(r, r.fecha));
-      } catch (error) {
-        tx.abort();
-        reject(error);
-      }
-    });
+  reemplazarDatos(datos: DatosApp): Promise<void> {
+    return this.conReintento(
+      (db) =>
+        new Promise((resolve, reject) => {
+          const tx = db.transaction(TODOS_LOS_STORES, 'readwrite');
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+          tx.onabort = () => reject(tx.error);
+          try {
+            TODOS_LOS_STORES.forEach((store) => tx.objectStore(store).clear());
+            datos.comidas.forEach((c) => tx.objectStore(STORE_COMIDAS).put(c));
+            datos.mercado.forEach((i) => tx.objectStore(STORE_MERCADO).put(i));
+            datos.nevera.forEach((p) => tx.objectStore(STORE_NEVERA).put(p));
+            tx.objectStore(STORE_PLAN).put(normalizarPlan(datos.plan), PLAN_KEY);
+            datos.comidasConfirmadas.forEach((r) => tx.objectStore(STORE_CONFIRMADAS).put(r));
+            datos.agua.forEach((r) => tx.objectStore(STORE_AGUA).put(r, r.fecha));
+          } catch (error) {
+            tx.abort();
+            reject(error);
+          }
+        }),
+    );
   }
 }
 

@@ -32,7 +32,12 @@
                 "input": "src/assets",
                 "output": "assets"
               },
-              "src/manifest.webmanifest"
+              "src/manifest.webmanifest",
+              {
+                "glob": ".gitattributes",
+                "input": "deploy",
+                "output": "/"
+              }
             ],
             "styles": ["src/global.scss", "src/theme/variables.scss"],
             "scripts": [],
