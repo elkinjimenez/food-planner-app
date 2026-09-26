@@ -1,1 +1,0 @@
-import{b as qe,nn as ux}from"./main-YWXI4JDJ.js";var n=(()=>{let r=class r{transform(e){return qe(e)}};r.ɵfac=function(o){return new(o||r)},r.ɵpipe=ux({name:`fecha`,type:r,pure:!0});return r})();export{n as t};
