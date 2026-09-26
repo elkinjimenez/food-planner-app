@@ -13,8 +13,8 @@
             </div>
             <div class="item-info">
               <span class="item-nombre">{{ comida.nombre }}</span>
-              @if (comida.ingredientes) {
-                <span class="item-sub">{{ comida.ingredientes }}</span>
+              @if (comida.ingredientes.length > 0) {
+                <span class="item-sub">{{ comida.ingredientes | ingredientes }}</span>
               }
             </div>
             <button class="action-btn action-btn--edit" [attr.aria-label]="'Editar ' + comida.nombre" (click)="editar(comida)">

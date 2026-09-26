@@ -1,11 +1,12 @@
 import { Injectable, inject } from '@angular/core';
-import { Comida, TipoComida } from '../models/comida.model';
+import { Comida, Ingrediente, TipoComida } from '../models/comida.model';
 import { CategoriaMercado, ItemMercado } from '../models/item-mercado.model';
 import { ProductoNevera } from '../models/producto-nevera.model';
 import { ComidaDelDia, DIAS_SEMANA, DiaSemana, PlanSemanal, semanaDesde } from '../models/plan-semanal.model';
 import { META_VASOS, RegistroAgua, RegistroComidas } from '../models/historial.model';
 import { comidasBase, mercadoBase, planSemanalVacio } from '../data/seed.data';
 import { fechaHoy } from '../utils/fecha';
+import { separarLista } from '../utils/separar-lista';
 import { AppUpdateService } from './app-update.service';
 
 /** Todos los datos de la app: lo que se exporta e importa en un respaldo. */
@@ -249,11 +250,18 @@ export class StorageService {
   }
 
   // ===== Comidas =====
-  getComidas(): Promise<Comida[]> {
-    return this.getAll<Comida>(STORE_COMIDAS);
+  /** Los ingredientes enlazados a Mercado vienen con el nombre actual del producto. */
+  async getComidas(): Promise<Comida[]> {
+    const [comidas, mercado] = await Promise.all([this.getAll<ComidaGuardada>(STORE_COMIDAS), this.getMercado()]);
+    const nombres = new Map(mercado.map((i) => [i.id, i.nombre]));
+    return comidas.map((c) => normalizarComida(c, nombres));
   }
-  saveComida(comida: Comida): Promise<void> {
-    return this.put(STORE_COMIDAS, comida);
+  /** Guarda la comida y, en la misma transacción, los productos que se crearon para ella en Mercado. */
+  saveComida(comida: Comida, nuevosEnMercado: ItemMercado[] = []): Promise<void> {
+    return this.enTransaccion([STORE_COMIDAS, STORE_MERCADO], (tx) => {
+      tx.objectStore(STORE_COMIDAS).put(comida);
+      nuevosEnMercado.forEach((item) => tx.objectStore(STORE_MERCADO).put(item));
+    });
   }
   /**
    * Borra la comida y la quita del plan y de lo confirmado de hoy en adelante.
@@ -320,15 +328,27 @@ export class StorageService {
   saveItemMercado(item: ItemMercado): Promise<void> {
     return this.put(STORE_MERCADO, item);
   }
-  /** Borra el ítem; lo que salió de él se queda en la nevera con el nombre que tenía el ítem. */
+  /**
+   * Borra el ítem; lo que salió de él se queda en la nevera, y como ingrediente en las comidas,
+   * con el nombre que tenía el ítem.
+   */
   deleteItemMercado(item: ItemMercado): Promise<void> {
-    return this.enTransaccion([STORE_MERCADO, STORE_NEVERA], (tx) => {
+    return this.enTransaccion([STORE_MERCADO, STORE_NEVERA, STORE_COMIDAS], (tx) => {
       tx.objectStore(STORE_MERCADO).delete(item.id);
       const nevera = tx.objectStore(STORE_NEVERA);
-      const req = nevera.getAll();
-      req.onsuccess = () => {
-        for (const producto of req.result as ProductoNevera[]) {
+      const reqNevera = nevera.getAll();
+      reqNevera.onsuccess = () => {
+        for (const producto of reqNevera.result as ProductoNevera[]) {
           if (producto.itemMercadoId === item.id) nevera.put({ ...producto, nombre: item.nombre });
+        }
+      };
+      const comidas = tx.objectStore(STORE_COMIDAS);
+      const reqComidas = comidas.getAll();
+      reqComidas.onsuccess = () => {
+        for (const comida of (reqComidas.result as ComidaGuardada[]).map((c) => normalizarComida(c))) {
+          if (!comida.ingredientes.some((i) => i.itemMercadoId === item.id)) continue;
+          const ingredientes = comida.ingredientes.map((i) => (i.itemMercadoId === item.id ? { ...i, nombre: item.nombre } : i));
+          comidas.put({ ...comida, ingredientes });
         }
       };
     });
@@ -460,7 +480,7 @@ export class StorageService {
   reemplazarDatos(datos: DatosApp): Promise<void> {
     return this.enTransaccion(TODOS_LOS_STORES, (tx) => {
       TODOS_LOS_STORES.forEach((store) => tx.objectStore(store).clear());
-      datos.comidas.forEach((c) => tx.objectStore(STORE_COMIDAS).put(c));
+      datos.comidas.forEach((c) => tx.objectStore(STORE_COMIDAS).put(normalizarComida(c)));
       datos.mercado.forEach((i) => tx.objectStore(STORE_MERCADO).put(i));
       datos.nevera.forEach((p) => tx.objectStore(STORE_NEVERA).put(p));
       tx.objectStore(STORE_PLAN).put(normalizarPlan(datos.plan), PLAN_KEY);
@@ -548,6 +568,23 @@ export function confirmacionesDelPlanAnterior(guardado: unknown, comidas: Comida
     }
   }
   return registros;
+}
+
+// Comida como pudo quedar guardada: antes los ingredientes eran un texto opcional ("Pan + queso")
+type ComidaGuardada = Omit<Comida, 'ingredientes'> & { ingredientes?: string | Ingrediente[] };
+
+/**
+ * Lleva una comida guardada (formato actual o anterior) a la lista de ingredientes. Con
+ * `nombresMercado` (id → nombre), los enlazados a Mercado toman el nombre actual del producto.
+ */
+export function normalizarComida(guardada: ComidaGuardada, nombresMercado = new Map<string, string>()): Comida {
+  const { ingredientes } = guardada;
+  const lista: Ingrediente[] =
+    typeof ingredientes === 'string' ? separarLista(ingredientes).map((nombre) => ({ nombre })) : (ingredientes ?? []);
+  return {
+    ...guardada,
+    ingredientes: lista.map((i) => ({ ...i, nombre: nombresMercado.get(i.itemMercadoId ?? '') ?? i.nombre })),
+  };
 }
 
 /** Quita una comida de todos los días del plan. Devuelve true si cambió algo. */

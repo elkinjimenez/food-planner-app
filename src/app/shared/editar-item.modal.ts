@@ -17,7 +17,10 @@ import {
   ModalController,
 } from '@ionic/angular';
 import { FORMATO_FECHA, LOCALE_FECHAS, fechaHoy, sumarDias } from '../utils/fecha';
+import { Ingrediente } from '../models/comida.model';
+import { ItemMercado } from '../models/item-mercado.model';
 import { injectAbrirModal } from './abrir-modal';
+import { SelectorIngredientesComponent } from './selector-ingredientes.component';
 
 // ion-datetime-button busca su ion-datetime por id en el documento: cada modal usa uno propio
 let contadorFechas = 0;
@@ -30,7 +33,10 @@ export interface EditarItemConfig {
   label2: string;
   value1: string;
   value2: string;
-  input2Type?: 'text' | 'date';
+  // 'ingredientes': el campo 2 elige productos de `mercado` (o los crea) en vez de ser un texto
+  input2Type?: 'text' | 'date' | 'ingredientes';
+  ingredientes?: Ingrediente[];
+  mercado?: ItemMercado[];
   campo2Opcional?: boolean;
   sugerencias2?: string[]; // atajos que rellenan el campo 2 cuando es de texto
   // Selector de una opción arriba de los campos (p. ej. la categoría o el tipo)
@@ -43,6 +49,8 @@ export interface EditarItemConfig {
 export interface EditarItemResultado {
   value1: string;
   value2: string;
+  ingredientes: Ingrediente[];
+  nuevosEnMercado: ItemMercado[]; // productos creados como ingrediente: se guardan con la comida
   opcion: string;
 }
 
@@ -115,6 +123,13 @@ export interface EditarItemResultado {
                 >{{ s.texto }}</button>
               }
             </div>
+          } @else if (config.input2Type === 'ingredientes') {
+            <app-selector-ingredientes
+              [mercado]="config.mercado ?? []"
+              [nombreComida]="value1"
+              [(ingredientes)]="ingredientes"
+              [(nuevos)]="nuevosEnMercado"
+            ></app-selector-ingredientes>
           } @else {
             <ion-input
               class="field-input"
@@ -167,15 +182,6 @@ export interface EditarItemResultado {
       font-weight: 600;
       color: var(--color-texto-secundario);
       padding-left: 4px;
-    }
-
-    .field-input {
-      --background: var(--fondo-tarjeta);
-      --border-radius: 12px;
-      --padding-start: 14px;
-      --padding-end: 14px;
-      --color: var(--color-texto);
-      font-size: 1rem;
     }
 
     /* Botón del selector de fecha, con el mismo aspecto que los inputs */
@@ -275,6 +281,7 @@ export interface EditarItemResultado {
     IonSegment,
     IonSegmentButton,
     IonLabel,
+    SelectorIngredientesComponent,
   ],
 })
 export class EditarItemModal implements OnInit {
@@ -284,6 +291,8 @@ export class EditarItemModal implements OnInit {
 
   value1 = '';
   value2 = '';
+  ingredientes: Ingrediente[] = [];
+  nuevosEnMercado: ItemMercado[] = [];
   opcion = '';
 
   readonly idFecha = `fecha-${++contadorFechas}`;
@@ -300,6 +309,7 @@ export class EditarItemModal implements OnInit {
   ngOnInit(): void {
     this.value1 = this.config.value1;
     this.value2 = this.config.value2;
+    this.ingredientes = [...(this.config.ingredientes ?? [])];
     this.opcion = this.config.opcion ?? '';
     // El selector siempre muestra una fecha (hoy, si no hay ninguna): se usa esa misma
     // para que lo que se ve sea lo que se guarda.
@@ -321,16 +331,19 @@ export class EditarItemModal implements OnInit {
 
   puedeGuardar(): boolean {
     const v1 = this.value1.trim().length > 0;
-    const v2 = this.value2.trim().length > 0;
+    const v2 = this.value2.trim().length > 0 || this.ingredientes.length > 0;
     return v1 && (this.config.campo2Opcional || v2);
   }
 
   guardar(): void {
-    this.modalCtrl.dismiss({
+    const resultado: EditarItemResultado = {
       value1: this.value1.trim(),
       value2: this.value2.trim(),
+      ingredientes: this.ingredientes,
+      nuevosEnMercado: this.nuevosEnMercado,
       opcion: this.opcion,
-    });
+    };
+    this.modalCtrl.dismiss(resultado);
   }
 
   cancelar(): void {

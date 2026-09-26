@@ -1,6 +1,9 @@
-import { Component, Input, inject } from '@angular/core';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonNote, ModalController } from '@ionic/angular';
-import { Comida } from '../../models/comida.model';
+import { Component, ElementRef, Input, inject } from '@angular/core';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonNote } from '@ionic/angular';
+import { Comida, TipoComida } from '../../models/comida.model';
+import { AlertService } from '../../services/alert.service';
+import { IngredientesPipe } from '../../shared/ingredientes.pipe';
+import { injectCrearComida } from '../../shared/crear-comida';
 
 @Component({
   selector: 'app-seleccionar-comida-modal',
@@ -20,17 +23,29 @@ import { Comida } from '../../models/comida.model';
       <div class="comida-count">
         <ion-note>{{ comidas.length }} opciones disponibles</ion-note>
       </div>
-      @if (seleccionadaId) {
-        <button type="button" class="comida-card comida-card--quitar" (click)="quitar()">
+      <!-- Con las dos acciones, van en una sola línea -->
+      <div class="acciones" [class.acciones--dos]="!!seleccionadaId">
+        @if (seleccionadaId) {
+          <button type="button" class="comida-card comida-card--quitar" (click)="quitar()">
+            <span class="comida-card__icon">
+              <ion-icon name="trash-outline"></ion-icon>
+            </span>
+            <span class="comida-card__body">
+              <span class="comida-card__nombre">Quitar</span>
+              <span class="comida-card__ingredientes">Dejar sin asignar</span>
+            </span>
+          </button>
+        }
+        <button type="button" class="comida-card comida-card--crear" (click)="crear()">
           <span class="comida-card__icon">
-            <ion-icon name="trash-outline"></ion-icon>
+            <ion-icon name="add-outline"></ion-icon>
           </span>
           <span class="comida-card__body">
-            <span class="comida-card__nombre">Quitar</span>
-            <span class="comida-card__ingredientes">Dejar sin asignar</span>
+            <span class="comida-card__nombre">{{ textoCrear() }}</span>
+            <span class="comida-card__ingredientes">Se agrega a Mis Comidas y queda elegido</span>
           </span>
         </button>
-      }
+      </div>
       @for (comida of comidas; track comida.id) {
         <button
           type="button"
@@ -44,8 +59,8 @@ import { Comida } from '../../models/comida.model';
           </span>
           <span class="comida-card__body">
             <span class="comida-card__nombre">{{ comida.nombre }}</span>
-            @if (comida.ingredientes) {
-              <span class="comida-card__ingredientes">{{ comida.ingredientes }}</span>
+            @if (comida.ingredientes.length > 0) {
+              <span class="comida-card__ingredientes">{{ comida.ingredientes | ingredientes }}</span>
             }
           </span>
           @if (isSeleccionada(comida)) {
@@ -130,6 +145,14 @@ import { Comida } from '../../models/comida.model';
           color: var(--color-peligro);
         }
       }
+
+      .comida-card--crear & {
+        background: var(--fondo-primario-tenue);
+
+        ion-icon {
+          color: var(--ion-color-primary);
+        }
+      }
     }
 
     .comida-card__body {
@@ -158,30 +181,105 @@ import { Comida } from '../../models/comida.model';
       color: var(--color-peligro);
     }
 
+    .comida-card--crear .comida-card__nombre {
+      color: var(--ion-color-primary-shade);
+    }
+
+    .acciones {
+      display: flex;
+      gap: 10px;
+      margin: 0 12px 10px;
+
+      .comida-card {
+        flex: 1;
+        width: auto;
+        min-width: 0;
+        margin: 0;
+      }
+    }
+
+    // Quitar y crear lado a lado: más compactas y sin la descripción
+    .acciones--dos {
+      .comida-card {
+        gap: 8px;
+        padding: 12px 10px;
+      }
+
+      .comida-card__icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+
+        ion-icon {
+          font-size: 18px;
+        }
+      }
+
+      .comida-card__nombre {
+        font-size: 0.95rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .comida-card__ingredientes {
+        display: none;
+      }
+    }
+
     .comida-card__check {
       font-size: 24px;
       color: var(--ion-color-primary);
       flex-shrink: 0;
     }
   `],
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonNote],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonNote, IngredientesPipe],
 })
 export class SeleccionarComidaModal {
-  private modalCtrl = inject(ModalController);
+  private el = inject<ElementRef<HTMLElement>>(ElementRef);
+  private alert = inject(AlertService);
+  private crearComida = injectCrearComida();
 
   @Input() titulo = 'Elegir';
+  @Input() tipo: TipoComida = 'desayuno';
   @Input() comidas: Comida[] = [];
   @Input() seleccionadaId: string | null = null;
+
+  /** En la línea con "Quitar" (media fila) va un texto más corto. */
+  textoCrear(): string {
+    if (this.tipo === 'desayuno') return this.seleccionadaId ? 'Nuevo desayuno' : 'Crear desayuno';
+    return this.seleccionadaId ? 'Nueva cena' : 'Crear cena';
+  }
 
   isSeleccionada(comida: Comida): boolean {
     return comida.id === this.seleccionadaId;
   }
 
   seleccionar(comida: Comida): void {
-    this.modalCtrl.dismiss(comida);
+    void this.cerrar(comida);
   }
 
   quitar(): void {
-    this.modalCtrl.dismiss(null, 'quitar');
+    void this.cerrar(null, 'quitar');
+  }
+
+  /** Abre el modal de crear comida encima; la nueva queda elegida. */
+  async crear(): Promise<void> {
+    const nueva = await this.crearComida(this.tipo);
+    if (!nueva) return;
+    if (nueva.tipo === this.tipo) {
+      await this.cerrar(nueva);
+      return;
+    }
+    // Al crearla se cambió el tipo: queda en Mis Comidas, pero no sirve para este espacio
+    await this.alert.toast(nueva.nombre, { header: nueva.tipo === 'desayuno' ? 'Guardado en tus desayunos' : 'Guardada en tus cenas' });
+  }
+
+  /**
+   * Cierra este modal y no "el de encima": al volver de crear una comida, el modal de crear aún
+   * está terminando de cerrarse y ModalController.dismiss() lo tomaría a él.
+   */
+  private cerrar(data: Comida | null, role?: string): Promise<boolean> {
+    return this.el.nativeElement.closest('ion-modal')!.dismiss(data, role);
   }
 }

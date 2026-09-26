@@ -4,7 +4,7 @@ import { PlanSemanal } from '../models/plan-semanal.model';
 import { uuid } from '../utils/uuid';
 
 // ===== Comidas precargadas =====
-const desayunosSeed: Omit<Comida, 'id' | 'tipo'>[] = [
+const desayunosSeed: Pick<Comida, 'nombre'>[] = [
   { nombre: 'Granola + yogur griego + fruta + chía' },
   { nombre: 'Huevos revueltos con tomate y cebolla' },
   { nombre: 'Pan integral + mantequilla + mermelada' },
@@ -13,7 +13,7 @@ const desayunosSeed: Omit<Comida, 'id' | 'tipo'>[] = [
   { nombre: 'Pan integral + queso campesino + tomate' },
 ];
 
-const cenasSeed: Omit<Comida, 'id' | 'tipo'>[] = [
+const cenasSeed: Pick<Comida, 'nombre'>[] = [
   { nombre: 'Huevos revueltos + pan integral + aguacate' },
   { nombre: 'Arepa + queso derretido' },
   { nombre: 'Yogur griego + granola + fruta + chía' },
@@ -25,8 +25,8 @@ const cenasSeed: Omit<Comida, 'id' | 'tipo'>[] = [
 /** Comidas base, con ids nuevos en cada llamada (al crear la base de datos o al restaurarlas). */
 export function comidasBase(tipo?: TipoComida): Comida[] {
   const todas: Comida[] = [
-    ...desayunosSeed.map((c) => ({ ...c, id: uuid(), tipo: 'desayuno' as const })),
-    ...cenasSeed.map((c) => ({ ...c, id: uuid(), tipo: 'cena' as const })),
+    ...desayunosSeed.map((c) => ({ ...c, id: uuid(), tipo: 'desayuno' as const, ingredientes: [] })),
+    ...cenasSeed.map((c) => ({ ...c, id: uuid(), tipo: 'cena' as const, ingredientes: [] })),
   ];
   return tipo ? todas.filter((c) => c.tipo === tipo) : todas;
 }

@@ -33,8 +33,8 @@ describe('normalizarPlan', () => {
 
 describe('confirmacionesDelPlanAnterior', () => {
   const comidas: Comida[] = [
-    { id: 'd1', nombre: 'Arepa', tipo: 'desayuno' },
-    { id: 'c1', nombre: 'Huevos', tipo: 'cena' },
+    { id: 'd1', nombre: 'Arepa', tipo: 'desayuno', ingredientes: [] },
+    { id: 'c1', nombre: 'Huevos', tipo: 'cena', ingredientes: [] },
   ];
   // Viernes: la semana en pantalla va del viernes 25 de septiembre al jueves 1 de octubre
   const HOY = '2026-09-25';

@@ -19,11 +19,13 @@ import {
   semanaDesde,
 } from '../../models/plan-semanal.model';
 import { ComidaConfirmada, RegistroComidas } from '../../models/historial.model';
+import { ProductoNevera } from '../../models/producto-nevera.model';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
 import { AppUpdateService } from '../../services/app-update.service';
 import { HoyService } from '../../services/hoy.service';
 import { sumarDias } from '../../utils/fecha';
+import { normalizarTexto } from '../../utils/texto';
 import { sortearDias } from '../../utils/sorteo';
 import { vibrar } from '../../utils/vibrar';
 import { planSemanalVacio } from '../../data/seed.data';
@@ -32,6 +34,9 @@ import { RespaldoBotonComponent } from '../../shared/respaldo-boton.component';
 import { injectAbrirModal } from '../../shared/abrir-modal';
 
 const TIPO_LABEL: Record<TipoComida, string> = { desayuno: 'Desayuno', cena: 'Cena' };
+// "Falta: …" solo en los primeros días (hoy, mañana y pasado): lo de después se compra luego,
+// y con la nevera vacía no se llena toda la semana de avisos
+const DIAS_CON_AVISO_FALTA = 3;
 
 /** Una tarjeta de la semana: una fecha, con lo planificado y lo confirmado para ese día. */
 interface DiaVista {
@@ -44,6 +49,9 @@ interface DiaVista {
   desayunoConfirmado: boolean;
   cenaConfirmado: boolean;
   confirmado: boolean;
+  // Ingredientes de Mercado que no están en la nevera
+  desayunoFalta: string[];
+  cenaFalta: string[];
 }
 
 @Component({
@@ -70,6 +78,7 @@ export class SemanaPage {
 
   plan = signal<PlanSemanal>(planSemanalVacio());
   comidas = signal<Comida[]>([]);
+  private nevera = signal<ProductoNevera[]>([]);
   // Lo confirmado en las fechas que están en pantalla (historial), por fecha
   confirmadas = signal(new Map<string, RegistroComidas>());
   private hoyService = inject(HoyService);
@@ -83,6 +92,16 @@ export class SemanaPage {
     const plan = this.plan();
     const confirmadas = this.confirmadas();
     const porId = new Map(this.comidas().map((c) => [c.id, c]));
+    // Un ingrediente está si hay en la nevera algo que salió de su producto de Mercado o, si se
+    // agregó a mano en la nevera, que se llame igual. Los ingredientes sin enlazar no cuentan.
+    const nevera = this.nevera();
+    const idsEnNevera = new Set(nevera.map((p) => p.itemMercadoId));
+    const nombresEnNevera = new Set(nevera.map((p) => normalizarTexto(p.nombre)));
+    // Sin lo que va entre paréntesis ("Aguacates (verdes)" → "Aguacates"): caben más en la línea
+    const faltan = (comida?: ComidaConfirmada): string[] =>
+      (porId.get(comida?.id ?? '')?.ingredientes ?? [])
+        .filter((i) => i.itemMercadoId && !idsEnNevera.has(i.itemMercadoId) && !nombresEnNevera.has(normalizarTexto(i.nombre)))
+        .map((i) => i.nombre.replace(/\s*\(.*?\)/g, '').trim());
     return semanaDesde(this.hoy()).map(({ fecha, dia }, i) => {
       const registro = confirmadas.get(fecha);
       // Lo confirmado para esa fecha manda sobre lo planificado
@@ -107,6 +126,8 @@ export class SemanaPage {
         cenaConfirmado,
         // Confirmado: tiene alguna comida y todas las que tiene están confirmadas
         confirmado: (!!desayuno || !!cena) && (!desayuno || desayunoConfirmado) && (!cena || cenaConfirmado),
+        desayunoFalta: i < DIAS_CON_AVISO_FALTA ? faltan(desayuno) : [],
+        cenaFalta: i < DIAS_CON_AVISO_FALTA ? faltan(cena) : [],
       };
     });
   });
@@ -124,14 +145,16 @@ export class SemanaPage {
 
   private async cargar(): Promise<void> {
     const hoy = this.hoy();
-    const [plan, comidas, confirmadas, hayPlanGuardado] = await Promise.all([
+    const [plan, comidas, confirmadas, hayPlanGuardado, nevera] = await Promise.all([
       this.storage.getPlan(),
       this.storage.getComidas(),
       this.storage.getComidasConfirmadas(hoy, sumarDias(hoy, 6)),
       this.storage.hayPlanGuardado(),
+      this.storage.getNevera(),
     ]);
     this.plan.set(plan);
     this.comidas.set(comidas);
+    this.nevera.set(nevera);
     this.confirmadas.set(new Map(confirmadas.map((r) => [r.fecha, r])));
 
     // Solo la primera vez (aún no hay plan guardado) se genera una semana aleatoria:
@@ -141,16 +164,12 @@ export class SemanaPage {
     }
   }
 
+  /** Sin comidas de ese tipo el selector se abre igual: desde ahí se puede crear una. */
   async asignarComida(d: DiaVista, tipo: TipoComida): Promise<void> {
-    const opciones = this.comidas().filter((c) => c.tipo === tipo);
-    if (opciones.length === 0) {
-      await this.alert.aviso('No hay comidas', `Agrega ${tipo}s en la pestaña Comidas.`);
-      return;
-    }
-
     const { data, role } = await this.abrirModal<Comida | null>(SeleccionarComidaModal, {
       titulo: `${TIPO_LABEL[tipo]} · ${DIAS_LABEL[d.dia]}`,
-      comidas: opciones,
+      tipo,
+      comidas: this.comidas().filter((c) => c.tipo === tipo),
       seleccionadaId: d[tipo]?.id ?? null,
     });
     if (role === 'quitar') {
@@ -158,6 +177,8 @@ export class SemanaPage {
       return;
     }
     if (!data) return;
+    // Recién creada en el selector: aún no está en la lista de la semana
+    this.comidas.update((comidas) => (comidas.some((c) => c.id === data.id) ? comidas : [...comidas, data]));
 
     const anterior = d[tipo];
     const restaurar = this.estadoActual(d, tipo);

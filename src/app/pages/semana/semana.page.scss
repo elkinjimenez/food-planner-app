@@ -144,6 +144,32 @@
   overflow-wrap: anywhere;
 }
 
+// Ingredientes de Mercado que no están en la nevera: el carrito dice "hay que comprarlo"
+.comida-falta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+
+  ion-icon {
+    flex-shrink: 0;
+    font-size: 13px;
+  }
+}
+
+.comida-falta-texto {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comida-falta-productos {
+  color: var(--color-peligro);
+}
+
 .comida-placeholder {
   font-size: 0.85rem;
   color: var(--ion-color-medium);

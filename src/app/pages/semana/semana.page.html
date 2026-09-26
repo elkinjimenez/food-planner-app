@@ -47,6 +47,9 @@
             <span class="item-label">Desayuno</span>
             @if (d.desayuno) {
               <span class="item-nombre">{{ d.desayuno.nombre }}</span>
+              @if (d.desayunoFalta.length > 0) {
+                <span class="comida-falta"><ion-icon name="cart-outline"></ion-icon><span class="comida-falta-texto">Falta: <span class="comida-falta-productos">{{ d.desayunoFalta.join(', ') }}</span></span></span>
+              }
             } @else {
               <span class="comida-placeholder">Toca para asignar</span>
             }
@@ -77,6 +80,9 @@
             <span class="item-label">Cena</span>
             @if (d.cena) {
               <span class="item-nombre">{{ d.cena.nombre }}</span>
+              @if (d.cenaFalta.length > 0) {
+                <span class="comida-falta"><ion-icon name="cart-outline"></ion-icon><span class="comida-falta-texto">Falta: <span class="comida-falta-productos">{{ d.cenaFalta.join(', ') }}</span></span></span>
+              }
             } @else {
               <span class="comida-placeholder">Toca para asignar</span>
             }

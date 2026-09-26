@@ -8,25 +8,13 @@ import {
   IonButton,
 } from '@ionic/angular';
 import { Comida, TipoComida } from '../../models/comida.model';
-import { uuid } from '../../utils/uuid';
 import { deslizarFilas } from '../../utils/deslizar-filas';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
-import { EditarItemConfig, injectAbrirEditor } from '../../shared/editar-item.modal';
+import { injectAbrirEditor } from '../../shared/editar-item.modal';
+import { EDITOR_COMIDA, injectCrearComida } from '../../shared/crear-comida';
 import { SeccionPlegableComponent } from '../../shared/seccion-plegable.component';
-
-// Lo común del modal de agregar y editar
-const EDITOR_COMIDA = {
-  icono: 'restaurant-outline',
-  label1: 'Nombre',
-  label2: 'Ingredientes (opcional)',
-  campo2Opcional: true,
-  labelOpcion: 'Tipo',
-  opciones: [
-    { valor: 'desayuno', texto: 'Desayuno' },
-    { valor: 'cena', texto: 'Cena' },
-  ],
-} satisfies Partial<EditarItemConfig>;
+import { IngredientesPipe } from '../../shared/ingredientes.pipe';
 
 /** Datos de cada sección de la vista (Desayunos y Cenas): la plantilla las dibuja con un solo @for. */
 interface SeccionComidas {
@@ -51,12 +39,14 @@ interface SeccionComidas {
     IonCard,
     IonButton,
     SeccionPlegableComponent,
+    IngredientesPipe,
   ],
 })
 export class ComidasPage {
   private storage = inject(StorageService);
   private alert = inject(AlertService);
   private abrirEditor = injectAbrirEditor();
+  private crearComida = injectCrearComida();
   private cdr = inject(ChangeDetectorRef);
 
   desayunos = signal<Comida[]>([]);
@@ -113,24 +103,7 @@ export class ComidasPage {
 
   /** El tipo se elige en el mismo modal; empieza en desayuno. */
   async agregar(tipo: TipoComida = 'desayuno'): Promise<void> {
-    // Título general: el tipo se puede cambiar en el selector
-    const data = await this.abrirEditor({
-      ...EDITOR_COMIDA,
-      titulo: 'Agregar comida',
-      boton: 'Agregar',
-      value1: '',
-      value2: '',
-      opcion: tipo,
-    });
-    if (!data) return;
-    const nueva: Comida = {
-      id: uuid(),
-      nombre: data.value1,
-      ingredientes: data.value2 || undefined,
-      tipo: data.opcion as TipoComida,
-    };
-    await this.storage.saveComida(nueva);
-    await this.cargar();
+    if (await this.crearComida(tipo)) await this.cargar();
   }
 
   async editar(comida: Comida): Promise<void> {
@@ -139,17 +112,19 @@ export class ComidasPage {
       titulo: 'Editar comida',
       boton: 'Guardar',
       value1: comida.nombre,
-      value2: comida.ingredientes ?? '',
+      value2: '',
+      ingredientes: comida.ingredientes,
+      mercado: await this.storage.getMercado(),
       opcion: comida.tipo,
     });
     if (!data) return;
     const editada: Comida = {
       ...comida,
       nombre: data.value1,
-      ingredientes: data.value2 || undefined,
+      ingredientes: data.ingredientes,
       tipo: data.opcion as TipoComida,
     };
-    await this.storage.saveComida(editada);
+    await this.storage.saveComida(editada, data.nuevosEnMercado);
     if (editada.tipo !== comida.tipo) {
       // En el plan y en lo confirmado estaba como el tipo anterior (p. ej. de desayuno): se deja sin asignar
       await this.storage.quitarComidaDeLaSemana(comida.id);

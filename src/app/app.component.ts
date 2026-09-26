@@ -29,6 +29,8 @@ import {
   flagOutline,
   shareOutline,
   todayOutline,
+  closeOutline,
+  searchOutline,
 } from 'ionicons/icons';
 import { StorageService } from './services/storage.service';
 import { AppUpdateService } from './services/app-update.service';
@@ -71,6 +73,8 @@ export class AppComponent implements OnInit {
       flagOutline,
       shareOutline,
       todayOutline,
+      closeOutline,
+      searchOutline,
     });
   }
 

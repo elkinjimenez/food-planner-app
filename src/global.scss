@@ -228,6 +228,17 @@ ion-badge {
   --background: var(--fondo-modal);
 }
 
+// Campos de texto de los modales (también dentro de sus componentes, p. ej. el buscador de ingredientes).
+// Con "ion-input" delante: solo con la clase, el estilo propio de Ionic (--background: transparent) gana
+ion-input.field-input {
+  --background: var(--fondo-tarjeta);
+  --border-radius: 12px;
+  --padding-start: 14px;
+  --padding-end: 14px;
+  --color: var(--color-texto);
+  font-size: 1rem;
+}
+
 // ===== Calendario del selector de fecha (ion-datetime-button) =====
 ion-modal.calendario {
   --width: fit-content;
