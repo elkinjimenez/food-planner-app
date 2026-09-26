@@ -1,0 +1,1 @@
+import{a as Fe,kt as ix}from"./main-7QI7QOCA.js";var n=(()=>{let r=class r{transform(e){return Fe(e)}};r.ɵfac=function(o){return new(o||r)},r.ɵpipe=ix({name:`fecha`,type:r,pure:!0});return r})();export{n as t};
