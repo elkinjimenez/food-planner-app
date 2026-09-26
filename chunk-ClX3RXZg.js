@@ -1,0 +1,1 @@
+import{Wt as k,ct as Tb}from"./main-RE244TVL.js";function c(){let o=k(Tb);return async(n,i)=>{let t=await o.create({component:n,componentProps:i,presentingElement:document.querySelector(`ion-router-outlet`)??void 0});return await t.present(),t.onWillDismiss()}}export{c as t};
