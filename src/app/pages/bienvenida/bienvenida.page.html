@@ -1,0 +1,27 @@
+<div class="contenido">
+  <header class="encabezado">
+    <img class="logo" src="assets/icon/app-icon.svg" alt="" width="80" height="80" />
+    <p class="saludo">Te damos la bienvenida a</p>
+    <h1 id="bienvenida-titulo" class="titulo">Food Planner</h1>
+    <p class="lema">Tu semana de comidas resuelta: qué comer, qué comprar y qué tienes en la nevera.</p>
+  </header>
+
+  <ul class="funciones">
+    @for (f of funciones; track f.titulo) {
+      <li class="funcion" [style.animation-delay.ms]="150 + $index * 70">
+        <div class="item-icon {{ f.tono }}">
+          <ion-icon [name]="f.icono"></ion-icon>
+        </div>
+        <div class="funcion-info">
+          <span class="funcion-titulo">{{ f.titulo }}</span>
+          <span class="funcion-texto">{{ f.texto }}</span>
+        </div>
+      </li>
+    }
+  </ul>
+</div>
+
+<footer class="pie">
+  <p class="nota">Sin cuentas: todo se guarda en este dispositivo</p>
+  <button type="button" class="empezar" (click)="empezar.emit()">Empezar</button>
+</footer>

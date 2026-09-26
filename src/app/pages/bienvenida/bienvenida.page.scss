@@ -1,0 +1,154 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  background: var(--ion-background-color);
+}
+
+// La pone animate.leave (app.component.html): se desvanece y deja ver la app
+:host(.saliendo) {
+  pointer-events: none;
+  animation: salir 0.35s ease forwards;
+}
+
+.contenido {
+  flex: 1;
+  overflow-y: auto;
+  padding: calc(var(--ion-safe-area-top, 0px) + clamp(24px, 6vh, 64px)) 24px 16px;
+}
+
+.encabezado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.logo {
+  filter: drop-shadow(0 8px 20px rgba(var(--ion-color-primary-rgb), 0.35));
+}
+
+.saludo {
+  margin: 20px 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-texto-secundario);
+}
+
+.titulo {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-texto);
+}
+
+.lema {
+  max-width: 340px;
+  margin: 10px 0 0;
+  line-height: 1.4;
+  color: var(--color-texto-suave);
+}
+
+.funciones {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 380px;
+  margin: clamp(24px, 5vh, 40px) auto 0;
+  padding: 0;
+  list-style: none;
+}
+
+.funcion {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.funcion-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.funcion-titulo {
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.funcion-texto {
+  font-size: 0.88rem;
+  line-height: 1.35;
+  color: var(--color-texto-secundario);
+}
+
+.tono-nevera {
+  background: var(--fondo-nevera);
+  color: var(--color-nevera);
+}
+
+.pie {
+  padding: 12px 24px calc(var(--ion-safe-area-bottom, 0px) + 16px);
+  text-align: center;
+}
+
+.nota {
+  margin: 0 0 12px;
+  font-size: 0.8rem;
+  color: var(--color-texto-secundario);
+}
+
+// Como el botón de guardar de los modales
+.empezar {
+  width: 100%;
+  max-width: 380px;
+  padding: 18px;
+  border: none;
+  border-radius: 14px;
+  background: var(--ion-color-primary);
+  color: var(--color-sobre-primario);
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+// Entra por partes: el encabezado, cada pestaña (con su retraso en el HTML) y el botón
+.encabezado,
+.funcion,
+.pie {
+  animation: aparecer 0.5s cubic-bezier(0.32, 0.72, 0, 1) backwards;
+}
+
+.pie {
+  animation-delay: 0.5s;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@keyframes salir {
+  to {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host(.saliendo),
+  .encabezado,
+  .funcion,
+  .pie {
+    animation: none;
+  }
+}

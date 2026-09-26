@@ -1,3 +1,6 @@
 <ion-app>
-  <ion-router-outlet></ion-router-outlet>
+  <ion-router-outlet [attr.inert]="mostrarBienvenida() ? '' : null"></ion-router-outlet>
+  @if (mostrarBienvenida()) {
+    <app-bienvenida animate.leave="saliendo" (empezar)="cerrarBienvenida()"></app-bienvenida>
+  }
 </ion-app>

@@ -135,8 +135,9 @@ export class StorageService {
         if (event.oldVersion === 0) {
           // Datos base solo al crear la base de datos (primera vez que se abre la app).
           // Si después una lista queda vacía, su pantalla ofrece restaurarla.
-          comidasBase().forEach((c) => tx.objectStore(STORE_COMIDAS).put(c));
-          mercadoBase().forEach((i) => tx.objectStore(STORE_MERCADO).put(i));
+          const mercado = mercadoBase();
+          mercado.forEach((i) => tx.objectStore(STORE_MERCADO).put(i));
+          comidasBase(mercado).forEach((c) => tx.objectStore(STORE_COMIDAS).put(c));
         } else if (event.oldVersion < 3) {
           migrarAHistorialPorFecha(tx);
         }
@@ -317,8 +318,8 @@ export class StorageService {
     }
   }
   /** Vuelve a cargar las comidas base de un tipo (se ofrece cuando la sección queda vacía). */
-  restaurarComidasBase(tipo: TipoComida): Promise<void> {
-    return this.putAll(STORE_COMIDAS, comidasBase(tipo));
+  async restaurarComidasBase(tipo: TipoComida): Promise<void> {
+    return this.putAll(STORE_COMIDAS, comidasBase(await this.getMercado(), tipo));
   }
 
   // ===== Mercado =====
