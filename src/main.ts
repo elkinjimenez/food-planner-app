@@ -10,8 +10,9 @@ import { provideServiceWorker } from '@angular/service-worker';
 bootstrapApplication(AppComponent, {
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    // Estilo iOS en todas las plataformas, también en PC
-    provideIonicAngular({ mode: 'ios' }),
+    // Estilo iOS en todas las plataformas, también en PC. Sin el deslizar atrás de Ionic:
+    // deslizar a los lados cambia de pestaña
+    provideIonicAngular({ mode: 'ios', swipeBackEnabled: false }),
     provideRouter(routes, withPreloading(PreloadAllModules), withComponentInputBinding()), provideServiceWorker('ngsw-worker.js', {
             enabled: !isDevMode(),
             registrationStrategy: 'registerImmediately'
