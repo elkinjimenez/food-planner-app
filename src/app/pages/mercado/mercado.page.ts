@@ -51,6 +51,18 @@ export class MercadoPage implements OnInit {
   supermercado = signal<ItemMercado[]>([]);
   fruver = signal<ItemMercado[]>([]);
   private filas = viewChildren('fila', { read: ElementRef<HTMLElement> });
+  // Secciones plegadas: todas empiezan abiertas
+  private plegadas = signal(new Set<CategoriaMercado>());
+
+  plegada(categoria: CategoriaMercado): boolean {
+    return this.plegadas().has(categoria);
+  }
+
+  alternar(categoria: CategoriaMercado): void {
+    const plegadas = new Set(this.plegadas());
+    if (!plegadas.delete(categoria)) plegadas.add(categoria);
+    this.plegadas.set(plegadas);
+  }
 
   async ngOnInit(): Promise<void> {
     await this.cargar();
@@ -108,9 +120,13 @@ export class MercadoPage implements OnInit {
     });
   }
 
-  // Método y no computed: toggleComprado cambia el ítem sin pasar por el signal
+  // Métodos y no computed: toggleComprado cambia el ítem sin pasar por el signal
   hayComprados(): boolean {
     return this.items().some((i) => i.comprado);
+  }
+
+  comprados(items: ItemMercado[]): number {
+    return items.filter((i) => i.comprado).length;
   }
 
   async desmarcarTodo(): Promise<void> {
@@ -161,7 +177,8 @@ export class MercadoPage implements OnInit {
     await this.cargar();
   }
 
-  async agregar(categoria: 'supermercado' | 'fruver'): Promise<void> {
+  /** La categoría se elige en el mismo modal; empieza en supermercado. */
+  async agregar(categoria: CategoriaMercado = 'supermercado'): Promise<void> {
     const modal = await this.modalCtrl.create({
       component: EditarItemModal,
       componentProps: {
@@ -193,24 +210,6 @@ export class MercadoPage implements OnInit {
     };
     await this.storage.saveItemMercado(nuevo);
     await this.cargar();
-  }
-
-  async agregarActual(): Promise<void> {
-    const actionSheet = await this.actionSheetCtrl.create({
-      header: 'Categoría',
-      buttons: [
-        {
-          text: 'Supermercado',
-          handler: () => this.agregar('supermercado'),
-        },
-        {
-          text: 'Fruver',
-          handler: () => this.agregar('fruver'),
-        },
-        { text: 'Cancelar', role: 'cancel' },
-      ],
-    });
-    await actionSheet.present();
   }
 
   async editar(item: ItemMercado): Promise<void> {

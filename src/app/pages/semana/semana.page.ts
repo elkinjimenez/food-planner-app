@@ -14,7 +14,6 @@ import { Comida, TipoComida } from '../../models/comida.model';
 import {
   PlanSemanal,
   DiaSemana,
-  DIAS_SEMANA,
   DIAS_LABEL,
   ComidaDelDia,
   semanaDesde,
@@ -23,7 +22,7 @@ import { ComidaConfirmada, RegistroComidas } from '../../models/historial.model'
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
 import { AppUpdateService } from '../../services/app-update.service';
-import { fechaHoy, formatearFecha, sumarDias } from '../../utils/fecha';
+import { fechaHoy, sumarDias } from '../../utils/fecha';
 import { sortearDias } from '../../utils/sorteo';
 import { planSemanalVacio } from '../../data/seed.data';
 import { SeleccionarComidaModal } from './seleccionar-comida.modal';
@@ -35,6 +34,7 @@ const TIPO_LABEL: Record<TipoComida, string> = { desayuno: 'Desayuno', cena: 'Ce
 interface DiaVista {
   fecha: string;
   dia: DiaSemana;
+  numero: number; // día del mes
   esHoy: boolean;
   desayuno?: ComidaConfirmada;
   cena?: ComidaConfirmada;
@@ -95,6 +95,7 @@ export class SemanaPage implements OnInit {
       return {
         fecha,
         dia,
+        numero: Number(fecha.slice(8)),
         esHoy: i === 0,
         desayuno,
         cena,
@@ -143,10 +144,6 @@ export class SemanaPage implements OnInit {
     }
   }
 
-  diaNumero(dia: DiaSemana): number {
-    return DIAS_SEMANA.indexOf(dia) + 1;
-  }
-
   async asignarComida(d: DiaVista, tipo: TipoComida): Promise<void> {
     const opciones = this.comidas().filter((c) => c.tipo === tipo);
     if (opciones.length === 0) {
@@ -157,7 +154,7 @@ export class SemanaPage implements OnInit {
     const modal = await this.modalCtrl.create({
       component: SeleccionarComidaModal,
       componentProps: {
-        titulo: `${TIPO_LABEL[tipo]} · ${DIAS_LABEL[d.dia].toLowerCase()} ${formatearFecha(d.fecha)}`,
+        titulo: `${TIPO_LABEL[tipo]} · ${DIAS_LABEL[d.dia]}`,
         comidas: opciones,
         seleccionadaId: d[tipo]?.id ?? null,
       },

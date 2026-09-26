@@ -1,19 +1,25 @@
 import { Injectable, inject } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
+import { AlertService } from './alert.service';
 
 @Injectable({ providedIn: 'root' })
 export class AppUpdateService {
   private swUpdate = inject(SwUpdate);
+  private alert = inject(AlertService);
 
   private buscando = false;
+  // Versión nueva descargada que aún no se ha aplicado
+  private versionLista = false;
 
   init(): void {
     if (!this.swUpdate.isEnabled) return;
 
-    // Si el Service Worker descarga una versión nueva, se activa y se recarga
+    // Si el Service Worker descarga una versión nueva, se ofrece en vez de recargar solo:
+    // recargar sin preguntar borraría lo que se esté escribiendo (p. ej. en un modal)
     this.swUpdate.versionUpdates.subscribe((event) => {
       if (event.type === 'VERSION_READY') {
-        this.aplicar();
+        this.versionLista = true;
+        this.ofrecerVersionNueva();
       }
     });
 
@@ -26,9 +32,20 @@ export class AppUpdateService {
     // solo se reanuda, sin pasar por ngOnInit. Por eso se busca también al volver.
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
+        // Si el aviso se cerró sin actualizar, se vuelve a ofrecer
+        if (this.versionLista) this.ofrecerVersionNueva();
         this.buscarActualizacion();
       }
     });
+  }
+
+  private async ofrecerVersionNueva(): Promise<void> {
+    const actualizar = await this.alert.toast('Nueva versión disponible', {
+      tipo: 'actualizacion',
+      boton: 'Actualizar',
+      duration: 8000,
+    });
+    if (actualizar) await this.aplicar();
   }
 
   /** Busca una versión nueva y, si existe, la activa y recarga. Si no, solo recarga. */

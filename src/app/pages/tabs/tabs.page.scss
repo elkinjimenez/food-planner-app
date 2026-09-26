@@ -30,13 +30,42 @@ ion-tab-bar {
   background: rgba(255, 255, 255, 0);
 }
 
+// Fondo de la pestaña seleccionada: se desliza de una a otra en vez de saltar.
+// Ocupa lo mismo que una pestaña (el ancho sin el padding del tab bar, entre 5) y se corre
+// una pestaña entera por cada posición (translateX en % de su propio ancho).
+.tab-indicador {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 8px;
+  width: calc((100% - 16px) / 5);
+  pointer-events: none;
+  transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+
+  // El margen de 2px de cada pestaña
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 2px;
+    border-radius: 50px;
+    background: rgba(var(--ion-color-primary-rgb), 0.2);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
 // Los colores (normal y seleccionado) los hereda de --color y --color-selected del tab bar
 ion-tab-button {
   --padding-top: 8px;
   --padding-bottom: 8px;
 
+  // Por encima del indicador
+  position: relative;
+  z-index: 1;
   border-radius: 50px;
-  transition: background 0.25s ease, color 0.2s ease;
+  transition: color 0.2s ease;
   margin: 0 2px;
   flex: 1;
   max-width: none;
@@ -46,12 +75,7 @@ ion-tab-button {
     transition: transform 0.25s ease;
   }
 
-  // Estado seleccionado — fondo destacado
-  &.tab-selected {
-    background: rgba(var(--ion-color-primary-rgb), 0.20);
-
-    ion-icon {
-      transform: scale(1.1);
-    }
+  &.tab-selected ion-icon {
+    transform: scale(1.1);
   }
 }

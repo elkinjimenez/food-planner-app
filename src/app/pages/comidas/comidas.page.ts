@@ -7,7 +7,6 @@ import {
   IonCard,
   IonButton,
   ModalController,
-  ActionSheetController,
 } from '@ionic/angular';
 import { Comida, TipoComida } from '../../models/comida.model';
 import { uuid } from '../../utils/uuid';
@@ -38,12 +37,23 @@ export class ComidasPage implements OnInit {
   private storage = inject(StorageService);
   private alert = inject(AlertService);
   private modalCtrl = inject(ModalController);
-  private actionSheetCtrl = inject(ActionSheetController);
   private cdr = inject(ChangeDetectorRef);
 
   desayunos = signal<Comida[]>([]);
   cenas = signal<Comida[]>([]);
   private filas = viewChildren('fila', { read: ElementRef<HTMLElement> });
+  // Secciones plegadas: todas empiezan abiertas
+  private plegadas = signal(new Set<TipoComida>());
+
+  plegada(tipo: TipoComida): boolean {
+    return this.plegadas().has(tipo);
+  }
+
+  alternar(tipo: TipoComida): void {
+    const plegadas = new Set(this.plegadas());
+    if (!plegadas.delete(tipo)) plegadas.add(tipo);
+    this.plegadas.set(plegadas);
+  }
 
   async ngOnInit(): Promise<void> {
     await this.cargar();
@@ -76,7 +86,8 @@ export class ComidasPage implements OnInit {
     await this.cargar();
   }
 
-  async agregar(tipo: 'desayuno' | 'cena'): Promise<void> {
+  /** El tipo se elige en el mismo modal; empieza en desayuno. */
+  async agregar(tipo: TipoComida = 'desayuno'): Promise<void> {
     const modal = await this.modalCtrl.create({
       component: EditarItemModal,
       componentProps: {
@@ -108,24 +119,6 @@ export class ComidasPage implements OnInit {
     };
     await this.storage.saveComida(nueva);
     await this.cargar();
-  }
-
-  async agregarActual(): Promise<void> {
-    const actionSheet = await this.actionSheetCtrl.create({
-      header: 'Tipo de comida',
-      buttons: [
-        {
-          text: 'Desayuno',
-          handler: () => this.agregar('desayuno'),
-        },
-        {
-          text: 'Cena',
-          handler: () => this.agregar('cena'),
-        },
-        { text: 'Cancelar', role: 'cancel' },
-      ],
-    });
-    await actionSheet.present();
   }
 
   async editar(comida: Comida): Promise<void> {

@@ -4,84 +4,106 @@
   </div>
   <p class="page-subtitle">Tus opciones para planear la semana</p>
   <!-- Desayunos -->
-  <div class="section-header">
+  <div
+    class="section-header section-header--plegable"
+    [class.section-header--plegada]="plegada('desayuno')"
+    role="button"
+    [attr.aria-expanded]="!plegada('desayuno')"
+    (click)="alternar('desayuno')"
+  >
     <div class="section-icon tono-desayuno">
       <ion-icon name="sunny-outline"></ion-icon>
     </div>
     <span class="section-title">Desayunos</span>
     <span class="section-count">{{ desayunos().length }}</span>
+    <ion-icon class="section-chevron" name="chevron-down-outline"></ion-icon>
   </div>
-  @for (comida of desayunos(); track comida.id) {
-    <ion-card #fila class="item-card">
-      <div class="item-card-body">
-        <div class="item-icon tono-desayuno">
-          <ion-icon name="sunny-outline"></ion-icon>
+  <div class="seccion-plegable" [class.seccion-plegable--plegada]="plegada('desayuno')">
+    <div class="seccion-contenido">
+      @for (comida of desayunos(); track comida.id) {
+        <ion-card #fila class="item-card">
+          <div class="item-card-body">
+            <div class="item-icon tono-desayuno">
+              <ion-icon name="sunny-outline"></ion-icon>
+            </div>
+            <div class="item-info">
+              <span class="item-nombre">{{ comida.nombre }}</span>
+              @if (comida.ingredientes) {
+                <span class="item-sub">{{ comida.ingredientes }}</span>
+              }
+            </div>
+            <button class="action-btn action-btn--edit" (click)="editar(comida)">
+              <ion-icon name="create-outline"></ion-icon>
+            </button>
+            <button class="action-btn action-btn--delete" (click)="eliminar(comida)">
+              <ion-icon name="trash-outline"></ion-icon>
+            </button>
+          </div>
+        </ion-card>
+      } @empty {
+        <div class="seccion-vacia">
+          <span>No tienes desayunos</span>
+          <ion-button fill="clear" size="small" (click)="restaurarBase('desayuno')">
+            <ion-icon name="refresh-outline" slot="start"></ion-icon>
+            Cargar desayunos base
+          </ion-button>
         </div>
-        <div class="item-info">
-          <span class="item-nombre">{{ comida.nombre }}</span>
-          @if (comida.ingredientes) {
-            <span class="item-sub">{{ comida.ingredientes }}</span>
-          }
-        </div>
-        <button class="action-btn action-btn--edit" (click)="editar(comida)">
-          <ion-icon name="create-outline"></ion-icon>
-        </button>
-        <button class="action-btn action-btn--delete" (click)="eliminar(comida)">
-          <ion-icon name="trash-outline"></ion-icon>
-        </button>
-      </div>
-    </ion-card>
-  } @empty {
-    <div class="seccion-vacia">
-      <span>No tienes desayunos</span>
-      <ion-button fill="clear" size="small" (click)="restaurarBase('desayuno')">
-        <ion-icon name="refresh-outline" slot="start"></ion-icon>
-        Cargar desayunos base
-      </ion-button>
+      }
     </div>
-  }
+  </div>
 
   <!-- Cenas -->
-  <div class="section-header">
+  <div
+    class="section-header section-header--plegable"
+    [class.section-header--plegada]="plegada('cena')"
+    role="button"
+    [attr.aria-expanded]="!plegada('cena')"
+    (click)="alternar('cena')"
+  >
     <div class="section-icon tono-cena">
       <ion-icon name="moon-outline"></ion-icon>
     </div>
     <span class="section-title">Cenas</span>
     <span class="section-count">{{ cenas().length }}</span>
+    <ion-icon class="section-chevron" name="chevron-down-outline"></ion-icon>
   </div>
-  @for (comida of cenas(); track comida.id) {
-    <ion-card #fila class="item-card">
-      <div class="item-card-body">
-        <div class="item-icon tono-cena">
-          <ion-icon name="moon-outline"></ion-icon>
+  <div class="seccion-plegable" [class.seccion-plegable--plegada]="plegada('cena')">
+    <div class="seccion-contenido">
+      @for (comida of cenas(); track comida.id) {
+        <ion-card #fila class="item-card">
+          <div class="item-card-body">
+            <div class="item-icon tono-cena">
+              <ion-icon name="moon-outline"></ion-icon>
+            </div>
+            <div class="item-info">
+              <span class="item-nombre">{{ comida.nombre }}</span>
+              @if (comida.ingredientes) {
+                <span class="item-sub">{{ comida.ingredientes }}</span>
+              }
+            </div>
+            <button class="action-btn action-btn--edit" (click)="editar(comida)">
+              <ion-icon name="create-outline"></ion-icon>
+            </button>
+            <button class="action-btn action-btn--delete" (click)="eliminar(comida)">
+              <ion-icon name="trash-outline"></ion-icon>
+            </button>
+          </div>
+        </ion-card>
+      } @empty {
+        <div class="seccion-vacia">
+          <span>No tienes cenas</span>
+          <ion-button fill="clear" size="small" (click)="restaurarBase('cena')">
+            <ion-icon name="refresh-outline" slot="start"></ion-icon>
+            Cargar cenas base
+          </ion-button>
         </div>
-        <div class="item-info">
-          <span class="item-nombre">{{ comida.nombre }}</span>
-          @if (comida.ingredientes) {
-            <span class="item-sub">{{ comida.ingredientes }}</span>
-          }
-        </div>
-        <button class="action-btn action-btn--edit" (click)="editar(comida)">
-          <ion-icon name="create-outline"></ion-icon>
-        </button>
-        <button class="action-btn action-btn--delete" (click)="eliminar(comida)">
-          <ion-icon name="trash-outline"></ion-icon>
-        </button>
-      </div>
-    </ion-card>
-  } @empty {
-    <div class="seccion-vacia">
-      <span>No tienes cenas</span>
-      <ion-button fill="clear" size="small" (click)="restaurarBase('cena')">
-        <ion-icon name="refresh-outline" slot="start"></ion-icon>
-        Cargar cenas base
-      </ion-button>
+      }
     </div>
-  }
+  </div>
 </ion-content>
 
 <ion-fab slot="fixed" horizontal="end" vertical="bottom">
-  <ion-fab-button (click)="agregarActual()">
+  <ion-fab-button (click)="agregar()">
     <ion-icon class="float-icon" name="add-outline"></ion-icon>
   </ion-fab-button>
 </ion-fab>

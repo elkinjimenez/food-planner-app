@@ -66,6 +66,7 @@ export class RespaldoBotonComponent {
       `Se reemplazarán todos tus datos actuales por los del respaldo: ${datos.comidas.length} comidas, ` +
         `${datos.mercado.length} productos de mercado, ${datos.nevera.length} productos de nevera ` +
         `y ${diasHistorial} días de historial.`,
+      { aceptar: 'Reemplazar', destructivo: true },
     );
     if (!confirmar) return;
 

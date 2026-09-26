@@ -25,6 +25,7 @@ import {
   calendarNumberOutline,
   chevronBackOutline,
   chevronForwardOutline,
+  chevronDownOutline,
 } from 'ionicons/icons';
 import { StorageService } from './services/storage.service';
 import { AppUpdateService } from './services/app-update.service';
@@ -63,6 +64,7 @@ export class AppComponent implements OnInit {
       calendarNumberOutline,
       chevronBackOutline,
       chevronForwardOutline,
+      chevronDownOutline,
     });
   }
 

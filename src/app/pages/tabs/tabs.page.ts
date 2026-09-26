@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { IonTabs, IonTabBar, IonTabButton, IonIcon } from '@ionic/angular';
 import { Router } from '@angular/router';
 
@@ -13,6 +13,13 @@ export class TabsPage {
 
   private tabs = ['semana', 'comidas', 'mercado', 'nevera', 'agua'];
   private isDragging = false;
+  // Posición del indicador que se desliza bajo la pestaña seleccionada
+  private tabActual = signal('semana');
+  indiceTab = computed(() => Math.max(this.tabs.indexOf(this.tabActual()), 0));
+
+  alCambiarTab(tab: string): void {
+    this.tabActual.set(tab);
+  }
 
   onTouchStart(event: TouchEvent): void {
     this.isDragging = true;

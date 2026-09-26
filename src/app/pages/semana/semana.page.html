@@ -16,7 +16,7 @@
   @for (d of semana(); track d.fecha) {
     <ion-card class="dia-card" [class.dia-card--hoy]="d.esHoy">
       <div class="dia-header">
-        <div class="dia-numero" [class.dia-numero--hoy]="d.esHoy">{{ diaNumero(d.dia) }}</div>
+        <div class="dia-numero" [class.dia-numero--hoy]="d.esHoy">{{ d.numero }}</div>
         <div class="dia-titulo">
           <span class="dia-nombre">{{ diasLabel[d.dia] }}</span>
           @if (d.esHoy) {

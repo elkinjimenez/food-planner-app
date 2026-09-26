@@ -1,5 +1,6 @@
-<ion-tabs>
+<ion-tabs (ionTabsWillChange)="alCambiarTab($event.tab)">
   <ion-tab-bar slot="bottom" (touchstart)="onTouchStart($event)" (touchmove)="onTouchMove($event)" (touchend)="onTouchEnd()">
+    <div class="tab-indicador" [style.transform]="'translateX(' + indiceTab() * 100 + '%)'"></div>
     <ion-tab-button tab="semana" aria-label="Semana">
       <ion-icon name="calendar-outline"></ion-icon>
     </ion-tab-button>

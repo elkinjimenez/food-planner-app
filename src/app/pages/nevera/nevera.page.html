@@ -23,28 +23,19 @@
       <span class="section-title">Productos</span>
       <span class="section-count">{{ productos().length }}</span>
     </div>
-    @for (producto of productos(); track producto.id) {
-      <ion-card #fila class="item-card" [class.item-vencido]="estado(producto.fechaVencimiento) === 'rojo'">
+    @for (p of conEstado(); track p.producto.id) {
+      <ion-card #fila class="item-card" [class.item-vencido]="p.estado === 'rojo'">
         <div class="item-card-body">
-          <div
-            class="estado-dot"
-            [class.estado-dot--verde]="estado(producto.fechaVencimiento) === 'verde'"
-            [class.estado-dot--amarillo]="estado(producto.fechaVencimiento) === 'amarillo'"
-            [class.estado-dot--rojo]="estado(producto.fechaVencimiento) === 'rojo'"
-          ></div>
+          <div class="estado-dot estado-dot--{{ p.estado }}"></div>
           <div class="item-info">
-            <span class="item-nombre">{{ producto.nombre }}</span>
-            <span class="item-sub">Vence: {{ producto.fechaVencimiento | fecha }}</span>
+            <span class="item-nombre">{{ p.producto.nombre }}</span>
+            <span class="item-sub">Vence: {{ p.producto.fechaVencimiento | fecha }}</span>
           </div>
-          <ion-badge
-            [color]="estado(producto.fechaVencimiento) === 'verde' ? 'success' : estado(producto.fechaVencimiento) === 'amarillo' ? 'warning' : 'danger'"
-          >
-            {{ estadoLabel(producto.fechaVencimiento) }}
-          </ion-badge>
-          <button class="action-btn action-btn--edit" (click)="editar(producto)">
+          <ion-badge [color]="p.color">{{ p.label }}</ion-badge>
+          <button class="action-btn action-btn--edit" (click)="editar(p.producto)">
             <ion-icon name="create-outline"></ion-icon>
           </button>
-          <button class="action-btn action-btn--delete" (click)="eliminar(producto)">
+          <button class="action-btn action-btn--delete" (click)="eliminar(p.producto)">
             <ion-icon name="trash-outline"></ion-icon>
           </button>
         </div>

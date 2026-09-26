@@ -47,9 +47,24 @@ ion-fab {
   z-index: 200 !important;
 }
 
+// FAB en vidrio tintado, como el tab bar: el verde deja ver lo que pasa detrás
 ion-fab-button {
-  --box-shadow: 0 4px 16px rgba(var(--ion-color-primary-rgb), 0.4);
+  --background: rgba(var(--ion-color-primary-rgb), 0.72);
+  --background-activated: rgba(0, 0, 0, 0.12);
+  --border-width: 1px;
+  --border-style: solid;
+  --border-color: rgba(var(--vidrio-rgb), 0.5);
+  // Sombra verde + brillo superior e inferior, como el borde de vidrio de iOS 26
+  --box-shadow:
+    0 4px 16px rgba(var(--ion-color-primary-rgb), 0.35),
+    inset 0 1px 1px rgba(var(--vidrio-rgb), 0.6),
+    inset 0 -1px 1px rgba(var(--vidrio-rgb), 0.2);
   margin-bottom: 88px;
+
+  &::part(native) {
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+  }
 }
 
 .float-icon {
@@ -130,6 +145,12 @@ ion-badge {
     background: linear-gradient(135deg, rgba(var(--ion-color-primary-rgb), 0.22), rgba(var(--ion-color-primary-rgb), 0.10));
   }
 
+  &::part(icon) {
+    color: var(--color-primario-texto);
+  }
+}
+
+.toast-glass.toast-actualizacion {
   &::part(icon) {
     color: var(--color-primario-texto);
   }
@@ -317,6 +338,48 @@ ion-modal.calendario {
   background: var(--fondo-suave);
   padding: 3px 10px;
   border-radius: 8px;
+}
+
+/* Sección plegable (acordeón): se pliega o despliega tocando su encabezado */
+.section-header--plegable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.section-chevron {
+  font-size: 18px;
+  color: var(--ion-color-medium);
+  transition: transform 0.25s ease;
+
+  .section-header--plegada & {
+    transform: rotate(-90deg);
+  }
+}
+
+// La fila de la grilla pasa de 1fr a 0fr: anima la altura sin conocerla
+.seccion-plegable {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.25s ease;
+}
+
+.seccion-contenido {
+  min-height: 0;
+  overflow: hidden;
+  // Margen extra para no cortar la sombra de las tarjetas, sin cambiar la separación
+  padding: 8px 0 16px;
+  margin: -8px 0 -16px;
+}
+
+// Plegada: se oculta al terminar la animación (con el margen extra se vería el borde de la primera tarjeta)
+.seccion-plegable--plegada {
+  grid-template-rows: 0fr;
+
+  > .seccion-contenido {
+    visibility: hidden;
+    transition: visibility 0s 0.25s;
+  }
 }
 
 /* Sección sin elementos, con la opción de restaurar su lista base */

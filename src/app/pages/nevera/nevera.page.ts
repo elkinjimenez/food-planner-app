@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, signal, inject, viewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, computed, signal, inject, viewChildren } from '@angular/core';
 import {
   IonContent,
   IonButton,
@@ -22,6 +22,28 @@ import { EditarItemModal } from '../../shared/editar-item.modal';
 import { FechaPipe } from '../../shared/fecha.pipe';
 
 type EstadoVencimiento = 'verde' | 'amarillo' | 'rojo';
+
+const COLOR_ESTADO: Record<EstadoVencimiento, string> = { verde: 'success', amarillo: 'warning', rojo: 'danger' };
+
+interface ProductoConEstado {
+  producto: ProductoNevera;
+  estado: EstadoVencimiento;
+  label: string;
+  color: string;
+}
+
+function estado(dias: number): EstadoVencimiento {
+  if (dias <= 1) return 'rojo';
+  if (dias <= 5) return 'amarillo';
+  return 'verde';
+}
+
+function estadoLabel(dias: number): string {
+  if (dias < 0) return `Vencido hace ${Math.abs(dias)}d`;
+  if (dias === 0) return 'Vence hoy';
+  if (dias === 1) return 'Vence mañana';
+  return `${dias} días`;
+}
 
 @Component({
   selector: 'app-nevera',
@@ -47,6 +69,15 @@ export class NeveraPage implements OnInit {
   private cdr = inject(ChangeDetectorRef);
 
   productos = signal<ProductoNevera[]>([]);
+  // El estado se calcula una vez por producto en cada carga, no en cada detección de cambios
+  // (cargar() corre también al volver a la app, por si cambió el día)
+  conEstado = computed<ProductoConEstado[]>(() =>
+    this.productos().map((producto) => {
+      const dias = diasHasta(producto.fechaVencimiento);
+      const e = estado(dias);
+      return { producto, estado: e, label: estadoLabel(dias), color: COLOR_ESTADO[e] };
+    }),
+  );
   private filas = viewChildren('fila', { read: ElementRef<HTMLElement> });
 
   async ngOnInit(): Promise<void> {
@@ -82,21 +113,6 @@ export class NeveraPage implements OnInit {
     // Ordenar por fecha de vencimiento ascendente
     data.sort((a, b) => a.fechaVencimiento.localeCompare(b.fechaVencimiento));
     this.productos.set(data);
-  }
-
-  estado(fecha: string): EstadoVencimiento {
-    const dias = diasHasta(fecha);
-    if (dias <= 1) return 'rojo';
-    if (dias <= 5) return 'amarillo';
-    return 'verde';
-  }
-
-  estadoLabel(fecha: string): string {
-    const dias = diasHasta(fecha);
-    if (dias < 0) return `Vencido hace ${Math.abs(dias)}d`;
-    if (dias === 0) return 'Vence hoy';
-    if (dias === 1) return 'Vence mañana';
-    return `${dias} días`;
   }
 
   async agregar(): Promise<void> {
