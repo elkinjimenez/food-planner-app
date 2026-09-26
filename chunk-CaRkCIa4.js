@@ -1,1 +1,0 @@
-import{d as Ve,rn as sx}from"./main-RE244TVL.js";var n=(()=>{let r=class r{transform(e){return Ve(e)}};r.ɵfac=function(o){return new(o||r)},r.ɵpipe=sx({name:`fecha`,type:r,pure:!0});return r})();export{n as t};
