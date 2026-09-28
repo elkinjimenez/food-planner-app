@@ -1,0 +1,1 @@
+import{E as ze,nt as Mx}from"./main-ICEKMZFW.js";var n=(()=>{let r=class r{transform(e){return ze(e)}};r.ɵfac=function(o){return new(o||r)},r.ɵpipe=Mx({name:`fecha`,type:r,pure:!0});return r})();export{n as t};
