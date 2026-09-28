@@ -1,1 +1,0 @@
-import{E as ze,rt as Mx}from"./main-GTKM3X6V.js";var n=(()=>{let r=class r{transform(e){return ze(e)}};r.ɵfac=function(o){return new(o||r)},r.ɵpipe=Mx({name:`fecha`,type:r,pure:!0});return r})();export{n as t};
