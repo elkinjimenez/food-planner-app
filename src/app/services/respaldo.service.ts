@@ -1,15 +1,18 @@
 import { Injectable, inject } from '@angular/core';
 import { DatosApp, StorageService, confirmacionesDelPlanAnterior } from './storage.service';
 import { RegistroAgua } from '../models/historial.model';
-import { fechaHoy } from '../utils/fecha';
+import { fechaHoy, formatearFecha } from '../utils/fecha';
 
 const APP = 'food-planner';
 // Subir la versión si cambia el formato de los datos; validarRespaldo() decide qué versiones acepta.
 // v2: historial por fecha (comidasConfirmadas y el agua de cada día).
 const VERSION_RESPALDO = 2;
+// En el mensaje, el código (base64) va después de "FP:"
+const PREFIJO_CODIGO = 'FP:';
+const CODIGO = /FP:([A-Za-z0-9+/=\s]+)/;
 
-/** Contenido del archivo .json de respaldo. */
-interface ArchivoRespaldo {
+/** Contenido de un respaldo: va comprimido en el código del mensaje. */
+interface ContenidoRespaldo {
   app: typeof APP;
   version: number;
   exportado: string; // fecha y hora ISO
@@ -20,55 +23,36 @@ interface ArchivoRespaldo {
 export class RespaldoService {
   private storage = inject(StorageService);
 
-  /** Arma el archivo con todos los datos. Se prepara antes del toque en "Exportar" (ver compartir). */
-  async crearArchivo(): Promise<File> {
-    const respaldo: ArchivoRespaldo = {
+  /**
+   * Mensaje con todos los datos para compartir (p. ej. enviárselo a uno mismo por WhatsApp)
+   * o copiar. Se prepara antes del toque en "Exportar": iOS solo deja compartir durante el toque.
+   */
+  async crearMensaje(): Promise<string> {
+    const respaldo: ContenidoRespaldo = {
       app: APP,
       version: VERSION_RESPALDO,
       exportado: new Date().toISOString(),
       datos: await this.storage.exportarDatos(),
     };
-    return new File([JSON.stringify(respaldo, null, 2)], `food-planner-respaldo-${fechaHoy()}.json`, {
-      type: 'application/json',
-    });
+    return [
+      `📦 Respaldo de Food Planner · ${formatearFecha(fechaHoy())}`,
+      'Para recuperar tus datos: en la app toca el botón de respaldo › "Importar respaldo" y pega este mensaje completo.',
+      PREFIJO_CODIGO + (await comprimir(JSON.stringify(respaldo))),
+    ].join('\n\n');
   }
 
   /**
-   * En el teléfono abre el menú de compartir (en iPhone: "Guardar en Archivos"); en computador
-   * descarga el archivo. Llamarlo directo en el toque: iOS solo permite compartir durante el gesto.
+   * Lee y valida un respaldo pegado: el mensaje completo, solo el código o el JSON de un respaldo
+   * anterior en archivo. Si no sirve, lanza un Error con el mensaje para el usuario.
    */
-  async compartir(archivo: File): Promise<void> {
-    const esTactil = matchMedia('(pointer: coarse)').matches;
-    if (esTactil && navigator.canShare?.({ files: [archivo] })) {
-      try {
-        await navigator.share({ files: [archivo], title: 'Respaldo de Food Planner' });
-        return;
-      } catch (error) {
-        if ((error as DOMException).name === 'AbortError') return; // cerró el menú de compartir
-        // Chrome/Edge en Windows (p. ej. con la vista de celular) dicen que pueden compartir
-        // el .json pero luego lo rechazan con NotAllowedError: en ese caso se descarga.
-        console.warn('No se pudo compartir el respaldo; se descarga en su lugar.', error);
-      }
-    }
-    this.descargar(archivo);
-  }
-
-  private descargar(archivo: File): void {
-    const url = URL.createObjectURL(archivo);
-    const enlace = document.createElement('a');
-    enlace.href = url;
-    enlace.download = archivo.name;
-    enlace.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-
-  /** Lee y valida un archivo de respaldo. Si no sirve, lanza un Error con el mensaje para el usuario. */
-  async leer(archivo: File): Promise<DatosApp> {
+  async leer(texto: string): Promise<DatosApp> {
     let json: unknown;
     try {
-      json = JSON.parse(await archivo.text());
+      const codigo = texto.match(CODIGO)?.[1];
+      // Al copiar o reenviar el mensaje pueden colarse saltos de línea en el código
+      json = JSON.parse(codigo ? await descomprimir(codigo.replace(/\s/g, '')) : texto);
     } catch {
-      throw new Error('El archivo no es un respaldo válido.');
+      throw new Error('El texto no es un respaldo válido. Revisa que hayas copiado el mensaje completo.');
     }
     return validarRespaldo(json);
   }
@@ -79,6 +63,20 @@ export class RespaldoService {
   }
 }
 
+// El JSON comprimido y en base64 queda de una fracción del tamaño: cabe en un mensaje de WhatsApp
+async function comprimir(texto: string): Promise<string> {
+  const stream = new Blob([texto]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+  const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+  let binario = '';
+  for (const byte of bytes) binario += String.fromCharCode(byte);
+  return btoa(binario);
+}
+
+async function descomprimir(codigo: string): Promise<string> {
+  const bytes = Uint8Array.from(atob(codigo), (c) => c.charCodeAt(0));
+  return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+}
+
 // v1: el agua era solo la del día en curso y lo confirmado iba en el plan, sin fecha
 type DatosV1 = Omit<DatosApp, 'comidasConfirmadas' | 'agua'> & { agua?: RegistroAgua | null };
 
@@ -87,9 +85,9 @@ type DatosV1 = Omit<DatosApp, 'comidasConfirmadas' | 'agua'> & { agua?: Registro
  * Lo confirmado en un respaldo v1 queda en las fechas de la semana que empieza `hoy`.
  */
 export function validarRespaldo(json: unknown, hoy = fechaHoy()): DatosApp {
-  const respaldo = json as Partial<ArchivoRespaldo> | null;
+  const respaldo = json as Partial<ContenidoRespaldo> | null;
   if (!respaldo || respaldo.app !== APP || typeof respaldo.version !== 'number' || !respaldo.datos) {
-    throw new Error('El archivo no es un respaldo de Food Planner.');
+    throw new Error('El texto no es un respaldo de Food Planner.');
   }
   if (respaldo.version > VERSION_RESPALDO) {
     throw new Error('El respaldo es de una versión más nueva de la app. Actualízala e inténtalo de nuevo.');

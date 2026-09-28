@@ -3,19 +3,22 @@ ion-content {
   --padding-bottom: calc(var(--ion-safe-area-bottom, 0px) + 16px);
 }
 
-.titulo-con-volver {
-  display: flex;
-  align-items: center;
-  margin-left: -12px;
-
-  ion-back-button {
-    --color: var(--ion-color-medium);
-    --icon-font-size: 22px;
-    --padding-start: 6px;
-    --padding-end: 6px;
-    --min-height: 32px;
-    height: 32px;
-  }
+// Volver en la barra de arriba, a la izquierda: píldora como las acciones
+.page-title-row ion-back-button {
+  grid-row: 1;
+  grid-column: 1;
+  --color: var(--color-texto-suave);
+  --background: var(--fondo-tarjeta);
+  --border-radius: 50px;
+  --icon-font-size: 20px;
+  --padding-start: 0;
+  --padding-end: 0;
+  --min-height: 36px;
+  --min-width: 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 // ===== Calendario =====

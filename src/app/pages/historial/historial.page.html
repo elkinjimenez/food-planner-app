@@ -1,9 +1,7 @@
 <ion-content>
   <div class="page-title-row">
-    <div class="titulo-con-volver">
-      <ion-back-button defaultHref="/semana" text="" icon="arrow-back-outline" aria-label="Volver"></ion-back-button>
-      <div class="page-title">Historial</div>
-    </div>
+    <ion-back-button defaultHref="/semana" text="" icon="arrow-back-outline" aria-label="Volver"></ion-back-button>
+    <div class="page-title">Historial</div>
     @if (seleccionada() !== hoy()) {
       <ion-button fill="clear" size="small" class="page-title-btn" (click)="irAHoy()">
         <ion-icon name="today-outline" slot="start"></ion-icon>

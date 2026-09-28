@@ -65,6 +65,27 @@ export class AlertService {
     return role === 'guardar' && data ? Number(data.values.valor) : null;
   }
 
+  /** Pide un texto largo, p. ej. para pegar algo copiado. Devuelve null si se cancela o queda vacío. */
+  async pedirTexto(
+    header: string,
+    { message, placeholder, aceptar = 'Aceptar' }: { message?: string; placeholder?: string; aceptar?: string } = {},
+  ): Promise<string | null> {
+    const alert = await this.alertCtrl.create({
+      header,
+      message,
+      // Sin corrector: con textos largos pegados (p. ej. un respaldo) se pone lento
+      inputs: [{ name: 'texto', type: 'textarea', placeholder, attributes: { spellcheck: false, autocapitalize: 'off' } }],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        { text: aceptar, role: 'aceptar' },
+      ],
+    });
+    await alert.present();
+    const { data, role } = await alert.onDidDismiss<{ values: { texto: string } }>();
+    const texto = data?.values.texto.trim();
+    return role === 'aceptar' && texto ? texto : null;
+  }
+
   /** Mensaje informativo con un solo botón. */
   async aviso(header: string, message?: string): Promise<void> {
     const alert = await this.alertCtrl.create({ header, message, buttons: ['Entendido'] });

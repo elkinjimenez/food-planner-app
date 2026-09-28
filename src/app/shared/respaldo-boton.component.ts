@@ -1,60 +1,64 @@
-import { Component, ElementRef, ViewChild, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ActionSheetController, IonButton, IonIcon } from '@ionic/angular';
 import { RespaldoService } from '../services/respaldo.service';
 import { AlertService } from '../services/alert.service';
 import { DatosApp } from '../services/storage.service';
+import { injectCompartirTexto } from './compartir-texto';
 
 /** Botón del encabezado para exportar o importar un respaldo de todos los datos. */
 @Component({
   selector: 'app-respaldo-boton',
   template: `
     <ion-button fill="clear" size="small" class="page-title-btn" aria-label="Respaldo" (click)="abrirOpciones()">
-      <ion-icon name="archive-outline" slot="start"></ion-icon>
+      <ion-icon name="archive-outline" slot="icon-only"></ion-icon>
     </ion-button>
-    <input #selectorArchivo type="file" accept=".json,application/json" hidden (change)="archivoElegido()" />
   `,
   imports: [IonButton, IonIcon],
 })
 export class RespaldoBotonComponent {
-  @ViewChild('selectorArchivo') private selectorArchivo!: ElementRef<HTMLInputElement>;
-
   private respaldo = inject(RespaldoService);
   private alert = inject(AlertService);
   private actionSheetCtrl = inject(ActionSheetController);
+  private compartir = injectCompartirTexto();
 
   async abrirOpciones(): Promise<void> {
-    // El archivo se prepara antes: iOS solo deja compartir o abrir el selector de archivos
-    // durante el toque, sin esperas de por medio.
-    const archivo = await this.respaldo.crearArchivo();
+    // El mensaje se prepara antes: iOS solo deja compartir o copiar durante el toque, sin esperas de por medio
+    let mensaje: string;
+    try {
+      mensaje = await this.respaldo.crearMensaje();
+    } catch {
+      await this.alert.aviso('No se pudo preparar el respaldo', 'Inténtalo de nuevo.');
+      return;
+    }
     const opciones = await this.actionSheetCtrl.create({
       header: 'Respaldo de tus datos',
-      subHeader: 'Guarda una copia de comidas, mercado, nevera, plan e historial, o recupera una anterior',
+      subHeader:
+        'Exporta una copia de comidas, mercado, nevera, plan e historial como un mensaje (p. ej. envíatelo por ' +
+        'WhatsApp o guárdalo en Notas). Para recuperarla, copia ese mensaje e impórtalo.',
       buttons: [
-        { text: 'Exportar respaldo', handler: () => void this.exportar(archivo) },
-        { text: 'Importar respaldo', handler: () => this.selectorArchivo.nativeElement.click() },
+        {
+          text: 'Exportar respaldo',
+          handler: () =>
+            void this.compartir(mensaje, { titulo: 'Exportar respaldo', copiar: 'Copiar respaldo', copiado: 'Respaldo copiado' }),
+        },
+        { text: 'Importar respaldo', handler: () => void this.importar() },
         { text: 'Cancelar', role: 'cancel' },
       ],
     });
     await opciones.present();
   }
 
-  private async exportar(archivo: File): Promise<void> {
-    try {
-      await this.respaldo.compartir(archivo);
-    } catch {
-      await this.alert.aviso('No se pudo exportar', 'Inténtalo de nuevo.');
-    }
-  }
-
-  async archivoElegido(): Promise<void> {
-    const input = this.selectorArchivo.nativeElement;
-    const archivo = input.files?.[0];
-    input.value = ''; // para poder elegir el mismo archivo otra vez
-    if (!archivo) return;
+  private async importar(): Promise<void> {
+    const texto = await this.alert.pedirTexto('Importar respaldo', {
+      message: 'Pega el mensaje del respaldo que exportaste.',
+      placeholder: 'Pega aquí el respaldo',
+      aceptar: 'Continuar',
+    });
+    if (!texto) return;
 
     let datos: DatosApp;
     try {
-      datos = await this.respaldo.leer(archivo);
+      datos = await this.respaldo.leer(texto);
     } catch (error) {
       await this.alert.aviso('No se pudo importar', (error as Error).message);
       return;
