@@ -1,0 +1,1 @@
+import{Z as Lx,y as We}from"./main-KOHLQYBO.js";var c=(()=>{class e{transform(r){return We(r)}static{this.ɵfac=function(a){return new(a||e)}}static{this.ɵpipe=Lx({name:`fecha`,type:e,pure:!0})}}return e})();export{c as t};
