@@ -1,0 +1,1 @@
+import{T as me,Vt as k}from"./main-HWL25DE3.js";function m(){let t=k(me);return a=>t.pedirNumero(`Meta diaria`,a,{min:1,max:30,message:`Vasos de unos 250 ml al día`})}export{m as t};

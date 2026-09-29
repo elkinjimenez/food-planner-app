@@ -1,1 +1,0 @@
-import{it as Px,o as Be}from"./main-HF4T2ZE6.js";var n=(()=>{let r=class r{transform(e){return Be(e)}};r.ɵfac=function(o){return new(o||r)},r.ɵpipe=Px({name:`fecha`,type:r,pure:!0});return r})();export{n as t};
