@@ -38,7 +38,7 @@ ion-content {
   stroke-linecap: round;
   stroke-dasharray: 534;
   transition: stroke-dashoffset 0.4s ease;
-  filter: drop-shadow(0 2px 6px rgba(var(--ion-color-primary-rgb), 0.4));
+  filter: drop-shadow(0 2px 6px rgba(var(--brillo-rgb), 0.4));
 }
 
 .ring-center {
@@ -110,7 +110,7 @@ ion-content {
 .btn-sumar {
   --background: var(--ion-color-primary);
   --background-hover: var(--ion-color-primary-shade);
-  --box-shadow: 0 4px 16px rgba(var(--ion-color-primary-rgb), 0.4);
+  --box-shadow: 0 4px 16px rgba(var(--brillo-rgb), 0.4);
 }
 
 .btn-restar {
@@ -119,12 +119,21 @@ ion-content {
   --color: var(--color-boton-secundario);
 }
 
+// Discreto: se usa poco y tiene "Deshacer"
 .btn-reiniciar {
-  --color: var(--ion-color-medium);
-  height: 32px;
+  --color: var(--color-texto-tenue);
+  --padding-start: 10px;
+  --padding-end: 10px;
+  height: 28px;
   margin: 0;
+  font-size: 0.8rem;
+  font-weight: 500;
   text-transform: none;
   letter-spacing: 0;
+
+  ion-icon {
+    font-size: 15px;
+  }
 }
 
 .nota {
@@ -133,21 +142,25 @@ ion-content {
   color: var(--ion-color-medium);
 }
 
-/* ===== Últimos 7 días ===== */
+/* ===== Últimos 7 días: tarjeta como la tira de Semana ===== */
 .semana-agua {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
   width: 100%;
-  max-width: 320px;
+  max-width: 360px;
+  padding: 12px 18px 10px;
+  border-radius: 20px;
+  background: var(--fondo-tarjeta);
+  box-shadow: var(--sombra-tarjeta);
 }
 
 .semana-titulo {
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--color-texto-tenue);
+  color: var(--color-texto-secundario);
 }
 
 .barras {

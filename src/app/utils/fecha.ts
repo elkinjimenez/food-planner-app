@@ -44,6 +44,13 @@ export function formatearFecha(fecha: string): string {
   return isNaN(d.getTime()) ? fecha : formatoTexto.format(d);
 }
 
+const formatoDiaMes = new Intl.DateTimeFormat(LOCALE_FECHAS, { day: 'numeric', month: 'long', timeZone: 'UTC' });
+
+/** El día y el mes de una fecha YYYY-MM-DD, p. ej. "28 de septiembre". */
+export function diaYMes(fecha: string): string {
+  return formatoDiaMes.format(aFechaUtc(fecha));
+}
+
 // ===== Meses, para el calendario del historial =====
 // Un mes se representa con la fecha de su primer día (YYYY-MM-01).
 

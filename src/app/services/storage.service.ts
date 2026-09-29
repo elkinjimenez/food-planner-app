@@ -459,6 +459,11 @@ export class StorageService {
         }),
     );
   }
+  /** Cambia la meta vigente: se guarda en el registro de hoy, que queda con ella en el historial. */
+  async cambiarMetaVasos(meta: number): Promise<void> {
+    const hoy = await this.getAgua(fechaHoy());
+    await this.putAgua({ ...hoy, meta });
+  }
   /** El agua de cada día entre dos fechas (incluidas); los días sin registro no vienen. */
   getAguaEntre(desde: string, hasta: string): Promise<RegistroAgua[]> {
     return this.getAll<RegistroAgua>(STORE_AGUA, rangoDeFechas(desde, hasta));
@@ -487,6 +492,20 @@ export class StorageService {
       tx.objectStore(STORE_PLAN).put(normalizarPlan(datos.plan), PLAN_KEY);
       datos.comidasConfirmadas.forEach((r) => tx.objectStore(STORE_CONFIRMADAS).put(r));
       datos.agua.forEach((r) => tx.objectStore(STORE_AGUA).put(r, r.fecha));
+    });
+  }
+
+  /**
+   * Borra todos los datos. Con `ejemplos` carga las comidas y el mercado base y queda sin plan,
+   * como la primera vez que se abre la app (Semana sortea la semana).
+   */
+  restablecerDatos(ejemplos: boolean): Promise<void> {
+    const mercado = ejemplos ? mercadoBase() : [];
+    const comidas = ejemplos ? comidasBase(mercado) : [];
+    return this.enTransaccion(TODOS_LOS_STORES, (tx) => {
+      TODOS_LOS_STORES.forEach((store) => tx.objectStore(store).clear());
+      mercado.forEach((i) => tx.objectStore(STORE_MERCADO).put(i));
+      comidas.forEach((c) => tx.objectStore(STORE_COMIDAS).put(c));
     });
   }
 }

@@ -2,111 +2,98 @@
   <div class="page-title-row">
     <div class="page-title">Planeador Semanal</div>
     <div class="page-title-acciones">
-      <app-respaldo-boton></app-respaldo-boton>
       <ion-button fill="clear" size="small" class="page-title-btn" aria-label="Historial" routerLink="/historial">
         <ion-icon name="calendar-number-outline" slot="icon-only"></ion-icon>
       </ion-button>
       <ion-button fill="clear" size="small" class="page-title-btn" aria-label="Recargar" (click)="refresh()">
         <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
       </ion-button>
+      <ion-button fill="clear" size="small" class="page-title-btn" aria-label="Ajustes" routerLink="/ajustes">
+        <ion-icon name="settings-outline" slot="icon-only"></ion-icon>
+      </ion-button>
     </div>
   </div>
   <p class="page-subtitle">Desayunos y cenas de los próximos 7 días</p>
 
+  <!-- La semana de un vistazo: un punto por comida (vacío, planificada o confirmada) -->
+  <nav class="tira" aria-label="Ir a un día">
+    @for (d of semana(); track d.fecha) {
+      <button
+        type="button"
+        class="tira-dia"
+        [class.tira-dia--hoy]="d.esHoy"
+        [attr.aria-label]="d.titulo + ', ' + d.subtitulo"
+        (click)="irADia(d.fecha)"
+      >
+        <span class="tira-letra">{{ d.corto }}</span>
+        <span class="tira-numero">{{ d.numero }}</span>
+        <span class="tira-puntos">
+          @for (c of d.comidas; track c.tipo) {
+            <span class="punto" [class.punto--plan]="!!c.comida" [class.punto--ok]="c.confirmado"></span>
+          }
+        </span>
+      </button>
+    }
+  </nav>
+
   @for (d of semana(); track d.fecha) {
-    <ion-card class="dia-card" [class.dia-card--hoy]="d.esHoy">
+    <ion-card class="dia" [class.dia--hoy]="d.esHoy" [id]="'dia-' + d.fecha">
       <div class="dia-header">
-        <div class="dia-numero" [class.dia-numero--hoy]="d.esHoy">{{ d.numero }}</div>
-        <div class="dia-titulo">
-          <span class="dia-nombre">{{ diasLabel[d.dia] }}</span>
-          @if (d.esHoy) {
-            <span class="badge-hoy">Hoy</span>
-          }
+        <div class="dia-titulos">
+          <span class="dia-titulo">{{ d.titulo }}</span>
+          <span class="dia-subtitulo">{{ d.subtitulo }}</span>
         </div>
-        @if (d.desayuno || d.cena) {
-          @if (d.confirmado) {
-            <span class="dia-badge dia-badge--confirmado">Confirmado</span>
-          } @else {
-            <span class="dia-badge">Planificado</span>
-          }
-        } @else {
-          <span class="dia-badge dia-badge--vacio">Vacío</span>
+        @if (d.confirmado) {
+          <span class="dia-estado dia-estado--ok"><ion-icon name="checkmark-circle"></ion-icon>Confirmado</span>
+        } @else if (d.vacio) {
+          <span class="dia-estado">Sin plan</span>
         }
       </div>
-      <div class="comidas-row">
-        <div class="comida-slot" [class.comida-slot--filled]="!!d.desayuno" [class.comida-slot--confirmed]="d.desayunoConfirmado">
-          <div class="item-icon tono-desayuno">
-            <ion-icon name="sunny-outline"></ion-icon>
+
+      @for (c of d.comidas; track c.tipo) {
+        <div class="comida" [class.comida--vacia]="!c.comida" [class.comida--ok]="c.confirmado">
+          <div class="item-icon {{ tipoIcono[c.tipo].tono }}">
+            <ion-icon [name]="tipoIcono[c.tipo].icono"></ion-icon>
           </div>
           <button
             type="button"
-            class="item-info comida-slot-btn"
-            [attr.aria-label]="'Desayuno del ' + diasLabel[d.dia] + ': ' + (d.desayuno?.nombre ?? 'sin asignar')"
-            (click)="asignarComida(d, 'desayuno')"
+            class="item-info comida-btn"
+            [attr.aria-label]="tipoLabel[c.tipo] + ' del ' + diasLabel[d.dia] + ': ' + (c.comida?.nombre ?? 'sin asignar')"
+            (click)="asignarComida(d, c)"
           >
-            <span class="item-label">Desayuno</span>
-            @if (d.desayuno) {
-              <span class="item-nombre">{{ d.desayuno.nombre }}</span>
-              @if (d.desayunoFalta.length > 0) {
-                <span class="comida-falta"><ion-icon name="cart-outline"></ion-icon><span class="comida-falta-texto">Falta: <span class="comida-falta-productos">{{ d.desayunoFalta.join(', ') }}</span></span></span>
+            <span class="item-label">{{ tipoLabel[c.tipo] }}</span>
+            @if (c.comida) {
+              <span class="item-nombre">{{ c.comida.nombre }}</span>
+              @if (c.falta.length > 0) {
+                <span class="comida-falta">
+                  <ion-icon name="cart-outline"></ion-icon>
+                  <span class="comida-falta-texto">Falta: {{ c.falta.join(', ') }}</span>
+                </span>
               }
             } @else {
-              <span class="comida-placeholder">Toca para asignar</span>
+              <span class="comida-agregar"><ion-icon name="add-outline"></ion-icon>Elegir {{ c.tipo }}</span>
             }
           </button>
-          @if (d.desayuno) {
+          @if (c.comida) {
             <button
               type="button"
-              class="confirm-btn"
-              [class.confirm-btn--active]="d.desayunoConfirmado"
-              [attr.aria-label]="'Confirmar desayuno del ' + diasLabel[d.dia]"
-              [attr.aria-pressed]="d.desayunoConfirmado"
-              (click)="toggleConfirmar(d, 'desayuno')"
+              class="check"
+              [class.check--ok]="c.confirmado"
+              [attr.aria-label]="'Confirmar ' + c.tipo + ' del ' + diasLabel[d.dia]"
+              [attr.aria-pressed]="c.confirmado"
+              (click)="toggleConfirmar(d, c)"
             >
-              <ion-icon [name]="d.desayunoConfirmado ? 'checkmark-sharp' : 'time-outline'"></ion-icon>
+              <span class="check-circulo"><ion-icon name="checkmark-sharp"></ion-icon></span>
             </button>
           }
         </div>
-        <div class="comida-slot" [class.comida-slot--filled]="!!d.cena" [class.comida-slot--confirmed]="d.cenaConfirmado">
-          <div class="item-icon tono-cena">
-            <ion-icon name="moon-outline"></ion-icon>
-          </div>
-          <button
-            type="button"
-            class="item-info comida-slot-btn"
-            [attr.aria-label]="'Cena del ' + diasLabel[d.dia] + ': ' + (d.cena?.nombre ?? 'sin asignar')"
-            (click)="asignarComida(d, 'cena')"
-          >
-            <span class="item-label">Cena</span>
-            @if (d.cena) {
-              <span class="item-nombre">{{ d.cena.nombre }}</span>
-              @if (d.cenaFalta.length > 0) {
-                <span class="comida-falta"><ion-icon name="cart-outline"></ion-icon><span class="comida-falta-texto">Falta: <span class="comida-falta-productos">{{ d.cenaFalta.join(', ') }}</span></span></span>
-              }
-            } @else {
-              <span class="comida-placeholder">Toca para asignar</span>
-            }
-          </button>
-          @if (d.cena) {
-            <button
-              type="button"
-              class="confirm-btn"
-              [class.confirm-btn--active]="d.cenaConfirmado"
-              [attr.aria-label]="'Confirmar cena del ' + diasLabel[d.dia]"
-              [attr.aria-pressed]="d.cenaConfirmado"
-              (click)="toggleConfirmar(d, 'cena')"
-            >
-              <ion-icon [name]="d.cenaConfirmado ? 'checkmark-sharp' : 'time-outline'"></ion-icon>
-            </button>
-          }
-        </div>
-      </div>
+      }
     </ion-card>
   }
 </ion-content>
 
 <ion-fab slot="fixed" horizontal="end" vertical="bottom">
-  <ion-fab-button (click)="sortearSemana()">
+  <ion-fab-button aria-label="Sortear la semana" (click)="sortearSemana()">
     <ion-icon class="float-icon" name="shuffle-outline"></ion-icon>
   </ion-fab-button>
 </ion-fab>

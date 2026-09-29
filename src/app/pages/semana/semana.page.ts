@@ -23,35 +23,42 @@ import { ProductoNevera } from '../../models/producto-nevera.model';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
 import { AppUpdateService } from '../../services/app-update.service';
+import { AjustesService } from '../../services/ajustes.service';
 import { HoyService } from '../../services/hoy.service';
-import { sumarDias } from '../../utils/fecha';
+import { diaYMes, sumarDias } from '../../utils/fecha';
 import { normalizarTexto } from '../../utils/texto';
 import { sortearDias } from '../../utils/sorteo';
-import { vibrar } from '../../utils/vibrar';
 import { planSemanalVacio } from '../../data/seed.data';
 import { SeleccionarComidaModal } from './seleccionar-comida.modal';
-import { RespaldoBotonComponent } from '../../shared/respaldo-boton.component';
 import { injectAbrirModal } from '../../shared/abrir-modal';
 
+const TIPOS_COMIDA: TipoComida[] = ['desayuno', 'cena'];
 const TIPO_LABEL: Record<TipoComida, string> = { desayuno: 'Desayuno', cena: 'Cena' };
-// "Falta: …" solo en los primeros días (hoy, mañana y pasado): lo de después se compra luego,
-// y con la nevera vacía no se llena toda la semana de avisos
-const DIAS_CON_AVISO_FALTA = 3;
+const TIPO_ICONO: Record<TipoComida, { icono: string; tono: string }> = {
+  desayuno: { icono: 'sunny-outline', tono: 'tono-desayuno' },
+  cena: { icono: 'moon-outline', tono: 'tono-cena' },
+};
+
+/** El desayuno o la cena de una tarjeta. */
+interface ComidaVista {
+  tipo: TipoComida;
+  comida?: ComidaConfirmada;
+  confirmado: boolean;
+  falta: string[]; // ingredientes de Mercado que no están en la nevera
+}
 
 /** Una tarjeta de la semana: una fecha, con lo planificado y lo confirmado para ese día. */
 interface DiaVista {
   fecha: string;
   dia: DiaSemana;
   numero: number; // día del mes
+  corto: string; // Lun, Mar…
+  titulo: string; // Hoy, Mañana o el día de la semana
+  subtitulo: string; // la fecha
   esHoy: boolean;
-  desayuno?: ComidaConfirmada;
-  cena?: ComidaConfirmada;
-  desayunoConfirmado: boolean;
-  cenaConfirmado: boolean;
+  comidas: ComidaVista[];
+  vacio: boolean;
   confirmado: boolean;
-  // Ingredientes de Mercado que no están en la nevera
-  desayunoFalta: string[];
-  cenaFalta: string[];
 }
 
 @Component({
@@ -67,7 +74,6 @@ interface DiaVista {
     IonButton,
     RouterLink,
     IonRouterLink,
-    RespaldoBotonComponent,
   ],
 })
 export class SemanaPage {
@@ -75,6 +81,7 @@ export class SemanaPage {
   private alert = inject(AlertService);
   private abrirModal = injectAbrirModal();
   private appUpdate = inject(AppUpdateService);
+  private ajustes = inject(AjustesService);
 
   plan = signal<PlanSemanal>(planSemanalVacio());
   comidas = signal<Comida[]>([]);
@@ -104,34 +111,32 @@ export class SemanaPage {
         .map((i) => i.nombre.replace(/\s*\(.*?\)/g, '').trim());
     return semanaDesde(this.hoy()).map(({ fecha, dia }, i) => {
       const registro = confirmadas.get(fecha);
-      // Lo confirmado para esa fecha manda sobre lo planificado
-      const comidaDe = (tipo: TipoComida): ComidaConfirmada | undefined => {
+      const comidas = TIPOS_COMIDA.map((tipo): ComidaVista => {
+        // Lo confirmado para esa fecha manda sobre lo planificado
         const confirmada = registro?.[tipo];
-        if (confirmada) return porId.get(confirmada.id) ?? confirmada;
         const id = plan[dia][`${tipo}Id` as const];
-        return id ? porId.get(id) : undefined;
-      };
-      const desayuno = comidaDe('desayuno');
-      const cena = comidaDe('cena');
-      const desayunoConfirmado = !!registro?.desayuno;
-      const cenaConfirmado = !!registro?.cena;
+        const comida = confirmada ? (porId.get(confirmada.id) ?? confirmada) : id ? porId.get(id) : undefined;
+        return { tipo, comida, confirmado: !!confirmada, falta: faltan(comida) };
+      });
+      const asignadas = comidas.filter((c) => c.comida);
       return {
         fecha,
         dia,
         numero: Number(fecha.slice(8)),
+        corto: DIAS_LABEL[dia].slice(0, 3),
+        titulo: i === 0 ? 'Hoy' : i === 1 ? 'Mañana' : DIAS_LABEL[dia],
+        subtitulo: i < 2 ? `${DIAS_LABEL[dia]}, ${diaYMes(fecha)}` : diaYMes(fecha),
         esHoy: i === 0,
-        desayuno,
-        cena,
-        desayunoConfirmado,
-        cenaConfirmado,
+        comidas,
+        vacio: asignadas.length === 0,
         // Confirmado: tiene alguna comida y todas las que tiene están confirmadas
-        confirmado: (!!desayuno || !!cena) && (!desayuno || desayunoConfirmado) && (!cena || cenaConfirmado),
-        desayunoFalta: i < DIAS_CON_AVISO_FALTA ? faltan(desayuno) : [],
-        cenaFalta: i < DIAS_CON_AVISO_FALTA ? faltan(cena) : [],
+        confirmado: asignadas.length > 0 && asignadas.every((c) => c.confirmado),
       };
     });
   });
   diasLabel = DIAS_LABEL;
+  tipoLabel = TIPO_LABEL;
+  tipoIcono = TIPO_ICONO;
 
   constructor() {
     // Si cambia el día, la semana tiene otras fechas: se carga lo confirmado en ellas
@@ -164,28 +169,31 @@ export class SemanaPage {
     }
   }
 
+  /** Lleva a la tarjeta del día (desde la tira de arriba). */
+  irADia(fecha: string): void {
+    document.getElementById(`dia-${fecha}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   /** Sin comidas de ese tipo el selector se abre igual: desde ahí se puede crear una. */
-  async asignarComida(d: DiaVista, tipo: TipoComida): Promise<void> {
+  async asignarComida(d: DiaVista, { tipo, comida: anterior, confirmado }: ComidaVista): Promise<void> {
     const { data, role } = await this.abrirModal<Comida | null>(SeleccionarComidaModal, {
       titulo: `${TIPO_LABEL[tipo]} · ${DIAS_LABEL[d.dia]}`,
       tipo,
       comidas: this.comidas().filter((c) => c.tipo === tipo),
-      seleccionadaId: d[tipo]?.id ?? null,
+      seleccionadaId: anterior?.id ?? null,
     });
     if (role === 'quitar') {
-      await this.quitarComida(d, tipo);
+      await this.quitarComida(d, tipo, anterior);
       return;
     }
     if (!data) return;
     // Recién creada en el selector: aún no está en la lista de la semana
     this.comidas.update((comidas) => (comidas.some((c) => c.id === data.id) ? comidas : [...comidas, data]));
 
-    const anterior = d[tipo];
     const restaurar = this.estadoActual(d, tipo);
     await this.guardarPlan(d.dia, tipo, data.id);
 
     // Si ese día tenía otra comida confirmada, la nueva queda pendiente de confirmar
-    const confirmado = tipo === 'desayuno' ? d.desayunoConfirmado : d.cenaConfirmado;
     if (confirmado && anterior?.id !== data.id) {
       await this.guardarConfirmacion(d.fecha, tipo, undefined);
     }
@@ -200,8 +208,7 @@ export class SemanaPage {
   }
 
   /** Deja el desayuno o la cena de ese día sin asignar (y sin confirmar), con opción de deshacer. */
-  private async quitarComida(d: DiaVista, tipo: TipoComida): Promise<void> {
-    const comida = d[tipo];
+  private async quitarComida(d: DiaVista, tipo: TipoComida, comida: ComidaConfirmada | undefined): Promise<void> {
     if (!comida) return;
     const restaurar = this.estadoActual(d, tipo);
     await this.guardarPlan(d.dia, tipo, undefined);
@@ -241,10 +248,9 @@ export class SemanaPage {
     await this.storage.putPlan(nuevoPlan);
   }
 
-  async toggleConfirmar(d: DiaVista, tipo: TipoComida): Promise<void> {
-    const comida = d[tipo];
+  async toggleConfirmar(d: DiaVista, { tipo, comida, confirmado: estaba }: ComidaVista): Promise<void> {
     if (!comida) return;
-    const confirmado = !(tipo === 'desayuno' ? d.desayunoConfirmado : d.cenaConfirmado);
+    const confirmado = !estaba;
     const antes = this.confirmadas().get(d.fecha)?.[tipo];
     await this.guardarConfirmacion(d.fecha, tipo, confirmado ? { id: comida.id, nombre: comida.nombre } : undefined);
 
@@ -271,7 +277,7 @@ export class SemanaPage {
 
   /** Botón de sortear: genera la semana al azar con opción de volver al plan anterior. */
   async sortearSemana(): Promise<void> {
-    vibrar();
+    this.ajustes.vibrar();
     const planAntes = this.plan();
     if (!(await this.generarSemanaAleatoria())) return;
     const deshacer = await this.alert.toast('Semana generada al azar', { deshacer: true });
@@ -290,14 +296,10 @@ export class SemanaPage {
     }
     const semana = this.semana();
     // Lo ya confirmado se mantiene
-    const desayunoIds = sortearDias(
-      desayunos.map((c) => c.id),
-      semana.map((d) => (d.desayunoConfirmado ? d.desayuno!.id : undefined)),
-    );
-    const cenaIds = sortearDias(
-      cenas.map((c) => c.id),
-      semana.map((d) => (d.cenaConfirmado ? d.cena!.id : undefined)),
-    );
+    const confirmadas = (tipo: TipoComida) =>
+      semana.map((d) => d.comidas.find((c) => c.tipo === tipo && c.confirmado)?.comida?.id);
+    const desayunoIds = sortearDias(desayunos.map((c) => c.id), confirmadas('desayuno'));
+    const cenaIds = sortearDias(cenas.map((c) => c.id), confirmadas('cena'));
     const nuevoPlan = planSemanalVacio();
     semana.forEach((d, i) => {
       const comidaDia: ComidaDelDia = {};

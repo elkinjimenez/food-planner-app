@@ -9,7 +9,7 @@ import { FechaPipe } from '../../shared/fecha.pipe';
 import {
   casillasDelMes,
   finDeMes,
-  formatearFecha,
+  diaYMes,
   inicioDeMes,
   nombreMes,
   sumarDias,
@@ -60,7 +60,7 @@ export class HistorialPage implements OnInit {
   detalle = computed(() => this.dia(this.seleccionada()));
   detalleTitulo = computed(() => {
     const fecha = this.seleccionada();
-    return `${DIAS_LABEL[diaSemanaDe(fecha)]} ${formatearFecha(fecha)}`;
+    return `${DIAS_LABEL[diaSemanaDe(fecha)]}, ${diaYMes(fecha)}`;
   });
   resumen = computed(() => {
     const dias = this.casillas().filter((d): d is DiaHistorial => !!d && d.fecha <= this.hoy());

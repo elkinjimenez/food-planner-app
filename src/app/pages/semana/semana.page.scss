@@ -1,11 +1,113 @@
-.dia-card {
-  padding: 0;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
-  border: 2px solid transparent;
+// ===== Tira de la semana =====
+.tira {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin: 4px 14px 6px;
+  padding: 6px;
+  border-radius: 20px;
+  background: var(--fondo-tarjeta);
+  box-shadow: var(--sombra-tarjeta);
+}
+
+.tira-dia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 8px 0;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--color-texto);
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
+
+  &:active {
+    background: var(--fondo-presionado);
+  }
 
   &--hoy {
-    border-color: var(--ion-color-primary);
-    box-shadow: 0 4px 20px rgba(var(--ion-color-primary-rgb), 0.25);
+    background: var(--ion-color-primary);
+    color: var(--color-sobre-primario);
+
+    &:active {
+      background: var(--ion-color-primary-shade);
+    }
+  }
+}
+
+.tira-letra {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--color-texto-secundario);
+
+  .tira-dia--hoy & {
+    color: inherit;
+    opacity: 0.85;
+  }
+}
+
+.tira-numero {
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.tira-puntos {
+  display: flex;
+  gap: 3px;
+  margin-top: 2px;
+}
+
+// Un punto por comida: vacía, planificada o confirmada
+.punto {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--borde);
+
+  &--plan {
+    background: rgba(var(--ion-color-primary-rgb), 0.45);
+  }
+
+  &--ok {
+    background: var(--ion-color-primary);
+  }
+
+  // Sobre el verde de hoy, en el color del texto con más o menos opacidad
+  .tira-dia--hoy & {
+    background: currentColor;
+    opacity: 0.35;
+  }
+
+  .tira-dia--hoy &--plan {
+    opacity: 0.7;
+  }
+
+  .tira-dia--hoy &--ok {
+    opacity: 1;
+  }
+}
+
+// ===== Tarjeta de cada día =====
+.dia {
+  --background: var(--fondo-tarjeta);
+  margin: 12px 14px;
+  border-radius: 20px;
+  box-shadow: var(--sombra-tarjeta);
+  // Al ir desde la tira, la tarjeta queda un poco por debajo del borde de arriba
+  scroll-margin-top: calc(var(--ion-safe-area-top, 0px) + 12px);
+
+  // Hoy: anillo verde fino en vez de borde grueso
+  &--hoy {
+    box-shadow:
+      0 0 0 1.5px rgba(var(--ion-color-primary-rgb), 0.55),
+      0 8px 24px rgba(var(--brillo-rgb), 0.14);
   }
 }
 
@@ -13,109 +115,101 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 16px 8px;
+  padding: 16px 18px 6px;
 }
 
-.dia-numero {
+.dia-titulos {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: var(--ion-color-primary);
-  color: var(--color-sobre-primario);
-  font-weight: 800;
-  font-size: 0.9rem;
-  flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(var(--ion-color-primary-rgb), 0.3);
-
-  &--hoy {
-    background: var(--ion-color-primary-shade);
-    box-shadow: 0 3px 12px rgba(var(--ion-color-primary-rgb), 0.5);
-  }
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
 .dia-titulo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-}
-
-.dia-nombre {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   color: var(--color-texto);
+
+  .dia--hoy & {
+    color: var(--color-primario-texto);
+  }
 }
 
-.dia-badge {
-  font-size: 0.7rem;
+.dia-subtitulo {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-texto-secundario);
+}
+
+.dia-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--fondo-suave);
+  color: var(--color-texto-secundario);
+  font-size: 0.72rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  padding: 3px 8px;
-  border-radius: 8px;
-  background: var(--fondo-primario-suave);
-  color: var(--ion-color-primary-shade);
 
-  &--vacio {
-    background: var(--fondo-suave);
-    color: var(--ion-color-medium);
+  ion-icon {
+    font-size: 14px;
   }
 
-  &--confirmado {
-    background: var(--ion-color-primary);
-    color: var(--color-sobre-primario);
+  &--ok {
+    background: var(--fondo-primario-suave);
+    color: var(--color-primario-texto);
   }
 }
 
-.comidas-row {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 4px 16px 16px;
-}
-
-.comida-slot {
+// ===== Desayuno y cena: filas de la tarjeta =====
+.comida {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: var(--fondo-bloque);
-  transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
-  cursor: pointer;
-  border: 1.5px solid transparent;
+  gap: 14px;
+  padding: 12px 12px 12px 18px;
+  transition: background 0.15s ease;
 
-  &:active {
-    transform: scale(0.98);
+  &:last-child {
+    padding-bottom: 14px;
+  }
+
+  // Línea fina entre desayuno y cena, desde el texto (no bajo el ícono)
+  & + &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 72px;
+    right: 18px;
+    height: 1px;
+    background: var(--borde-suave);
+  }
+
+  &:has(.comida-btn:active) {
     background: var(--fondo-presionado);
   }
 
-  &--filled {
-    background: var(--fondo-primario-tenue);
-    border-color: rgba(var(--ion-color-primary-rgb), 0.2);
-  }
-
-  &--confirmed {
-    background: var(--fondo-primario-tenue);
-    border-color: var(--ion-color-primary);
-    box-shadow: 0 2px 8px rgba(var(--ion-color-primary-rgb), 0.15);
-  }
-
-  // Al navegar con teclado, el foco se marca en todo el espacio
-  &:has(.comida-slot-btn:focus-visible) {
+  // Al navegar con teclado, el foco se marca en toda la fila
+  &:has(.comida-btn:focus-visible) {
     outline: 2px solid var(--ion-color-primary);
-    outline-offset: 2px;
+    outline-offset: -2px;
+  }
+
+  // Sin asignar: el ícono en gris
+  &--vacia .item-icon {
+    background: var(--fondo-suave);
+    color: var(--color-texto-tenue);
   }
 }
 
-// Botón de la comida sin estilo propio: su ::after cubre todo el espacio, así se toca en
-// cualquier parte (el botón de confirmar queda por encima). No envuelve al de confirmar
+// Botón de la comida sin estilo propio: su ::after cubre toda la fila, así se toca en
+// cualquier parte (el de confirmar queda por encima). No envuelve al de confirmar
 // porque un botón dentro de otro no es válido.
-.comida-slot-btn {
+.comida-btn {
   margin: 0;
   padding: 0;
   border: none;
@@ -125,6 +219,7 @@
   text-align: start;
   cursor: pointer;
   outline: none;
+  -webkit-tap-highlight-color: transparent;
 
   &::after {
     content: '';
@@ -135,7 +230,8 @@
 
 // El nombre de la comida ocupa hasta dos líneas
 .item-nombre {
-  line-height: 1.25;
+  font-size: 0.95rem;
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -146,17 +242,23 @@
 
 // Ingredientes de Mercado que no están en la nevera: el carrito dice "hay que comprarlo"
 .comida-falta {
-  display: flex;
+  display: inline-flex;
+  align-self: flex-start;
   align-items: center;
   gap: 4px;
-  min-width: 0;
-  font-size: 0.75rem;
-  font-weight: 600;
+  max-width: 100%;
+  margin-top: 4px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: var(--fondo-suave);
   color: var(--color-texto-suave);
+  font-size: 0.72rem;
+  font-weight: 600;
 
   ion-icon {
     flex-shrink: 0;
     font-size: 13px;
+    color: var(--color-peligro);
   }
 }
 
@@ -166,49 +268,71 @@
   white-space: nowrap;
 }
 
-.comida-falta-productos {
-  color: var(--color-peligro);
+.comida-agregar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-primario-texto);
+
+  ion-icon {
+    font-size: 18px;
+  }
 }
 
-.comida-placeholder {
-  font-size: 0.85rem;
-  color: var(--ion-color-medium);
-  opacity: 0.55;
-  font-style: italic;
-}
-
-.confirm-btn {
+// Confirmar: círculo vacío que se llena de verde con el chulo (área de toque de 44px)
+.check {
   position: relative;
   z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 2px solid var(--borde-pendiente);
-  background: var(--fondo-pendiente);
-  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  margin: -6px 0;
+  padding: 0;
   flex-shrink: 0;
-  transition: all 0.2s ease;
+  border: none;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.check-circulo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--borde);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
 
   ion-icon {
     font-size: 16px;
-    color: var(--color-pendiente);
+    color: var(--color-sobre-primario);
+    opacity: 0;
+    transform: scale(0.5);
+    transition:
+      opacity 0.2s ease,
+      transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
-  &:active {
-    transform: scale(0.9);
+  .check:active & {
+    transform: scale(0.88);
   }
 
-  &--active {
-    border-color: var(--ion-color-primary);
+  .check--ok & {
     background: var(--ion-color-primary);
+    border-color: var(--ion-color-primary);
 
     ion-icon {
-      color: var(--color-sobre-primario);
-      font-size: 20px;
-      font-weight: bold;
+      opacity: 1;
+      transform: none;
     }
   }
 }

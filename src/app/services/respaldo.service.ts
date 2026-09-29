@@ -36,7 +36,7 @@ export class RespaldoService {
     };
     return [
       `📦 Respaldo de Food Planner · ${formatearFecha(fechaHoy())}`,
-      'Para recuperar tus datos: en la app toca el botón de respaldo › "Importar respaldo" y pega este mensaje completo.',
+      'Para recuperar tus datos: en la app ve a Ajustes › "Importar respaldo" y pega este mensaje completo.',
       PREFIJO_CODIGO + (await comprimir(JSON.stringify(respaldo))),
     ].join('\n\n');
   }

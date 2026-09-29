@@ -13,6 +13,7 @@ import { AlertService } from '../../services/alert.service';
 import { HoyService } from '../../services/hoy.service';
 import { META_VASOS, RegistroAgua } from '../../models/historial.model';
 import { diaSemana, fechaHoy, sumarDias } from '../../utils/fecha';
+import { injectPedirMetaVasos } from '../../shared/pedir-meta-vasos';
 
 const LETRAS_DIA = ['D', 'L', 'M', 'X', 'J', 'V', 'S']; // por diaSemana(): 0 = domingo
 
@@ -34,6 +35,7 @@ export class AguaPage {
   private storage = inject(StorageService);
   private alert = inject(AlertService);
   private hoyService = inject(HoyService);
+  private pedirMetaVasos = injectPedirMetaVasos();
 
   registro = signal<RegistroAgua>({ fecha: '', vasos: 0 });
   meta = signal(META_VASOS);
@@ -84,11 +86,7 @@ export class AguaPage {
   }
 
   async cambiarMeta(): Promise<void> {
-    const meta = await this.alert.pedirNumero('Meta diaria', this.meta(), {
-      min: 1,
-      max: 30,
-      message: 'Vasos de unos 250 ml al día',
-    });
+    const meta = await this.pedirMetaVasos(this.meta());
     if (meta === null || meta === this.meta()) return;
     this.meta.set(meta);
     // Se guarda en el registro de hoy: así queda como la vigente y como la de hoy en el historial

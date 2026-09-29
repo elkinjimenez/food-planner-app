@@ -111,7 +111,7 @@ import { injectCrearComida } from '../../shared/crear-comida';
       &--selected {
         background: var(--fondo-primario-tenue);
         border: 1.5px solid var(--ion-color-primary);
-        box-shadow: 0 2px 8px rgba(var(--ion-color-primary-rgb), 0.15);
+        box-shadow: 0 2px 8px rgba(var(--brillo-rgb), 0.15);
       }
     }
 
@@ -182,7 +182,7 @@ import { injectCrearComida } from '../../shared/crear-comida';
     }
 
     .comida-card--crear .comida-card__nombre {
-      color: var(--ion-color-primary-shade);
+      color: var(--color-primario-texto);
     }
 
     .acciones {

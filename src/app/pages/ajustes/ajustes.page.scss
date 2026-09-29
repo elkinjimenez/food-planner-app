@@ -1,0 +1,123 @@
+// Fuera de las pestañas no hay tab bar: solo el área segura de abajo
+ion-content {
+  --padding-bottom: calc(var(--ion-safe-area-bottom, 0px) + 16px);
+}
+
+.grupo-titulo {
+  padding: 18px 20px 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-texto-secundario);
+}
+
+.grupo {
+  margin: 8px 14px;
+}
+
+// Tema: tres opciones con el ícono arriba; la elegida en verde
+.temas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 10px;
+}
+
+.tema {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 80px;
+  padding: 12px 8px;
+  border: 1.5px solid transparent;
+  border-radius: 14px;
+  background: var(--fondo-suave);
+  color: var(--color-texto-suave);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
+
+  ion-icon {
+    font-size: 26px;
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  &--elegido {
+    background: var(--fondo-primario-tenue);
+    border-color: var(--ion-color-primary);
+    color: var(--color-primario-texto);
+  }
+}
+
+// Fila de un ajuste: ícono + nombre y detalle + control
+.ajuste {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+
+  & + & {
+    border-top: 1px solid var(--borde-suave);
+  }
+}
+
+button.ajuste {
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:active {
+    background: var(--fondo-presionado);
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+.ajuste-chevron {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--color-texto-tenue);
+}
+
+.ajuste-spinner {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--ion-color-medium);
+}
+
+.tono-peligro {
+  background: var(--fondo-peligro);
+  color: var(--color-peligro);
+}
+
+.item-nombre--peligro {
+  color: var(--color-peligro);
+}
+
+.grupo-nota {
+  margin: 0;
+  padding: 2px 20px 4px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--color-texto-secundario);
+}

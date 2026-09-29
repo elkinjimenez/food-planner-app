@@ -64,6 +64,18 @@ export class AppUpdateService {
   }
 
   /**
+   * Busca una versión nueva y, si la hay (también si ya estaba descargada), la activa y recarga.
+   * Devuelve false si ya se tiene la última.
+   */
+  async buscarYAplicar(): Promise<boolean> {
+    if (!this.swUpdate.isEnabled) return false;
+    await this.swUpdate.checkForUpdate();
+    if (!(await this.swUpdate.activateUpdate())) return false;
+    document.location.reload();
+    return true;
+  }
+
+  /**
    * Pasa esta ventana a la versión más nueva y recarga, solo si existe una. Si el Service Worker
    * la encuentra, VERSION_READY la aplica; si ya la tenía descargada, checkForUpdate() devuelve
    * false aunque esta ventana siga en una anterior, y activateUpdate() la pasa a la nueva.

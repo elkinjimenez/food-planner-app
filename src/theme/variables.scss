@@ -99,6 +99,12 @@
   // ===== Vidrio (tab bar y toasts) =====
   --vidrio-rgb: 255, 255, 255;
 
+  // Tarjetas blancas sin borde (Semana, Hidratación)
+  --sombra-tarjeta: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.05);
+
+  // Sombra verde de lo destacado (hoy, FAB, confirmado)
+  --brillo-rgb: var(--ion-color-primary-rgb);
+
   // Desayuno, cena y agua: los mismos colores en Comidas, Semana e Historial
   --color-desayuno: #f5a623;
   --fondo-desayuno: #fff4d6;
@@ -108,4 +114,81 @@
   --fondo-agua: #e3f2fd;
   --color-nevera: #5599cc;
   --fondo-nevera: #e0eef5;
+}
+
+// ===== Modo oscuro =====
+// La paleta oscura de Ionic (global.scss) cubre sus componentes; aquí van el fondo y los colores propios.
+// Mismo peso que su .ion-palette-dark.ios y declarado después: gana este.
+:root.ion-palette-dark {
+  // Verde menos saturado que el del modo claro: sobre fondo oscuro aquel se ve fosforescente
+  --ion-color-primary: #3a9d65;
+  --ion-color-primary-rgb: 58, 157, 101;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #338a59;
+  --ion-color-primary-tint: #4ea774;
+  --ion-color-success: #3a9d65;
+  --ion-color-success-rgb: 58, 157, 101;
+
+  --ion-background-color: #0f1110;
+  --ion-background-color-rgb: 15, 17, 16;
+  --ion-text-color: #e7ebe9;
+  --ion-text-color-rgb: 231, 235, 233;
+  --ion-card-background: var(--fondo-tarjeta);
+  --ion-item-background: var(--fondo-tarjeta);
+
+  // ===== Texto =====
+  --color-texto: #e7ebe9;
+  --color-texto-suave: #a9b1ad;
+  --color-texto-secundario: #8b948f;
+  --color-texto-tenue: #646c68;
+  --color-primario-texto: #6cc393;
+
+  // ===== Fondos (grises neutros: el verde queda solo en lo destacado) =====
+  --fondo-tarjeta: #1a1d1c;
+  --fondo-tarjeta-rgb: 26, 29, 28;
+  --fondo-modal: #131514;
+  --fondo-bloque: #222524;
+  --fondo-suave: #262a28;
+  --fondo-presionado: #2c3230;
+  --fondo-pista: #2a2e2c;
+  --fondo-pestana: #4a4e4c;
+  --fondo-boton-secundario: #2a2e2c;
+  --fondo-boton-secundario-hover: #343836;
+  --color-boton-secundario: #c8cdca;
+
+  // ===== Bordes =====
+  --borde: #363b39;
+  --borde-suave: #272b29;
+
+  // ===== Tintes del verde principal =====
+  --fondo-primario-tenue: #1d2622;
+  --fondo-primario-suave: #1f2d26;
+  --fondo-primario-deshabilitado: #2b3d33;
+
+  // Sin sombras verdes: en oscuro se ven como un resplandor
+  --brillo-rgb: 0, 0, 0;
+
+  // ===== Eliminar / vencido =====
+  --color-peligro: #ff7a66;
+  --fondo-peligro: #3a1f1c;
+  --fondo-peligro-hover: #4a2622;
+  --fondo-peligro-tenue: #2a1918;
+
+  // ===== Pendiente de confirmar (Semana) =====
+  --color-pendiente: #f5b041;
+  --fondo-pendiente: #33290f;
+  --borde-pendiente: #5c4a1c;
+
+  // ===== Vidrio (tab bar y toasts) =====
+  --vidrio-rgb: 72, 78, 75;
+
+  --color-desayuno: #f5b041;
+  --fondo-desayuno: #3a2e12;
+  --color-cena: #8aa0f0;
+  --fondo-cena: #1e2640;
+  --color-agua: #5fb4f0;
+  --fondo-agua: #13293a;
+  --color-nevera: #75b0dd;
+  --fondo-nevera: #15262f;
 }

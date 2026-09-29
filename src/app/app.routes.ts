@@ -7,6 +7,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/historial/historial.page').then((m) => m.HistorialPage),
   },
   {
+    path: 'ajustes',
+    loadComponent: () => import('./pages/ajustes/ajustes.page').then((m) => m.AjustesPage),
+  },
+  {
     path: '',
     loadComponent: () => import('./pages/tabs/tabs.page').then((m) => m.TabsPage),
     children: [

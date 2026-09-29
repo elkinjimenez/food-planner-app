@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { IonApp, IonRouterOutlet } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
@@ -31,13 +31,17 @@ import {
   todayOutline,
   closeOutline,
   searchOutline,
+  settingsOutline,
+  contrastOutline,
+  pulseOutline,
+  downloadOutline,
+  sparklesOutline,
+  cloudDownloadOutline,
 } from 'ionicons/icons';
 import { StorageService } from './services/storage.service';
 import { AppUpdateService } from './services/app-update.service';
+import { AjustesService } from './services/ajustes.service';
 import { BienvenidaPage } from './pages/bienvenida/bienvenida.page';
-
-// En localStorage y no en IndexedDB: se lee sin esperar al abrir la app y no entra en los respaldos
-const BIENVENIDA_VISTA = 'food-planner-bienvenida-vista';
 
 @Component({
   selector: 'app-root',
@@ -47,8 +51,8 @@ const BIENVENIDA_VISTA = 'food-planner-bienvenida-vista';
 export class AppComponent implements OnInit {
   private storage = inject(StorageService);
   private appUpdate = inject(AppUpdateService);
-
-  mostrarBienvenida = signal(!localStorage.getItem(BIENVENIDA_VISTA));
+  // Aplica el tema al abrir la app
+  ajustes = inject(AjustesService);
 
   constructor() {
     addIcons({
@@ -81,16 +85,17 @@ export class AppComponent implements OnInit {
       todayOutline,
       closeOutline,
       searchOutline,
+      settingsOutline,
+      contrastOutline,
+      pulseOutline,
+      downloadOutline,
+      sparklesOutline,
+      cloudDownloadOutline,
     });
   }
 
   ngOnInit(): void {
     this.storage.init().catch((err) => console.error('Error inicializando storage:', err));
     this.appUpdate.init();
-  }
-
-  cerrarBienvenida(): void {
-    localStorage.setItem(BIENVENIDA_VISTA, '1');
-    this.mostrarBienvenida.set(false);
   }
 }

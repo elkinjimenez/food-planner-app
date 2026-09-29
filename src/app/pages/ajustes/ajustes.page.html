@@ -1,0 +1,101 @@
+<ion-content>
+  <div class="page-title-row">
+    <ion-back-button defaultHref="/semana" text="" icon="arrow-back-outline" aria-label="Volver"></ion-back-button>
+    <div class="page-title">Ajustes</div>
+  </div>
+  <p class="page-subtitle">Tus preferencias y tus datos</p>
+
+  <div class="grupo-titulo">Apariencia</div>
+  <ion-card class="grupo">
+    <div class="temas" role="radiogroup" aria-label="Tema">
+      @for (t of temas; track t.valor) {
+        <button
+          type="button"
+          role="radio"
+          class="tema"
+          [class.tema--elegido]="ajustes.tema() === t.valor"
+          [attr.aria-checked]="ajustes.tema() === t.valor"
+          (click)="ajustes.cambiarTema(t.valor)"
+        >
+          <ion-icon [name]="t.icono"></ion-icon>
+          <span>{{ t.nombre }}</span>
+        </button>
+      }
+    </div>
+  </ion-card>
+
+  <div class="grupo-titulo">Preferencias</div>
+  <ion-card class="grupo">
+    <button type="button" class="ajuste" (click)="cambiarMeta()">
+      <div class="item-icon tono-agua"><ion-icon name="water-outline"></ion-icon></div>
+      <div class="item-info">
+        <span class="item-nombre">Meta diaria de agua</span>
+        <span class="item-sub">{{ meta() }} vasos · {{ meta() * 250 }} ml</span>
+      </div>
+      <ion-icon name="chevron-forward-outline" class="ajuste-chevron"></ion-icon>
+    </button>
+    @if (ajustes.puedeVibrar) {
+      <div class="ajuste">
+        <div class="item-icon tono-cena"><ion-icon name="pulse-outline"></ion-icon></div>
+        <div class="item-info">
+          <span class="item-nombre">Vibración</span>
+          <span class="item-sub">Al generar la semana al azar</span>
+        </div>
+        <ion-toggle [checked]="ajustes.vibracion()" (ionChange)="cambiarVibracion($event)" aria-label="Vibración"></ion-toggle>
+      </div>
+    }
+  </ion-card>
+
+  <div class="grupo-titulo">Tus datos</div>
+  <ion-card class="grupo">
+    <button type="button" class="ajuste" (click)="exportar()">
+      <div class="item-icon tono-supermercado"><ion-icon name="share-outline"></ion-icon></div>
+      <div class="item-info">
+        <span class="item-nombre">Exportar respaldo</span>
+        <span class="item-sub">Envíatelo por WhatsApp o guárdalo en Notas</span>
+      </div>
+    </button>
+    <button type="button" class="ajuste" (click)="importar()">
+      <div class="item-icon tono-fruver"><ion-icon name="download-outline"></ion-icon></div>
+      <div class="item-info">
+        <span class="item-nombre">Importar respaldo</span>
+        <span class="item-sub">Pega el mensaje de un respaldo</span>
+      </div>
+    </button>
+  </ion-card>
+  <p class="grupo-nota">
+    El respaldo es una copia de tus comidas, mercado, nevera, plan e historial en un mensaje. Para recuperarla,
+    copia ese mensaje e impórtalo.
+  </p>
+  <ion-card class="grupo">
+    <button type="button" class="ajuste" (click)="restablecer()">
+      <div class="item-icon tono-peligro"><ion-icon name="trash-outline"></ion-icon></div>
+      <div class="item-info">
+        <span class="item-nombre item-nombre--peligro">Restablecer datos</span>
+        <span class="item-sub">Borra todo o vuelve a los datos de ejemplo</span>
+      </div>
+    </button>
+  </ion-card>
+
+  <div class="grupo-titulo">Acerca de</div>
+  <ion-card class="grupo">
+    <button type="button" class="ajuste" (click)="ajustes.verBienvenida()">
+      <div class="item-icon tono-desayuno"><ion-icon name="sparkles-outline"></ion-icon></div>
+      <div class="item-info">
+        <span class="item-nombre">Ver la bienvenida</span>
+        <span class="item-sub">Lo que puedes hacer en la app</span>
+      </div>
+      <ion-icon name="chevron-forward-outline" class="ajuste-chevron"></ion-icon>
+    </button>
+    <button type="button" class="ajuste" [disabled]="buscandoVersion()" (click)="buscarActualizacion()">
+      <div class="item-icon tono-nevera"><ion-icon name="cloud-download-outline"></ion-icon></div>
+      <div class="item-info">
+        <span class="item-nombre">Buscar actualización</span>
+        <span class="item-sub">Versión {{ version }}</span>
+      </div>
+      @if (buscandoVersion()) {
+        <ion-spinner name="crescent" class="ajuste-spinner"></ion-spinner>
+      }
+    </button>
+  </ion-card>
+</ion-content>

@@ -252,7 +252,7 @@ const CATEGORIAS: Categoria[] = [
       border: none;
       border-radius: 10px;
       background: var(--fondo-primario-tenue);
-      color: var(--ion-color-primary-shade);
+      color: var(--color-primario-texto);
       font: inherit;
       font-size: 0.85rem;
       font-weight: 600;
@@ -386,7 +386,7 @@ const CATEGORIAS: Categoria[] = [
       padding: 6px 12px 6px 8px;
       border: none;
       background: var(--fondo-primario-tenue);
-      color: var(--ion-color-primary-shade);
+      color: var(--color-primario-texto);
       font-family: inherit;
       cursor: pointer;
 
