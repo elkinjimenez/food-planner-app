@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1790718790170,
+  "timestamp": 1790719033320,
   "index": "/food-planner-app/index.html",
   "assetGroups": [
     {
@@ -52,7 +52,7 @@
         "/food-planner-app/index.html",
         "/food-planner-app/main-KOHLQYBO.js",
         "/food-planner-app/manifest.webmanifest",
-        "/food-planner-app/styles-S2YNMSAP.css"
+        "/food-planner-app/styles-KFYUFFMT.css"
       ],
       "patterns": []
     },
@@ -118,10 +118,10 @@
     "/food-planner-app/chunk-fUR9-3vw.js": "95ad35c2cd63261029c9a0e32ae035faca10416a",
     "/food-planner-app/chunk-gr5rQkL_.js": "3bb78cce1162db06e3387c1f4d510d52f334883a",
     "/food-planner-app/chunk-vnzRcX4w.js": "6292738c940aaadf1bb7754a76bb4c7ff77d6cbd",
-    "/food-planner-app/index.html": "d5b8d7108a005342389f47f84211eccacafca398",
+    "/food-planner-app/index.html": "6a7ac0e3231a41381f893403730de75148320379",
     "/food-planner-app/main-KOHLQYBO.js": "7d00364aaa0f3e0ec717ab3bab8e819658829a72",
     "/food-planner-app/manifest.webmanifest": "3ba8929ba919ead27d3af878cf31af5f02356fe8",
-    "/food-planner-app/styles-S2YNMSAP.css": "9150b51f3b0409c73d3e0cf5f84f1b90ba86e094"
+    "/food-planner-app/styles-KFYUFFMT.css": "cb32fbe9648665c00edf4730d5969b5b684b35bf"
   },
   "navigationUrls": [
     {
