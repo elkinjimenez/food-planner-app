@@ -171,10 +171,10 @@ export class MercadoPage {
           ? ` y ${ids.size === 1 ? 'se sacará' : 'se sacarán'} de la Nevera`
           : ` y ${enNevera} de ellos ${enNevera === 1 ? 'se sacará' : 'se sacarán'} de la Nevera`;
     const actionSheet = await this.actionSheetCtrl.create({
-      header: '¿Desmarcar todo?',
+      header: '¿Reiniciar lista?',
       subHeader: `${carrito}${detalle}`,
       buttons: [
-        { text: 'Sí, desmarcar', role: 'destructive' },
+        { text: 'Sí, reiniciar', role: 'destructive' },
         { text: 'Cancelar', role: 'cancel' },
       ],
     });
@@ -190,7 +190,7 @@ export class MercadoPage {
     const sacados = await this.storage.desmarcarComprados(comprados);
     await this.cargarDeslizando();
     const productos = comprados.length === 1 ? '1 producto' : `${comprados.length} productos`;
-    const deshacer = await this.alert.toast(productos, { tipo: 'pendiente', header: 'Lista desmarcada', deshacer: true });
+    const deshacer = await this.alert.toast(productos, { tipo: 'pendiente', header: 'Lista reiniciada', deshacer: true });
     if (!deshacer) return;
     await this.storage.marcarComprados(comprados, sacados);
     await this.cargarDeslizando();

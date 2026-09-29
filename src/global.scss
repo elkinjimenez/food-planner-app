@@ -252,14 +252,19 @@ ion-modal.calendario {
   --backdrop-opacity: 0.2;
   --background: var(--fondo-tarjeta);
 
+  &::part(content) {
+    padding: 14px;
+  }
+
   ion-datetime {
     --background: var(--fondo-tarjeta);
     --background-rgb: var(--fondo-tarjeta-rgb);
-    padding: 0 4px 8px;
   }
 
+  // Mismo tamaño que los días del calendario del historial
   ion-datetime::part(calendar-day) {
-    font-weight: 500;
+    font-size: 1rem;
+    font-weight: 600;
   }
 
   ion-datetime::part(calendar-day today) {
@@ -280,10 +285,14 @@ ion-modal.calendario {
 //   <p class="page-subtitle">…</p>
 // Arriba una barra con las acciones y debajo el título grande, en una sola línea.
 // Los altos son fijos para que el encabezado mida lo mismo en todas, tenga o no botón.
+// Los botones de la barra miden lo mismo que el botón flotante (ion-fab-button: 56px).
+$boton-encabezado: 56px;
+$icono-encabezado: 26px;
+
 .page-title-row {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  grid-template-rows: 44px auto;
+  grid-template-rows: $boton-encabezado auto;
   align-items: center;
   padding: calc(var(--ion-safe-area-top, 0px) + 6px) 14px 0 20px;
 }
@@ -324,23 +333,36 @@ ion-modal.calendario {
   --box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.06);
   --padding-top: 0;
   --padding-bottom: 0;
-  --padding-start: 12px;
-  --padding-end: 14px;
-  height: 36px;
+  --padding-start: 18px;
+  --padding-end: 20px;
+  height: $boton-encabezado;
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   text-transform: none;
   letter-spacing: 0;
+
+  // En iOS el ícono trae margen negativo a la izquierda y queda pegado al borde de la píldora
+  ion-icon[slot='start'] {
+    font-size: 22px;
+    margin-inline-start: 0;
+    margin-inline-end: 6px;
+  }
 
   &.button-has-icon-only {
     --padding-start: 0;
     --padding-end: 0;
-    width: 36px;
+    width: $boton-encabezado;
 
     ion-icon {
-      font-size: 19px;
+      font-size: $icono-encabezado;
     }
   }
+}
+
+.page-title-btn--peligro {
+  --color: var(--color-peligro);
+  --background: var(--fondo-peligro);
+  --background-activated: var(--fondo-peligro-hover);
 }
 
 // Volver en la barra de arriba, a la izquierda (vistas fuera de las pestañas): píldora como las acciones
@@ -350,13 +372,16 @@ ion-modal.calendario {
   --color: var(--color-texto-suave);
   --background: var(--fondo-tarjeta);
   --border-radius: 50px;
-  --icon-font-size: 20px;
+  --icon-font-size: #{$icono-encabezado};
+  // En iOS el ícono trae -4px/1px de margen para acompañar el texto "Atrás": sin texto queda corrido a la izquierda
+  --icon-margin-start: 0;
+  --icon-margin-end: 0;
   --padding-start: 0;
   --padding-end: 0;
-  --min-height: 36px;
-  --min-width: 36px;
-  width: 36px;
-  height: 36px;
+  --min-height: #{$boton-encabezado};
+  --min-width: #{$boton-encabezado};
+  width: $boton-encabezado;
+  height: $boton-encabezado;
   border-radius: 50px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.06);
 }

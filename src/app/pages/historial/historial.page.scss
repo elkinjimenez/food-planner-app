@@ -5,7 +5,7 @@ ion-content {
 
 // ===== Calendario =====
 .calendario {
-  padding: 8px 10px 12px;
+  padding: 14px;
 }
 
 .calendario-mes {
@@ -14,7 +14,6 @@ ion-content {
   justify-content: space-between;
 
   ion-button {
-    --color: var(--ion-color-medium);
     margin: 0;
   }
 }
@@ -57,19 +56,20 @@ ion-content {
     background: var(--fondo-presionado);
   }
 
-  // Días que aún no llegan: se atenúa el contenido, no el recuadro si está elegido
-  &--futura > * {
+  // Días que aún no llegan se atenúan, salvo el elegido
+  &--futura:not(.casilla--elegida) > * {
     opacity: 0.45;
   }
 
+  // Igual que el selector de fecha: hoy en verde y el elegido con el círculo relleno
   &--hoy .casilla-numero {
-    color: var(--color-sobre-primario);
-    background: var(--ion-color-primary);
+    color: var(--ion-color-primary);
+    font-weight: 700;
   }
 
-  &--elegida {
-    background: var(--fondo-primario-tenue);
-    box-shadow: inset 0 0 0 1.5px var(--ion-color-primary);
+  &--elegida .casilla-numero {
+    color: var(--color-sobre-primario);
+    background: var(--ion-color-primary);
   }
 }
 
@@ -77,10 +77,10 @@ ion-content {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 

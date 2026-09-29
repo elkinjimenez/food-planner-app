@@ -89,8 +89,13 @@ const formatoMes = new Intl.DateTimeFormat(LOCALE_FECHAS, { month: 'long', timeZ
 
 /** Nombre del mes con su año, p. ej. "Septiembre 2026". */
 export function nombreMes(fecha: string): string {
-  const mes = formatoMes.format(aFechaUtc(inicioDeMes(fecha)));
+  const mes = nombreDelMes(fecha);
   return `${mes.charAt(0).toUpperCase()}${mes.slice(1)} ${fecha.slice(0, 4)}`;
+}
+
+/** Solo el nombre del mes, en minúscula: "septiembre". */
+export function nombreDelMes(fecha: string): string {
+  return formatoMes.format(aFechaUtc(inicioDeMes(fecha)));
 }
 
 // Las fechas YYYY-MM-DD son días del calendario, no instantes: se operan como

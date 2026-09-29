@@ -11,7 +11,7 @@
   </div>
   <p class="page-subtitle">Tus comidas confirmadas y el agua de cada día</p>
 
-  <ion-card class="calendario">
+  <ion-card class="calendario" #calendario>
     <div class="calendario-mes">
       <ion-button fill="clear" size="small" aria-label="Mes anterior" (click)="cambiarMes(-1)">
         <ion-icon name="chevron-back-outline" slot="icon-only"></ion-icon>
@@ -22,7 +22,7 @@
       </ion-button>
     </div>
 
-    <div class="calendario-grid">
+    <div class="calendario-grid" #grid>
       @for (nombre of diasSemana; track $index) {
         <span class="calendario-cabecera">{{ nombre }}</span>
       }
@@ -122,7 +122,7 @@
   </ion-card>
 
   <ion-card class="detalle">
-    <div class="detalle-titulo">Lo que más comiste este mes</div>
+    <div class="detalle-titulo">Lo que más comiste {{ enMes() }}</div>
     @for (c of masFrecuentes(); track c.id) {
       <div class="detalle-fila">
         <div class="item-icon {{ c.tipo === 'desayuno' ? 'tono-desayuno' : 'tono-cena' }}">
@@ -135,7 +135,7 @@
       </div>
     } @empty {
       <div class="detalle-fila">
-        <span class="detalle-vacio">Aún no hay comidas confirmadas este mes</span>
+        <span class="detalle-vacio">{{ esMesPasado() ? 'No hubo' : 'Aún no hay' }} comidas confirmadas {{ enMes() }}</span>
       </div>
     }
   </ion-card>

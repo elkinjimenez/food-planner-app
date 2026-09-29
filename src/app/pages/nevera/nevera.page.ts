@@ -191,7 +191,7 @@ export class NeveraPage {
     const desmarcados = await this.storage.sacarDeNevera(productos);
     await this.cargar();
     const total = productos.length === 1 ? '1 producto' : `${productos.length} productos`;
-    const deshacer = await this.alert.toast(total, { tipo: 'eliminado', header: 'Nevera vaciada', deshacer: true });
+    const deshacer = await this.alert.toast(total, { tipo: 'agotado', header: 'Nevera vaciada', deshacer: true });
     if (!deshacer) return;
     await this.storage.marcarComprados(desmarcados, productos);
     await this.cargar();
