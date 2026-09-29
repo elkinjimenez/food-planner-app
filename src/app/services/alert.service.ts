@@ -1,13 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 
-type TipoToast = 'ok' | 'pendiente' | 'eliminado' | 'actualizacion';
+type TipoToast = 'ok' | 'pendiente' | 'eliminado' | 'agotado' | 'actualizacion' | 'error';
 
 const ICONOS_TOAST: Record<TipoToast, string> = {
   ok: 'checkmark-circle',
   pendiente: 'time-outline',
   eliminado: 'trash-outline',
+  agotado: 'remove-circle-outline',
   actualizacion: 'refresh-outline',
+  error: 'alert-circle-outline',
 };
 
 interface OpcionesToast {
@@ -15,7 +17,7 @@ interface OpcionesToast {
   header?: string;
   deshacer?: boolean;
   boton?: string; // botón con otro texto (p. ej. "Actualizar")
-  duration?: number;
+  duration?: number; // 0: no se quita solo
 }
 
 @Injectable({ providedIn: 'root' })
@@ -24,24 +26,23 @@ export class AlertService {
   private toastCtrl = inject(ToastController);
   private toastActual?: HTMLIonToastElement;
 
-
-  /** Con `destructivo` el botón de aceptar va en rojo (p. ej. si borra datos). */
+  /** Con `destructivo` el botón de aceptar va en rojo (p. ej. si borra datos). Tocar fuera equivale a cancelar. */
   async confirm(
     header: string,
     message?: string,
     { aceptar = 'Aceptar', destructivo = false }: { aceptar?: string; destructivo?: boolean } = {},
   ): Promise<boolean> {
-    return new Promise(async (resolve) => {
-      const alert = await this.alertCtrl.create({
-        header,
-        message,
-        buttons: [
-          { text: 'Cancelar', role: 'cancel', handler: () => resolve(false) },
-          { text: aceptar, role: destructivo ? 'destructive' : undefined, handler: () => resolve(true) },
-        ],
-      });
-      await alert.present();
+    const alert = await this.alertCtrl.create({
+      header,
+      message,
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        { text: aceptar, role: destructivo ? 'destructive' : 'aceptar' },
+      ],
     });
+    await alert.present();
+    const { role } = await alert.onDidDismiss();
+    return role === (destructivo ? 'destructive' : 'aceptar');
   }
 
   /** Pide un número entero entre `min` y `max` (no se cierra con uno fuera de rango). Devuelve null si se cancela. */
@@ -109,6 +110,9 @@ export class AlertService {
     }: OpcionesToast = {},
   ): Promise<boolean> {
     await this.toastActual?.dismiss();
+    // Fuera de las pestañas (Ajustes, Historial) el tab bar está oculto: anclado a él, Ionic
+    // dejaría el aviso fuera de la pantalla. Ahí va abajo sin ancla.
+    const tabBar = document.querySelector<HTMLElement>('ion-tab-bar');
     const toast = await this.toastCtrl.create({
       header,
       message,
@@ -116,7 +120,7 @@ export class AlertService {
       icon: ICONOS_TOAST[tipo],
       buttons: boton ? [{ text: boton, role: 'boton' }] : [],
       position: 'bottom',
-      positionAnchor: document.querySelector<HTMLElement>('ion-tab-bar') ?? undefined,
+      positionAnchor: tabBar?.offsetParent ? tabBar : undefined,
       swipeGesture: 'vertical',
       cssClass: ['toast-glass', `toast-${tipo}`, ...(header ? ['toast-con-titulo'] : [])],
     });

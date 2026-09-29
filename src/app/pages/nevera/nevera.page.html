@@ -35,8 +35,8 @@
           <button class="action-btn action-btn--edit" [attr.aria-label]="'Editar ' + p.nombre" (click)="editar(p)">
             <ion-icon name="create-outline"></ion-icon>
           </button>
-          <button class="action-btn action-btn--delete" [attr.aria-label]="'Eliminar ' + p.nombre" (click)="eliminar(p)">
-            <ion-icon name="trash-outline"></ion-icon>
+          <button class="action-btn action-btn--delete" [attr.aria-label]="'Se acabó ' + p.nombre" (click)="seAcabo(p)">
+            <ion-icon name="remove-circle-outline"></ion-icon>
           </button>
         </div>
       </ion-card>

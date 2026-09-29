@@ -12,3 +12,5 @@ export interface Comida {
 }
 
 export type TipoComida = Comida['tipo'];
+
+export const TIPOS_COMIDA: TipoComida[] = ['desayuno', 'cena'];

@@ -1,6 +1,6 @@
 {
   "name": "Food-Planner-App",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "author": "Elkin Omar Jimenez Garcia",
   "scripts": {
     "ng": "ng",

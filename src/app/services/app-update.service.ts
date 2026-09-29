@@ -48,21 +48,6 @@ export class AppUpdateService {
     if (actualizar) await this.aplicar();
   }
 
-  /** Busca una versión nueva y, si existe, la activa y recarga. Si no, solo recarga. */
-  async actualizarYRecargar(): Promise<void> {
-    if (this.swUpdate.isEnabled) {
-      try {
-        if (await this.swUpdate.checkForUpdate()) {
-          await this.aplicar();
-          return;
-        }
-      } catch (err) {
-        console.error('Error buscando actualización:', err);
-      }
-    }
-    document.location.reload();
-  }
-
   /**
    * Busca una versión nueva y, si la hay (también si ya estaba descargada), la activa y recarga.
    * Devuelve false si ya se tiene la última.

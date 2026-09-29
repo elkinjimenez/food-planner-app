@@ -19,6 +19,7 @@ import {
   leafOutline,
   checkmarkCircle,
   checkmarkSharp,
+  removeCircleOutline,
   timeOutline,
   arrowBackOutline,
   archiveOutline,
@@ -37,6 +38,7 @@ import {
   downloadOutline,
   sparklesOutline,
   cloudDownloadOutline,
+  alertCircleOutline,
 } from 'ionicons/icons';
 import { StorageService } from './services/storage.service';
 import { AppUpdateService } from './services/app-update.service';
@@ -73,6 +75,7 @@ export class AppComponent implements OnInit {
       leafOutline,
       checkmarkCircle,
       checkmarkSharp,
+      removeCircleOutline,
       timeOutline,
       arrowBackOutline,
       archiveOutline,
@@ -91,6 +94,7 @@ export class AppComponent implements OnInit {
       downloadOutline,
       sparklesOutline,
       cloudDownloadOutline,
+      alertCircleOutline,
     });
   }
 

@@ -10,7 +10,7 @@ import {
   IonButton,
   IonRouterLink,
 } from '@ionic/angular';
-import { Comida, TipoComida } from '../../models/comida.model';
+import { Comida, TIPOS_COMIDA, TipoComida } from '../../models/comida.model';
 import {
   PlanSemanal,
   DiaSemana,
@@ -22,7 +22,6 @@ import { ComidaConfirmada, RegistroComidas } from '../../models/historial.model'
 import { ProductoNevera } from '../../models/producto-nevera.model';
 import { StorageService } from '../../services/storage.service';
 import { AlertService } from '../../services/alert.service';
-import { AppUpdateService } from '../../services/app-update.service';
 import { AjustesService } from '../../services/ajustes.service';
 import { HoyService } from '../../services/hoy.service';
 import { diaYMes, sumarDias } from '../../utils/fecha';
@@ -32,7 +31,6 @@ import { planSemanalVacio } from '../../data/seed.data';
 import { SeleccionarComidaModal } from './seleccionar-comida.modal';
 import { injectAbrirModal } from '../../shared/abrir-modal';
 
-const TIPOS_COMIDA: TipoComida[] = ['desayuno', 'cena'];
 const TIPO_LABEL: Record<TipoComida, string> = { desayuno: 'Desayuno', cena: 'Cena' };
 const TIPO_ICONO: Record<TipoComida, { icono: string; tono: string }> = {
   desayuno: { icono: 'sunny-outline', tono: 'tono-desayuno' },
@@ -80,12 +78,12 @@ export class SemanaPage {
   private storage = inject(StorageService);
   private alert = inject(AlertService);
   private abrirModal = injectAbrirModal();
-  private appUpdate = inject(AppUpdateService);
   private ajustes = inject(AjustesService);
 
   plan = signal<PlanSemanal>(planSemanalVacio());
   comidas = signal<Comida[]>([]);
   private nevera = signal<ProductoNevera[]>([]);
+  private idsMercado = signal(new Set<string>());
   // Lo confirmado en las fechas que están en pantalla (historial), por fecha
   confirmadas = signal(new Map<string, RegistroComidas>());
   private hoyService = inject(HoyService);
@@ -100,14 +98,22 @@ export class SemanaPage {
     const confirmadas = this.confirmadas();
     const porId = new Map(this.comidas().map((c) => [c.id, c]));
     // Un ingrediente está si hay en la nevera algo que salió de su producto de Mercado o, si se
-    // agregó a mano en la nevera, que se llame igual. Los ingredientes sin enlazar no cuentan.
+    // agregó a mano en la nevera, que se llame igual. Los ingredientes sin enlazar no cuentan, ni
+    // los de un producto que se borró de Mercado: ya no se pueden comprar desde la lista.
     const nevera = this.nevera();
+    const idsMercado = this.idsMercado();
     const idsEnNevera = new Set(nevera.map((p) => p.itemMercadoId));
     const nombresEnNevera = new Set(nevera.map((p) => normalizarTexto(p.nombre)));
     // Sin lo que va entre paréntesis ("Aguacates (verdes)" → "Aguacates"): caben más en la línea
     const faltan = (comida?: ComidaConfirmada): string[] =>
       (porId.get(comida?.id ?? '')?.ingredientes ?? [])
-        .filter((i) => i.itemMercadoId && !idsEnNevera.has(i.itemMercadoId) && !nombresEnNevera.has(normalizarTexto(i.nombre)))
+        .filter(
+          (i) =>
+            !!i.itemMercadoId &&
+            idsMercado.has(i.itemMercadoId) &&
+            !idsEnNevera.has(i.itemMercadoId) &&
+            !nombresEnNevera.has(normalizarTexto(i.nombre)),
+        )
         .map((i) => i.nombre.replace(/\s*\(.*?\)/g, '').trim());
     return semanaDesde(this.hoy()).map(({ fecha, dia }, i) => {
       const registro = confirmadas.get(fecha);
@@ -150,16 +156,18 @@ export class SemanaPage {
 
   private async cargar(): Promise<void> {
     const hoy = this.hoy();
-    const [plan, comidas, confirmadas, hayPlanGuardado, nevera] = await Promise.all([
+    const [plan, comidas, confirmadas, hayPlanGuardado, nevera, mercado] = await Promise.all([
       this.storage.getPlan(),
       this.storage.getComidas(),
       this.storage.getComidasConfirmadas(hoy, sumarDias(hoy, 6)),
       this.storage.hayPlanGuardado(),
       this.storage.getNevera(),
+      this.storage.getMercado(),
     ]);
     this.plan.set(plan);
     this.comidas.set(comidas);
     this.nevera.set(nevera);
+    this.idsMercado.set(new Set(mercado.map((i) => i.id)));
     this.confirmadas.set(new Map(confirmadas.map((r) => [r.fecha, r])));
 
     // Solo la primera vez (aún no hay plan guardado) se genera una semana aleatoria:
@@ -187,8 +195,12 @@ export class SemanaPage {
       return;
     }
     if (!data) return;
-    // Recién creada en el selector: aún no está en la lista de la semana
-    this.comidas.update((comidas) => (comidas.some((c) => c.id === data.id) ? comidas : [...comidas, data]));
+    // Recién creada en el selector: aún no está en la lista de la semana, y sus ingredientes
+    // están en Mercado (se eligieron de ahí o se crearon con ella)
+    if (!this.comidas().some((c) => c.id === data.id)) {
+      this.comidas.update((comidas) => [...comidas, data]);
+      this.idsMercado.update((ids) => new Set([...ids, ...data.ingredientes.flatMap((i) => i.itemMercadoId ?? [])]));
+    }
 
     const restaurar = this.estadoActual(d, tipo);
     await this.guardarPlan(d.dia, tipo, data.id);
@@ -310,9 +322,5 @@ export class SemanaPage {
     this.plan.set(nuevoPlan);
     await this.storage.putPlan(nuevoPlan);
     return true;
-  }
-
-  async refresh(): Promise<void> {
-    await this.appUpdate.actualizarYRecargar();
   }
 }

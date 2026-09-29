@@ -160,10 +160,11 @@ export class NeveraPage {
     await this.cargar();
   }
 
-  async eliminar({ producto, nombre }: ProductoConEstado): Promise<void> {
+  async seAcabo({ producto, nombre }: ProductoConEstado): Promise<void> {
     const desmarcados = await this.storage.sacarDeNevera([producto]);
     await this.cargarDeslizando();
-    const deshacer = await this.alert.toast(nombre, { tipo: 'eliminado', header: 'Producto eliminado', deshacer: true });
+    const mensaje = desmarcados.length ? `${nombre} vuelve a la lista de Mercado` : nombre;
+    const deshacer = await this.alert.toast(mensaje, { tipo: 'agotado', header: 'Se acabó', deshacer: true });
     if (!deshacer) return;
     await this.storage.marcarComprados(desmarcados, [producto]);
     await this.cargarDeslizando();

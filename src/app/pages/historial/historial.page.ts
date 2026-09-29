@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { IonBackButton, IonButton, IonCard, IonContent, IonIcon, IonLabel } from '@ionic/angular';
-import { Comida, TipoComida } from '../../models/comida.model';
+import { Comida, TIPOS_COMIDA, TipoComida } from '../../models/comida.model';
 import { DIAS_LABEL, DIAS_SEMANA, diaSemanaDe } from '../../models/plan-semanal.model';
 import { ComidaConfirmada, META_VASOS, RegistroAgua, RegistroComidas } from '../../models/historial.model';
 import { StorageService } from '../../services/storage.service';
@@ -32,8 +32,6 @@ interface ComidaFrecuente {
   tipo: TipoComida;
   veces: number;
 }
-
-const TIPOS_COMIDA: TipoComida[] = ['desayuno', 'cena'];
 
 @Component({
   selector: 'app-historial',

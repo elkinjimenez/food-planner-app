@@ -4,9 +4,10 @@ import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular';
 
 import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
-import { Injectable, isDevMode } from '@angular/core';
+import { ErrorHandler, Injectable, isDevMode, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideServiceWorker } from '@angular/service-worker';
 import { LocationStrategy, PathLocationStrategy } from '@angular/common';
+import { ManejadorErrores } from './app/services/manejador-errores';
 
 // Toda la app ocupa una sola entrada del historial: los gestos atrás/adelante del sistema no
 // navegan dentro de ella. En Historial se vuelve con el deslizar de Ionic o la flecha.
@@ -23,9 +24,13 @@ bootstrapApplication(AppComponent, {
     { provide: LocationStrategy, useClass: SinHistorialStrategy },
     // Estilo iOS en todas las plataformas, también en PC
     provideIonicAngular({ mode: 'ios' }),
-    provideRouter(routes, withPreloading(PreloadAllModules), withComponentInputBinding()), provideServiceWorker('ngsw-worker.js', {
-            enabled: !isDevMode(),
-            registrationStrategy: 'registerImmediately'
-          }),
+    // Los métodos async de las pantallas no se esperan: sin esto sus errores no llegan al ErrorHandler
+    provideBrowserGlobalErrorListeners(),
+    { provide: ErrorHandler, useClass: ManejadorErrores },
+    provideRouter(routes, withPreloading(PreloadAllModules), withComponentInputBinding()),
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerImmediately',
+    }),
   ],
 });

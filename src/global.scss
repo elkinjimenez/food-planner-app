@@ -96,7 +96,7 @@ ion-badge {
 }
 
 // ===== Toast estilo iOS 26 — liquid glass =====
-// Todos los avisos (AlertService) van abajo, anclados sobre el tab bar.
+// Todos los avisos (AlertService) van abajo, anclados sobre el tab bar si está visible.
 // Sin `color` de Ionic: sus clases .ion-color-* fijan el fondo con !important.
 // El blur va en el part "wrapper" (el mismo elemento que anima la opacidad).
 .toast-glass {
@@ -163,7 +163,9 @@ ion-badge {
   }
 }
 
-.toast-glass.toast-eliminado {
+.toast-glass.toast-eliminado,
+.toast-glass.toast-agotado,
+.toast-glass.toast-error {
   &::part(icon) {
     color: var(--color-peligro);
   }

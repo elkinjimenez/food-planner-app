@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Comida, Ingrediente, TipoComida } from '../models/comida.model';
+import { Comida, Ingrediente, TIPOS_COMIDA, TipoComida } from '../models/comida.model';
 import { CategoriaMercado, ItemMercado } from '../models/item-mercado.model';
 import { ProductoNevera } from '../models/producto-nevera.model';
 import { ComidaDelDia, DIAS_SEMANA, DiaSemana, PlanSemanal, semanaDesde } from '../models/plan-semanal.model';
@@ -17,6 +17,14 @@ export interface DatosApp {
   plan: PlanSemanal;
   comidasConfirmadas: RegistroComidas[];
   agua: RegistroAgua[];
+}
+
+/** No se pudo leer o guardar en IndexedDB ni al reintentar: lo que muestra la pantalla puede no estar guardado. */
+export class ErrorDeDatos extends Error {
+  constructor(cause: unknown) {
+    super('No se pudo acceder a IndexedDB', { cause });
+    this.name = 'ErrorDeDatos';
+  }
 }
 
 const DB_NAME = 'food-planner-db';
@@ -49,8 +57,6 @@ const TODOS_LOS_STORES: StoreName[] = [
   STORE_CONFIRMADAS,
   STORE_AGUA,
 ];
-
-const TIPOS_COMIDA: TipoComida[] = ['desayuno', 'cena'];
 
 /** Fechas entre `desde` y `hasta` (incluidas); sin `hasta`, de `desde` en adelante. */
 function rangoDeFechas(desde: string, hasta?: string): IDBKeyRange {
@@ -180,7 +186,11 @@ export class StorageService {
       return await operacion(await this.getDb());
     } catch {
       this.dbPromise = null;
-      return operacion(await this.getDb());
+      try {
+        return await operacion(await this.getDb());
+      } catch (error) {
+        throw new ErrorDeDatos(error);
+      }
     }
   }
 
